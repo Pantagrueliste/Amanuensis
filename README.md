@@ -20,7 +20,7 @@ Amanuensis is a robust Python application, tailored specifically for researchers
 
 ## Usage
 
-To use Amanuensis, simply clone this repository, navigate to the directory, and run `python main.py`. When prompted, enter the directory where your text files are located. The script will then normalize each file, line by line, applying the normalization function to each word. 
+To use Amanuensis, simply clone this repository, navigate to the directory, and run `python amanuensis.py`. When prompted, enter the directory where your text files are located. The script will then normalize each file, line by line, applying the normalization function to each word. 
 
 ## Dependencies
 
