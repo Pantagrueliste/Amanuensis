@@ -1,6 +1,6 @@
 # Amanuensis: A human-supervised normalization tool for early modern abbreviated texts
 
-Amanuensis is a fairly robust Python application tailored for researchers and users in the Digital Humanities who need to process and normalize large amounts of text data. With Amanuensis, you can transform old and complex texts into a more digestible format, preparing them for further digital analysis and manipulation. 
+Amanuensis is a robust Python application, tailored specifically for researchers and users in the Digital Humanities. It is designed to accelerate normalization tasks for large-scale text data, transforming old and complex texts into a more digestible format. This preparation is crucial for further digital analysis and manipulation. With Amanuensis, you can make your text data more accessible and easier to work with.
 
 ## Features
 
