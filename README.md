@@ -32,3 +32,7 @@ To use Amanuensis, simply clone this repository, navigate to the directory, and 
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a pull request.
+
+## License
+
+This project is licensed under the terms of the MIT license. For more details, see the [LICENSE](LICENSE.md) file.
