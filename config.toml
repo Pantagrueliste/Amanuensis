@@ -1,0 +1,19 @@
+[directories]
+working_directory = "/Users/clem/Desktop/EEBOTest3/eng"
+
+[logging]
+level = "verbose"  # or "minimal" or "statistic"
+
+[settings]
+context_size = 20
+
+[unicode_replacements]
+"\u00B6" = ""  # empty "" --> deletion
+"\u261E" = ""
+"\u2740" = ""
+"\u2767" = ""
+"Ʋ" = "U"
+"&c." = "etc."
+"ꝑ" = "per"
+"ꝭ" = "s"
+"ȝ" = "g"
