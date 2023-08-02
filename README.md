@@ -2,6 +2,8 @@
 
 Amanuensis is a fairly robust Python application, tailored specifically for researchers and users in the Digital Humanities. It is designed to accelerate normalization tasks for large-scale text data, transforming old and complex texts into a more digestible format. This preparation is crucial for further digital analysis and manipulation. With Amanuensis, you can make your text data more accessible and easier to work with.
 
+<img width="1792" alt="Screenshot 2023-07-31 at 18 59 01" src="https://github.com/Pantagrueliste/Amanuensis/assets/9995536/33ccccc5-4287-4874-891a-e57035e5418e">
+
 ## Features
 
 - **Unicode Replacement**: Handles a customizable dictionary of unicode characters and transforms them into understandable text representations.
