@@ -1,14 +1,14 @@
 [directories]
-working_directory = "/Users/clem/Desktop/EEBOTest3/eng"
+working_directory = "users/name/directory" # working directory path
 
-[logging]
-level = "verbose"  # or "minimal" or "statistic"
+[logging] # don't change, still shaky
+level = "minimal"  # or "verbose" or "statistic"
 
 [settings]
 context_size = 20
 
 [unicode_replacements]
-"\u00B6" = ""  # empty "" --> deletion
+"\u00B6" = ""  # empty "" is a deletion
 "\u261E" = ""
 "\u2740" = ""
 "\u2767" = ""
