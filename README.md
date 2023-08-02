@@ -1,6 +1,6 @@
 # Amanuensis: A human-supervised normalization tool for early modern abbreviated texts
 
-Amanuensis is a robust Python application, tailored specifically for researchers and users in the Digital Humanities. It is designed to accelerate normalization tasks for large-scale text data, transforming old and complex texts into a more digestible format. This preparation is crucial for further digital analysis and manipulation. With Amanuensis, you can make your text data more accessible and easier to work with.
+Amanuensis is a fairly robust Python application, tailored specifically for researchers and users in the Digital Humanities. It is designed to accelerate normalization tasks for large-scale text data, transforming old and complex texts into a more digestible format. This preparation is crucial for further digital analysis and manipulation. With Amanuensis, you can make your text data more accessible and easier to work with.
 
 ## Features
 
@@ -14,8 +14,8 @@ Amanuensis is a robust Python application, tailored specifically for researchers
 ## Upcoming Features
 
 - **Customization**: Enables users to adapt Amanuensis to their specific needs with a TOML config file.
-- **Robustness**: Increased robsntness with Logging features and improved error handling.
-- **Documentation**: Basic documentation in English, French, Spanish, and Italian.
+- **Robustness**: Improved error handling, simplification.
+- **Documentation**: Basic documentation.
 - **Gamification**: Improved UX for a better user engagement.
 
 ## Usage
