@@ -1,3 +1,8 @@
+Amanuensis, *noun*. /əˌmænjuˈensɪs/. 
+1. a person who writes down your words when you cannot write.
+2. an assistant, especially one who writes or types for somebody.
+Early 17th cent.: Latin, from (servus) a manu ‘(slave) at hand(writing), secretary’ + -ensis ‘belonging to’.
+
 # Amanuensis: A human-supervised normalization tool for early modern abbreviated texts
 
 Amanuensis is a fairly robust Python application, tailored specifically for researchers and users in the Digital Humanities. It is designed to accelerate normalization tasks for large-scale text data, transforming old and complex texts into a more digestible format. This preparation is crucial for further digital analysis and manipulation. With Amanuensis, you can make your text data more accessible and easier to work with.
