@@ -4,7 +4,7 @@ Amanuensis is a fairly robust Python application, tailored specifically for rese
 
 ## Features
 
-- **Unicode Replacement**: Handles various unicode characters and transforms them into understandable text representations.
+- **Unicode Replacement**: Handles a customizable dictionary of unicode characters and transforms them into understandable text representations.
 - **Dynamic Word Normalization**: Changes words that contain special characters into valid English words.
 - **Interactive Correction**: If a word can't be automatically normalized, the application prompts the user for input.
 - **Progress Stats**: Offers real-time statistics like elapsed time, estimated remaining time, and percentage of files processed to keep you informed about the normalization process.
@@ -13,8 +13,8 @@ Amanuensis is a fairly robust Python application, tailored specifically for rese
 
 ## Upcoming Features
 
-- **Increased Customization**: Enabling users to adapt Amanuensis to their specific needs with a TOML config file.
-- **Robustness**: Improved error handling, simplification.
+- **Increased Customization**: More options in TOML config file.
+- **Robustness**: Improved error handling, code simplification.
 - **Documentation**: Basic documentation.
 - **Gamification**: Improved UX for a better user engagement.
 
