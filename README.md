@@ -13,7 +13,7 @@ Amanuensis is a fairly robust Python application, tailored specifically for rese
 
 ## Upcoming Features
 
-- **Customization**: Enables users to adapt Amanuensis to their specific needs with a TOML config file.
+- **Increased Customization**: Enabling users to adapt Amanuensis to their specific needs with a TOML config file.
 - **Robustness**: Improved error handling, simplification.
 - **Documentation**: Basic documentation.
 - **Gamification**: Improved UX for a better user engagement.
@@ -28,6 +28,8 @@ To use Amanuensis, simply clone this repository, navigate to the directory, and 
 - NLTK
 - Levenshtein
 - colorama
+- tqdm
+- art
 
 ## Contributing
 
