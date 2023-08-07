@@ -20,9 +20,9 @@ Amanuensis is a fairly robust Python application, tailored specifically for rese
 
 ## Upcoming Features
 
+- **Improved Robustness**: Improved error handling, code simplification.
 - **Multilingual Support**: Addition of French, Italian, and Spanish.
 - **Increased Customization**: More options in TOML config file.
-- **Robustness**: Improved error handling, code simplification.
 - **Documentation**: Basic documentation in English.
 - **Gamification**: Improved UX for a better user engagement.
 
