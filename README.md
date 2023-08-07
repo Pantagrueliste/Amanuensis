@@ -28,6 +28,8 @@ Amanuensis is a fairly robust Python application, tailored specifically for rese
 - **Documentation**: Basic documentation in English.
 - **Gamification**: Improved UX for a better user engagement.
 
+Feel free to suggest new features in the Issues section.
+
 ## Usage
 
 To use Amanuensis, simply clone this repository, navigate to the directory, and run `python amanuensis.py`. When prompted, enter the directory where your text files are located. The script will then normalize each file, line by line, applying the normalization function to each word. 
