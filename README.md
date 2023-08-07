@@ -23,7 +23,7 @@ Amanuensis is a fairly robust Python application, tailored specifically for rese
 - **Improved Robustness**: Improved error handling, code simplification.
 - **Multilingual Support**: Addition of French, Italian, and Spanish.
 - **Increased Customization**: More options in TOML config file.
-- **OpenAI API**: Additional step in the Dynamic Word Normalization leveraging Large Language Models such as GPT-4.
+- **OpenAI API**: Optional step in the Dynamic Word Normalization leveraging Large Language Models such as GPT-4.
 - **Documentation**: Basic documentation in English.
 - **Gamification**: Improved UX for a better user engagement.
 
