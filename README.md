@@ -13,6 +13,7 @@ Amanuensis is a fairly robust Python application, tailored specifically for rese
 
 - **Unicode Replacement**: Handles a customizable dictionary of unicode characters and transforms them into understandable text representations.
 - **Dynamic Word Normalization**: Changes words that contain special characters into valid English words.
+- **Increased Performance**: Async IO and multithreading.
 - **Interactive Correction**: If a word can't be automatically normalized, the application prompts the user for input.
 - **Progress Stats**: Offers real-time statistics like elapsed time, estimated remaining time, and percentage of files processed to keep you informed about the normalization process.
 - **Batch Processing**: Processes all text files in a given directory, saving the output into a "FinalText" directory.
