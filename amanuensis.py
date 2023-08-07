@@ -1,25 +1,36 @@
 """
-This module normalizes early modern texts, by systematically replacing specific characters
-and by offering ad hoc solutions using a wordnet and a user-defined dictionaries.
+This module normalizes early modern texts, by systematically replacing
+specific characters and by offering ad hoc solutions using a wordnet and
+a user-defined dictionaries.
 """
 
 import os
-import json
 import sys
 import csv
+import json
 import string
 import datetime
-import toml
 import logging
+import toml
+from toml.decoder import TomlDecodeError
 
 import nltk
+from art import text2art
 from nltk.corpus import wordnet
 from nltk.stem import WordNetLemmatizer
-import Levenshtein
-from art import text2art
 from colorama import init, Fore, Back, Style
-from tqdm import tqdm
-from toml.decoder import TomlDecodeError
+from progressbar import ProgressBar
+from prompt_toolkit import prompt
+from prompt_toolkit.formatted_text import HTML
+from multiprocessing import Pool
+
+import Levenshtein
+
+
+json_solutions_counter = 0
+
+# Progressbar global definition
+progress = ProgressBar()
 
 # Title
 print(text2art("Amanuensis"))
@@ -33,7 +44,38 @@ nltk.download('wordnet')
 # Create a WordNetLemmatizer object, used for word normalization
 lemmatizer = WordNetLemmatizer()
 
-# Load user solutions from a JSON file. These are preferred solutions for word normalization.
+def read_config(file_path):
+    """Read the configuration file"""
+    config = toml.load(file_path)
+    working_directory = config['directories']['working_directory']
+    logging_level = config['logging']['level']
+    context_size = config['settings']['context_size']
+    unicode_replacements = config['unicode_replacements']
+    return working_directory, logging_level, context_size, unicode_replacements
+toml_file_path = 'config.toml'
+
+working_directory, logging_level, context_size, unicode_replacements = read_config(toml_file_path)
+print(working_directory, logging_level, context_size, unicode_replacements)
+
+def apply_unicode_replacements(file_path, unicode_replacements):
+    """Applies Unicode replacements on the given file."""
+    with open(file_path, 'r', encoding='utf-8') as file:
+        text = file.read()
+
+    for original, replacement in unicode_replacements.items():
+        text = text.replace(original, replacement)
+
+    with open(file_path, 'w', encoding='utf-8') as file:
+        file.write(text)
+
+def process_files(files, unicode_replacements):
+    """multiprocessing"""
+    with Pool() as pool:
+        pool.starmap(apply_unicode_replacements, zip(files, [unicode_replacements]*len(files)))
+
+
+# Load user solutions from a JSON file.
+# These are preferred solutions for word normalization.
 try:
     with open('user_solutions.json', 'r', encoding='utf-8') as file:
         user_solutions = json.load(file)
@@ -41,16 +83,15 @@ except FileNotFoundError:
     user_solutions = {}
 
 # Initialize logging
-logging.basicConfig(filename='normalization.log', level=logging.INFO,
-                    format='%(asctime)s %(levelname)s: %(message)s',
-                    datefmt='%m/%d/%Y %I:%M:%S %p')
+logging.basicConfig(
+    filename='normalization.log',
+    level=logging.INFO,
+    format='%(asctime)s %(levelname)s: %(message)s',
+    datefmt='%m/%d/%Y %I:%M:%S %p'
+)
 
-# This function saves a difficult passage to a CSV file. It appends a row containing the file path,
-# line number, and context of the difficult passage.
-def log_difficult_passage(file_path,
-    line_number,
-    context,
-    csv_file='difficult_passages.csv'):
+
+def log_difficult_passage(file_path, line_number, context, csv_file='difficult_passages.csv'):
     """
     This function saves a difficult passage to a CSV file.
     It appends a row containing the file path, line number, and context of the difficult passage.
@@ -59,15 +100,24 @@ def log_difficult_passage(file_path,
         writer = csv.writer(csv_file_obj)
         writer.writerow([file_path, line_number, context])
 
+
 def check_user_solutions(word_wo_punctuation, user_solutions):
+    """
+    Check if the solution for the word without punctuation exists in user solutions.
+    """
     if word_wo_punctuation in user_solutions and word_wo_punctuation not in ["the$"]:
         return user_solutions[word_wo_punctuation]
     return None
 
+
 def check_unicode_replacement(word_wo_punctuation, unicode_replacements):
+    """
+    Check if the solution for the word without punctuation exists in unicode replacements.
+    """
     if word_wo_punctuation in unicode_replacements:
         return unicode_replacements[word_wo_punctuation]
     return None
+
 
 def get_synsets_replacement(word_wo_punctuation, trailing_punctuation, lemmatizer):
     """
@@ -93,6 +143,7 @@ def get_synsets_replacement(word_wo_punctuation, trailing_punctuation, lemmatize
         return modified_word_m + trailing_punctuation
     return None
 
+
 def remove_punctuation(word):
     """
     This function removes punctuation from a given word.
@@ -101,288 +152,205 @@ def remove_punctuation(word):
     trailing_punctuation = word[len(word_wo_punctuation):]
     return word_wo_punctuation, trailing_punctuation
 
-def normalize_word(word,
-                 file_name,
-                 line_number,
-                 line_words,
-                 word_index,
-                 replacement_log,
-                 context_size):
-    """
-    This function normalizes a given word and logs the replacements made.
-    """
-    global json_solutions_counter
-    word_wo_punctuation, trailing_punctuation = remove_punctuation(word)
+# added in the normalize_word simplification camplaign.
 
+def remove_punctuation_from_word(word):
+    word_wo_punctuation, trailing_punctuation = remove_punctuation(word)
+    return word_wo_punctuation, trailing_punctuation
+
+
+def check_and_log_user_solution(word_wo_punctuation, user_solutions, file_name, line_number, word, trailing_punctuation):
     user_solution = check_user_solutions(word_wo_punctuation, user_solutions)
     if user_solution is not None:
         logging.info(f"{Fore.GREEN}{file_name}, line {line_number}: '{word}' replaced with '{user_solution}' using a previous user solution")
+        global json_solutions_counter
         json_solutions_counter += 1
         return user_solution + trailing_punctuation
+    return None
 
-    unicode_replacement = check_unicode_replacement(word_wo_punctuation, unicode_replacements)
-    if unicode_replacement is not None:
-        logging.info(f"In the file '{file_name}' at line {line_number}, "
-              f"found a solution in the user_solutions file for the word '{word}'.")
-        json_solutions_counter += 1
-        return unicode_replacement + trailing_punctuation
 
-    if '$' not in word_wo_punctuation:
-        return word_wo_punctuation + trailing_punctuation
-
+def handle_synsets_replacement(word, word_wo_punctuation, trailing_punctuation, lemmatizer, file_name, line_number, user_solutions):
     synsets_replacement = get_synsets_replacement(word_wo_punctuation, trailing_punctuation, lemmatizer)
     if synsets_replacement is not None:
         if word_wo_punctuation not in user_solutions:
             message1 = f"The original word was '{Fore.RED + word + Style.RESET_ALL}'"
             message2 = f"in file '{file_name}' at line {line_number}. After replacing $, '{Fore.GREEN + synsets_replacement + Style.RESET_ALL}'"
             message3 = "is in the dictionary, saving as such."
-            logging.info(f"{Fore.LIGHTBLACK_EX}{message1}{Style.RESET_ALL}"
-                         f"{Fore.LIGHTBLACK_EX}{message2}{Style.RESET_ALL}"
-                         f"{Fore.LIGHTBLACK_EX}{message3}{Style.RESET_ALL}")
+            logging.info(f"{Fore.LIGHTBLACK_EX}{message1}{Style.RESET_ALL}{Fore.LIGHTBLACK_EX}{message2}{Style.RESET_ALL}{Fore.LIGHTBLACK_EX}{message3}{Style.RESET_ALL}")
             return synsets_replacement
         else:
             return user_solutions[word_wo_punctuation] + trailing_punctuation
-
-    else:
-        message1 = (
-            f"Could not find a match for "
-            f"'{Fore.RED + word_wo_punctuation + Style.RESET_ALL}'"
-        )
-        message2 = (
-            f"in the dictionary after trying both replacements. "
-            f"Found in file "
-            f"'{file_name}' at line {line_number}."
-        )
-
-        print(Fore.LIGHTBLACK_EX + message1 + Style.RESET_ALL +
-              Fore.LIGHTBLACK_EX + message2 + Style.RESET_ALL)
-        context_words = (line_words[max(0, word_index - 4):word_index] +
-                         ['<...>'] +
-                         line_words[word_index+1:min(len(line_words), word_index + 5)])
-        print("Context: ", ' '.join(context_words))
-
-        while True:
-            correct_word_prompt = (
-                Fore.LIGHTBLACK_EX
-                + f"Please enter 'n' or 'm' to replace $, or enter "
-                + f"the full replacement for "
-                + f"'{Fore.RED + word_wo_punctuation + Style.RESET_ALL}', "
-                + "or type 'quit' to exit the script, or '`' if you don't know: "
-            )
-            correct_word = input(correct_word_prompt)
-
-            if correct_word.lower() == 'quit':
-                os.system('cls' if os.name == 'nt' else 'clear')
-                print("Exiting the script...")
-                sys.exit()
-
-            elif correct_word == '`':
-                start_index = max(0, word_index - context_size)
-                end_index = min(len(line_words), word_index + context_size)
-                context_before = line_words[start_index:word_index]
-                context_after = line_words[word_index + 1:end_index]
-                context_words = context_before + ['<...>'] + context_after
-                log_difficult_passage(file_name, line_number, ' '.join(context_words))
-                print("Difficult passage logged. Please continue with the next word.")
-
-                user_solutions[word_wo_punctuation] = word_wo_punctuation
-                with open('user_solutions.json', 'w', encoding='utf-8') as json_file:
-                    json.dump(user_solutions, json_file)
-
-                return word
-
-            elif correct_word.lower() == 'n':
-                correct_word = word_wo_punctuation.replace('$', 'n')
-
-            elif correct_word.lower() == 'm':
-                correct_word = word_wo_punctuation.replace('$', 'm')
-
-            lev_distance = Levenshtein.distance(word_wo_punctuation.replace('$', ''), correct_word)
-
-            if lev_distance > word_wo_punctuation.count('$') + 1:
-                print(Fore.YELLOW +
-                      "Your input seems significantly different from the original word. "
-                      "Please confirm if this is correct.")
-                confirmation = input("Type 'yes' to confirm, 'no' to input again: ").lower()
-                while confirmation not in ['yes', 'no']:
-                    confirmation = input(Fore.RED +
-                                         "Invalid response. Type 'yes' to confirm, 'no' to input again: ").lower()
-                if confirmation == 'no':
-                    continue
-            break
-
-        json_solutions_counter += 1
-        logging.info(f"In the file '{file_name}' at line {line_number}, "
-              f"found a solution in the user_solutions file for the word '{word}'.")
-        if word_wo_punctuation != "the$":
-            user_solutions[word_wo_punctuation] = correct_word
-        with open('user_solutions.json', 'w', encoding='utf-8') as file:
-            json.dump(user_solutions, file)
-
-        return correct_word + trailing_punctuation
-
-    return word
+    return None
 
 
-def process_file(file_path,
-                final_dir,
-                replacement_log,
-                context_size):
-    """Processes a file, normalizes its words and saves the result in a new file."""
-    replacement_count = 0
+def handle_user_input(word_wo_punctuation, word_index, context_size, line_words, file_name, line_number):
+    os.system('cls' if os.name == 'nt' else 'clear')
+    message1 = f"Could not find a match for '{Fore.RED + word_wo_punctuation + Style.RESET_ALL}'"
+    message2 = f"in the dictionary after trying both replacements. Found in file '{file_name}' at line {line_number}."
+    print(f"{Fore.LIGHTBLACK_EX}{message1}{Style.RESET_ALL}{Fore.LIGHTBLACK_EX}{message2}{Style.RESET_ALL}")
+    context_words = (line_words[max(0, word_index - 4):word_index] +
+                     ['<...>'] +
+                     line_words[word_index + 1:min(len(line_words), word_index + 5)])
+    print("Context: ", ' '.join(context_words))
 
-    with open(file_path, 'r', encoding='utf-8') as input_file:
-        lines = input_file.read().split('\n')
+    while True:
+        correct_word_prompt = HTML("<ansired>Please enter 'n' or 'm' to replace $, or enter the full replacement for '{}' or type 'quit' to exit the script, or '`' if you don't know:</ansired>\n".format(word_wo_punctuation))
+        correct_word = prompt(correct_word_prompt)
 
-    def has_special_char(word):
-        special_chars = "\u00B6\u261E\u2740\u2767Ʋ&c."
-        return any(char in word for char in special_chars)
+        if correct_word.lower() == 'quit':
+            os.system('cls' if os.name == 'nt' else 'clear')
+            print("Exiting the script...")
+            sys.exit()
 
-    for line_number, line in enumerate(lines, start=1):
-        words_in_line = line.split()
-        normalized_words = []
-        for i, word in enumerate(words_in_line):
-            norm_word = normalize_word(word, file_path, line_number,
-                                    words_in_line, i, replacement_log, context_size)
-            normalized_words.append(norm_word)
-        replacement_count += sum(1 for word in words_in_line if has_special_char(word))
-        lines[line_number-1] = ' '.join(normalized_words)
+        elif correct_word == '`':
+            start_index = max(0, word_index - context_size)
+            end_index = min(len(line_words), word_index + context_size)
+            context_before = line_words[start_index:word_index]
+            context_after = line_words[word_index + 1:end_index]
+            context_words = context_before + ['<...>'] + context_after
+            log_difficult_passage(file_name, line_number, ' '.join(context_words))
+            print("Difficult passage logged. Please continue with the next word.")
+            return word_wo_punctuation
 
-    new_file_path = os.path.join(final_dir, os.path.relpath(file_path))
-    os.makedirs(os.path.dirname(new_file_path), exist_ok=True)
+        elif correct_word.lower() == 'n':
+            correct_word = word_wo_punctuation.replace('$', 'n')
+        elif correct_word.lower() == 'm':
+            correct_word = word_wo_punctuation.replace('$', 'm')
 
-    with open(new_file_path, 'w', encoding='utf-8') as file:
-        file.write('\n'.join(lines))
+        lev_distance = Levenshtein.distance(word_wo_punctuation.replace('$', ''), correct_word)
+        if lev_distance > word_wo_punctuation.count('$') + 1:
+            print(Fore.YELLOW + "Your input seems significantly different from the original word. Please confirm if this is correct.")
+            confirmation = input("Type 'yes' to confirm, 'no' to input again: ").lower()
+            while confirmation not in ['yes', 'no']:
+                confirmation = input(Fore.RED + "Invalid response. Type 'yes' to confirm, 'no' to input again: ").lower()
+            if confirmation == 'no':
+                continue
 
-    logging.info(f"A total of {replacement_count} replacements were made in the file '{file_path}'")
-    return replacement_count, 1
+        print()  # Adds a blank line for spacing
 
-class ProgressBar:
-    """ class that handles progress bar display."""
-    def __init__(self, total, description="Processing"):
-        self.total = total
-        self.description = description
-        self.bar = tqdm(total=self.total, desc=self.description)
+        break
 
-    def update(self, n=1):
-        self.bar.update(n)
+    return correct_word
 
-    def close(self):
-        self.bar.close()
-
-def load_config():
-    """ function to get the logging level from the config file."""
-    try:
-        config_values = toml.load("config.toml")
-    except FileNotFoundError:
-        logging.error("Config file not found. Using default settings.")
-        config_values = {"directories": {"working_directory": "./"},
-                "logging": {"level": "verbose"},
-                "settings": {"context_size": 5}
-                }
-    except TomlDecodeError as e:
-        logging.error(f"Error while parsing config file: {str(e)}. Using default settings.")
-        config_values = {"directories": {"working_directory": "./"},
-                "logging": {"level": "verbose"},
-                "settings": {"context_size": 5}
-                }
-    return config_values
-
-def configure_logging(logging_level):
-    """ function that sets up logging based on the logging level."""
-    numeric_level = {"minimal": logging.WARNING, "verbose": logging.INFO,
-                     "statistic": logging.ERROR}.get(logging_level.lower(), logging.INFO)
-    logging.basicConfig(level=numeric_level,
-                        format='%(asctime)s %(levelname)s: %(message)s',
-                        datefmt='%m/%d/%Y %I:%M:%S %p')
-
-def main(target_directory, text_context_size, unicode_replacements):
-    """Main function to normalize all text files in a directory."""
-    print("\nStarting normalization...\n")
-
-    # Calculate total_files in a more readable way
-    total_files = 0
-    for _, _, files in os.walk(target_directory):
-        for file in files:
-            if file.endswith('.txt'):
-                total_files += 1
-
-    # Initialize progress bar
-    bar = ProgressBar(total_files, "Files Processed")
-
-    final_dir = os.path.join(target_directory, "FinalText")
-    file_counter = 0
-    total_replacements = 0
-    total_files = 0
+def log_and_save_user_solution(word_wo_punctuation, correct_word, trailing_punctuation, file_name, line_number, word):
     global json_solutions_counter
-    json_solutions_counter = 0
-    total_processed_files = 0
-    start_time = datetime.datetime.now()
+    json_solutions_counter += 1
 
-    with open('replacement_log.txt', 'w', encoding='utf-8') as replacement_log:
-        for subdir, dirs, files in os.walk(target_directory):
-            total_files += len(
-                [f for f in files if f.endswith('.txt')]
-            )  # count only txt files
-            for file in files:
-                if file.endswith('.txt'):
-                    replacements, processed_files = process_file(
-                        os.path.join(subdir, file), final_dir, replacement_log, text_context_size
-                    )
-                    total_processed_files += processed_files
-                    total_replacements += replacements
-                    percent_complete = (
-                        total_processed_files / total_files
-                    ) * 100
-                    elapsed_time = datetime.datetime.now() - start_time
-                    proportion = (
-                        json_solutions_counter / total_replacements
-                    ) * 100 if total_replacements != 0 else 0
-                    estimated_remaining = (
-                        (
-                            (elapsed_time / total_processed_files) *
-                            (total_files - total_processed_files)
-                        ).total_seconds()
-                    )
-                    logging.info(
-                        f"\nStats after file {total_processed_files}:"
-                        f"\nNumber of files normalized: {total_processed_files}"
-                        f"\nTotal replacements made: {total_replacements}"
-                        f"\nElapsed time: {elapsed_time}"
-                        f"\nEstimated remaining time: "
-                        f"{datetime.timedelta(seconds=estimated_remaining)}"
-                    )
-                    logging.info(
-                        f"Out of the total replacements, {json_solutions_counter}"
-                        f" solutions were found in the user_solutions file,"
-                        f" which is {proportion:.2f}% of the total replacements."
-                    )
-                    logging.info(
-                        f"Completed {percent_complete:.2f}% of files."
-                    )
-                    bar.update()
+    logging.info(f"In the file '{file_name}' at line {line_number}, found a solution in the user_solutions file for the word '{word}'.")
 
-        elapsed_time = datetime.datetime.now() - start_time
-        logging.info(
-            f"\nNormalization completed. Total files normalized:"
-            f" {total_processed_files}. Total replacements made:"
-            f" {total_replacements}. Total time taken: {elapsed_time}.\n"
-        )
-        # Update the progress bar within the loop
-        for subdir, dirs, files in os.walk(target_directory):
-            for file in files:
-                if file.endswith('.txt'):
-                    # Process the file
-                    bar.update()
-    # Close the progress bar when done
-    bar.close()
+    if word_wo_punctuation != "the$":
+        user_solutions[word_wo_punctuation] = correct_word
+
+    with open('user_solutions.json', 'w', encoding='utf-8') as file:
+        json.dump(user_solutions, file)
+
+    return correct_word + trailing_punctuation
+
+
+def normalize_word(word, file_name, line_number, line_words, word_index, unicode_replacements, replacement_log, context_size):
+    word_wo_punctuation, trailing_punctuation = remove_punctuation_from_word(word)
+
+    user_solution = check_and_log_user_solution(word_wo_punctuation, user_solutions, file_name, line_number, word, trailing_punctuation)
+    if user_solution is not None:
+        return user_solution
+
+    if '$' not in word_wo_punctuation:
+        return word_wo_punctuation + trailing_punctuation
+
+    synsets_replacement = handle_synsets_replacement(word, word_wo_punctuation, trailing_punctuation, lemmatizer, file_name, line_number, user_solutions)
+    if synsets_replacement is not None:
+        return synsets_replacement
+
+    correct_word = handle_user_input(word_wo_punctuation, word_index, context_size, line_words, file_name, line_number)
+    return log_and_save_user_solution(word_wo_punctuation, correct_word, trailing_punctuation, file_name, line_number, word)
+
+def normalize_line(line, file_name, line_number, unicode_replacements, replacement_log, context_size):
+    """
+    This function normalizes a given line and logs the replacements made.
+    """
+    global json_solutions_counter
+    line_words = line.split()
+    for word_index, word in enumerate(line_words):
+        if "$" in word:
+            word = normalize_word(word, file_name, line_number, line_words, word_index, unicode_replacements, replacement_log, context_size)
+            line_words[word_index] = word
+
+    return ' '.join(line_words)
+
+
+def normalize_file(file_path, unicode_replacements, replacement_log, context_size):
+    """
+    This function normalizes a given file and logs the replacements made.
+    """
+    global json_solutions_counter
+    file_name = os.path.basename(file_path)
+    with open(file_path, 'r', encoding='utf-8') as file:
+        lines = file.readlines()
+
+    for line_number, line in enumerate(lines):
+        lines[line_number] = normalize_line(line, file_name, line_number, unicode_replacements, replacement_log, context_size)
+
+    with open(file_path, 'w', encoding='utf-8') as file:
+        file.writelines(lines)
+
+    return json_solutions_counter
+
+def main():
+    # Load config file
+    try:
+        with open('config.toml', 'r', encoding='utf-8') as file:
+            config = toml.loads(file.read())
+    except TomlDecodeError as error:
+        print(f"Error while parsing config file: {error}")
+        sys.exit()
+
+    # Get config parameters
+    working_directory = config.get('directories', {}).get('working_directory', [])
+    unicode_replacements = config.get('unicode_replacements', {})
+    context_size = config.get('settings', {}).get('context_size', 5)
+    replacement_log = config.get('settings', {}).get('replacement_log', 'replacement_log.csv')
+
+    # Print information about Unicode replacements
+    if unicode_replacements:
+        print("Running Unicode replacements...")
+        print(f"Characters to replace: {list(unicode_replacements.keys())}")
+
+    # Count files for Unicode replacements and create progress bar
+    file_count_replacements = sum(len(files) for _, _, files in os.walk(working_directory) if any(fname.endswith('.txt') for fname in files))
+    pbar_replacements = ProgressBar(maxval=file_count_replacements)
+    pbar_replacements.start()
+
+    # Perform Unicode replacements on all files first
+    processed_files = 0
+    for dirpath, dirnames, filenames in os.walk(working_directory):
+        for filename in filenames:
+            if filename.endswith(".txt"):  # process only .txt files
+                file_path = os.path.join(dirpath, filename)
+                if unicode_replacements:
+                    apply_unicode_replacements(file_path, unicode_replacements)  # Apply Unicode replacements
+                processed_files += 1
+                pbar_replacements.update(processed_files)  # Update progress bar
+
+    pbar_replacements.finish()  # Finish progress bar for replacements
+
+    # Count files for normalization and create progress bar
+    file_count_normalization = sum(len(files) for _, _, files in os.walk(working_directory) if any(fname.endswith('.txt') for fname in files))
+    pbar_normalization = ProgressBar(maxval=file_count_normalization)
+    pbar_normalization.start()
+
+    # Normalize files after Unicode replacement step is finished
+    processed_files = 0
+    for dirpath, dirnames, filenames in os.walk(working_directory):
+        for filename in filenames:
+            if filename.endswith(".txt"):  # process only .txt files
+                file_path = os.path.join(dirpath, filename)
+                normalize_file(file_path, unicode_replacements, replacement_log, context_size)
+                processed_files += 1
+                pbar_normalization.update(processed_files)  # Update progress bar
+
+    pbar_normalization.finish()  # Finish progress bar for normalization
+
+    print(f"{Fore.GREEN}Normalization complete. Please check '{replacement_log}' for a log of the replacements.")
 
 if __name__ == "__main__":
-    config = load_config()
-    directory = config["directories"]["working_directory"]
-    log_level = config["logging"]["level"]
-    context_size = config["settings"]["context_size"]
-    unicode_replacements = config.get('unicode_replacements', {})
-
-    configure_logging(log_level)
-    main(directory, context_size, unicode_replacements)
+    main()
