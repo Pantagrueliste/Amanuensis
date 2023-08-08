@@ -7,6 +7,7 @@ level = "verbose"  # select between "minimal", "verbose", or "statistic"
 
 [settings]
 context_size = 20
+debug_mode = true
 
 [unicode_replacements]
 replacements_on = false # or false

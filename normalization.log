@@ -63,3 +63,105 @@ Normalization completed. Total files normalized: 0. Total replacements made: 0. 
 08/08/2023 06:32:58 PM INFO: [90mThe original word was '[31mbelo$ging[0m'[0m[90min file 'A69343.P5.txt' at line 0. After replacing $, '[32mbelonging[0m'[0m[90mis in the dictionary, saving as such.[0m
 08/08/2023 06:32:58 PM INFO: [90mThe original word was '[31mre$der[0m'[0m[90min file 'A69343.P5.txt' at line 0. After replacing $, '[32mrender[0m'[0m[90mis in the dictionary, saving as such.[0m
 08/08/2023 06:32:58 PM INFO: [90mThe original word was '[31mco$mon[0m'[0m[90min file 'A69343.P5.txt' at line 0. After replacing $, '[32mcommon[0m'[0m[90mis in the dictionary, saving as such.[0m
+08/08/2023 06:47:41 PM INFO: [32mA03456.P5.txt, line 0: 'apu$,or' replaced with 'apu$,or' using a previous user solution
+08/08/2023 06:47:41 PM INFO: [32mA69343.P5.txt, line 0: 'co$prehendeth' replaced with 'comprehendeth' using a previous user solution
+08/08/2023 06:47:42 PM INFO: [90mThe original word was '[31mco$cluded[0m'[0m[90min file 'A69343.P5.txt' at line 0. After replacing $, '[32mconcluded[0m'[0m[90mis in the dictionary, saving as such.[0m
+08/08/2023 06:47:42 PM INFO: [90mThe original word was '[31mcou$sels,[0m'[0m[90min file 'A69343.P5.txt' at line 0. After replacing $, '[32mcounsels,[0m'[0m[90mis in the dictionary, saving as such.[0m
+08/08/2023 06:47:42 PM INFO: [90mThe original word was '[31mbelo$ging[0m'[0m[90min file 'A69343.P5.txt' at line 0. After replacing $, '[32mbelonging[0m'[0m[90mis in the dictionary, saving as such.[0m
+08/08/2023 06:47:42 PM INFO: [90mThe original word was '[31mre$der[0m'[0m[90min file 'A69343.P5.txt' at line 0. After replacing $, '[32mrender[0m'[0m[90mis in the dictionary, saving as such.[0m
+08/08/2023 06:47:42 PM INFO: [90mThe original word was '[31mco$mon[0m'[0m[90min file 'A69343.P5.txt' at line 0. After replacing $, '[32mcommon[0m'[0m[90mis in the dictionary, saving as such.[0m
+08/08/2023 07:15:45 PM INFO: [32mA03456.P5.txt, line 1: 'apu$,or' replaced with 'apu$,or' using a previous user solution
+08/08/2023 07:15:46 PM INFO: [32mA69343.P5.txt, line 1: 'co$prehendeth' replaced with 'comprehendeth' using a previous user solution
+08/08/2023 07:15:47 PM INFO: [90mThe original word was '[31mco$cluded[0m'[0m[90min file 'A69343.P5.txt' at line 1. After replacing $, '[32mconcluded[0m'[0m[90mis in the dictionary, saving as such.[0m
+08/08/2023 07:15:47 PM INFO: [90mThe original word was '[31mcou$sels,[0m'[0m[90min file 'A69343.P5.txt' at line 1. After replacing $, '[32mcounsels,[0m'[0m[90mis in the dictionary, saving as such.[0m
+08/08/2023 07:15:47 PM INFO: [90mThe original word was '[31mbelo$ging[0m'[0m[90min file 'A69343.P5.txt' at line 1. After replacing $, '[32mbelonging[0m'[0m[90mis in the dictionary, saving as such.[0m
+08/08/2023 07:15:47 PM INFO: [90mThe original word was '[31mre$der[0m'[0m[90min file 'A69343.P5.txt' at line 1. After replacing $, '[32mrender[0m'[0m[90mis in the dictionary, saving as such.[0m
+08/08/2023 07:15:47 PM INFO: [90mThe original word was '[31mco$mon[0m'[0m[90min file 'A69343.P5.txt' at line 1. After replacing $, '[32mcommon[0m'[0m[90mis in the dictionary, saving as such.[0m
+08/08/2023 07:17:03 PM INFO: [32mA03456.P5.txt, line 1: 'apu$,or' replaced with 'apu$,or' using a previous user solution
+08/08/2023 07:17:04 PM INFO: [32mA69343.P5.txt, line 1: 'co$prehendeth' replaced with 'comprehendeth' using a previous user solution
+08/08/2023 07:17:05 PM INFO: [90mThe original word was '[31mco$cluded[0m'[0m[90min file 'A69343.P5.txt' at line 1. After replacing $, '[32mconcluded[0m'[0m[90mis in the dictionary, saving as such.[0m
+08/08/2023 07:17:05 PM INFO: [90mThe original word was '[31mcou$sels,[0m'[0m[90min file 'A69343.P5.txt' at line 1. After replacing $, '[32mcounsels,[0m'[0m[90mis in the dictionary, saving as such.[0m
+08/08/2023 07:17:05 PM INFO: [90mThe original word was '[31mbelo$ging[0m'[0m[90min file 'A69343.P5.txt' at line 1. After replacing $, '[32mbelonging[0m'[0m[90mis in the dictionary, saving as such.[0m
+08/08/2023 07:17:05 PM INFO: [90mThe original word was '[31mre$der[0m'[0m[90min file 'A69343.P5.txt' at line 1. After replacing $, '[32mrender[0m'[0m[90mis in the dictionary, saving as such.[0m
+08/08/2023 07:17:05 PM INFO: [90mThe original word was '[31mco$mon[0m'[0m[90min file 'A69343.P5.txt' at line 1. After replacing $, '[32mcommon[0m'[0m[90mis in the dictionary, saving as such.[0m
+08/08/2023 07:17:09 PM INFO: In the file 'A69343.P5.txt' at line 1, found a solution in the user_solutions file for the word 'co$maundement'.
+08/08/2023 07:17:10 PM INFO: In the file 'A69343.P5.txt' at line 1, found a solution in the user_solutions file for the word 'cou$sellours'.
+08/08/2023 07:17:11 PM INFO: In the file 'A69343.P5.txt' at line 1, found a solution in the user_solutions file for the word 'whe$the'.
+08/08/2023 07:17:11 PM INFO: [90mThe original word was '[31mco$fort[0m'[0m[90min file 'A69343.P5.txt' at line 1. After replacing $, '[32mcomfort[0m'[0m[90mis in the dictionary, saving as such.[0m
+08/08/2023 07:17:13 PM INFO: In the file 'A69343.P5.txt' at line 1, found a solution in the user_solutions file for the word 'the$Germany'.
+08/08/2023 07:17:20 PM INFO: In the file 'A69343.P5.txt' at line 1, found a solution in the user_solutions file for the word 'me$.Hetherto'.
+08/08/2023 07:17:41 PM INFO: [32mA03456.P5.txt, line 1: 'apu$,or' replaced with 'apu$,or' using a previous user solution
+08/08/2023 07:19:02 PM INFO: [32mA03456.P5.txt, line 1: 'apu$,or' replaced with 'apu$,or' using a previous user solution
+08/08/2023 07:22:42 PM INFO: [32mA03456.P5.txt, line 1: 'apu$,or' replaced with 'apu$,or' using a previous user solution
+08/08/2023 07:22:46 PM INFO: In the file 'A15818.P5.txt' at line 1, found a solution in the user_solutions file for the word 'Reaso$is'.
+08/08/2023 07:22:47 PM INFO: [90mThe original word was '[31mco$sider[0m'[0m[90min file 'A67616.P5.txt' at line 1. After replacing $, '[32mconsider[0m'[0m[90mis in the dictionary, saving as such.[0m
+08/08/2023 07:22:53 PM INFO: In the file 'A11933.P5.txt' at line 1, found a solution in the user_solutions file for the word 'aduau$ced'.
+08/08/2023 07:22:55 PM INFO: In the file 'A11933.P5.txt' at line 1, found a solution in the user_solutions file for the word 'sou$deth'.
+08/08/2023 07:22:55 PM INFO: In the file 'A11933.P5.txt' at line 1, found a solution in the user_solutions file for the word 'vndersta$ding'.
+08/08/2023 07:22:55 PM INFO: [90mThe original word was '[31mfou$dation[0m'[0m[90min file 'A11933.P5.txt' at line 1. After replacing $, '[32mfoundation[0m'[0m[90mis in the dictionary, saving as such.[0m
+08/08/2023 07:22:59 PM INFO: In the file 'A11933.P5.txt' at line 1, found a solution in the user_solutions file for the word 'conte$tednes'.
+08/08/2023 07:22:59 PM INFO: [90mThe original word was '[31mco$mon[0m'[0m[90min file 'A11933.P5.txt' at line 1. After replacing $, '[32mcommon[0m'[0m[90mis in the dictionary, saving as such.[0m
+08/08/2023 07:23:01 PM INFO: In the file 'A11933.P5.txt' at line 1, found a solution in the user_solutions file for the word 'Preacher,Solomo$is'.
+08/08/2023 07:23:02 PM INFO: In the file 'A11933.P5.txt' at line 1, found a solution in the user_solutions file for the word 'Solomo$was'.
+08/08/2023 07:25:20 PM INFO: [32mA03456.P5.txt, line 1: 'apu$,or' replaced with 'apu$,or' using a previous user solution
+08/08/2023 07:25:20 PM INFO: [32mA11933.P5.txt, line 1: 'aduau$ced' replaced with 'aduaunced' using a previous user solution
+08/08/2023 07:25:20 PM INFO: [32mA11933.P5.txt, line 1: 'sou$deth' replaced with 'soundeth' using a previous user solution
+08/08/2023 07:25:20 PM INFO: [32mA11933.P5.txt, line 1: 'vndersta$ding' replaced with 'vnderstanding' using a previous user solution
+08/08/2023 07:25:21 PM INFO: [90mThe original word was '[31mfou$dation[0m'[0m[90min file 'A11933.P5.txt' at line 1. After replacing $, '[32mfoundation[0m'[0m[90mis in the dictionary, saving as such.[0m
+08/08/2023 07:25:21 PM INFO: [32mA11933.P5.txt, line 1: 'conte$tednes' replaced with 'contentednes' using a previous user solution
+08/08/2023 07:25:21 PM INFO: [90mThe original word was '[31mco$mon[0m'[0m[90min file 'A11933.P5.txt' at line 1. After replacing $, '[32mcommon[0m'[0m[90mis in the dictionary, saving as such.[0m
+08/08/2023 07:25:21 PM INFO: [32mA11933.P5.txt, line 1: 'Preacher,Solomo$is' replaced with 'Preacher,Solomonis' using a previous user solution
+08/08/2023 07:25:21 PM INFO: [32mA11933.P5.txt, line 1: 'Solomo$was' replaced with 'Solomonwas' using a previous user solution
+08/08/2023 07:25:23 PM INFO: In the file 'A11933.P5.txt' at line 1, found a solution in the user_solutions file for the word 'rau$ged'.
+08/08/2023 07:25:23 PM INFO: [90mThe original word was '[31mco$pelled[0m'[0m[90min file 'A11933.P5.txt' at line 1. After replacing $, '[32mcompelled[0m'[0m[90mis in the dictionary, saving as such.[0m
+08/08/2023 07:25:23 PM INFO: [90mThe original word was '[31mco$parison,[0m'[0m[90min file 'A11933.P5.txt' at line 1. After replacing $, '[32mcomparison,[0m'[0m[90mis in the dictionary, saving as such.[0m
+08/08/2023 07:25:23 PM INFO: [90mThe original word was '[31mco$found[0m'[0m[90min file 'A11933.P5.txt' at line 1. After replacing $, '[32mconfound[0m'[0m[90mis in the dictionary, saving as such.[0m
+08/08/2023 07:25:23 PM INFO: [90mThe original word was '[31mco$mon,[0m'[0m[90min file 'A11933.P5.txt' at line 1. After replacing $, '[32mcommon,[0m'[0m[90mis in the dictionary, saving as such.[0m
+08/08/2023 07:25:31 PM INFO: In the file 'A11933.P5.txt' at line 1, found a solution in the user_solutions file for the word 'ma$which'.
+08/08/2023 07:25:32 PM INFO: In the file 'A11933.P5.txt' at line 1, found a solution in the user_solutions file for the word 'co$tentednesse'.
+08/08/2023 07:25:33 PM INFO: In the file 'A11933.P5.txt' at line 1, found a solution in the user_solutions file for the word 'the$,through'.
+08/08/2023 07:25:39 PM INFO: In the file 'A11933.P5.txt' at line 1, found a solution in the user_solutions file for the word 'the$selues,'.
+08/08/2023 07:25:42 PM INFO: In the file 'A11933.P5.txt' at line 1, found a solution in the user_solutions file for the word 'ple$tie'.
+08/08/2023 07:25:42 PM INFO: [90mThe original word was '[31mco$mon[0m'[0m[90min file 'A11933.P5.txt' at line 1. After replacing $, '[32mcommon[0m'[0m[90mis in the dictionary, saving as such.[0m
+08/08/2023 07:25:42 PM INFO: [90mThe original word was '[31mco$cerning[0m'[0m[90min file 'A11933.P5.txt' at line 1. After replacing $, '[32mconcerning[0m'[0m[90mis in the dictionary, saving as such.[0m
+08/08/2023 07:25:44 PM INFO: In the file 'A11933.P5.txt' at line 1, found a solution in the user_solutions file for the word 'cu$bred'.
+08/08/2023 07:25:44 PM INFO: [90mThe original word was '[31mco$modities,[0m'[0m[90min file 'A11933.P5.txt' at line 1. After replacing $, '[32mcommodities,[0m'[0m[90mis in the dictionary, saving as such.[0m
+08/08/2023 07:25:45 PM INFO: In the file 'A11933.P5.txt' at line 1, found a solution in the user_solutions file for the word 'disco$moditie'.
+08/08/2023 07:25:45 PM INFO: [90mThe original word was '[31mco$tent[0m'[0m[90min file 'A11933.P5.txt' at line 1. After replacing $, '[32mcontent[0m'[0m[90mis in the dictionary, saving as such.[0m
+08/08/2023 07:25:45 PM INFO: [32mA11933.P5.txt, line 1: 'the$selues,' replaced with 'themselues' using a previous user solution
+08/08/2023 07:25:46 PM INFO: In the file 'A11933.P5.txt' at line 1, found a solution in the user_solutions file for the word 'pronou$ceth'.
+08/08/2023 07:25:48 PM INFO: In the file 'A11933.P5.txt' at line 1, found a solution in the user_solutions file for the word 'significatio$Habacuc'.
+08/08/2023 07:25:48 PM INFO: [90mThe original word was '[31mco$sist[0m'[0m[90min file 'A11933.P5.txt' at line 1. After replacing $, '[32mconsist[0m'[0m[90mis in the dictionary, saving as such.[0m
+08/08/2023 07:25:50 PM INFO: In the file 'A11933.P5.txt' at line 1, found a solution in the user_solutions file for the word 'co$meth'.
+08/08/2023 07:25:51 PM INFO: In the file 'A11933.P5.txt' at line 1, found a solution in the user_solutions file for the word 'co$maundements'.
+08/08/2023 07:25:53 PM INFO: In the file 'A11933.P5.txt' at line 1, found a solution in the user_solutions file for the word 'enco$brances'.
+08/08/2023 07:25:54 PM INFO: In the file 'A11933.P5.txt' at line 1, found a solution in the user_solutions file for the word 'co$tentednes,'.
+08/08/2023 07:25:55 PM INFO: In the file 'A11933.P5.txt' at line 1, found a solution in the user_solutions file for the word 'the$selues.15.'.
+08/08/2023 07:25:55 PM INFO: [90mThe original word was '[31mco$strained[0m'[0m[90min file 'A11933.P5.txt' at line 1. After replacing $, '[32mconstrained[0m'[0m[90mis in the dictionary, saving as such.[0m
+08/08/2023 07:25:58 PM INFO: In the file 'A11933.P5.txt' at line 1, found a solution in the user_solutions file for the word 'Ada$eue$'.
+08/08/2023 07:25:59 PM INFO: In the file 'A11933.P5.txt' at line 1, found a solution in the user_solutions file for the word 'ma$.14'.
+08/08/2023 07:25:59 PM INFO: [90mThe original word was '[31mco$manded[0m'[0m[90min file 'A22560.P5.txt' at line 1. After replacing $, '[32mcommanded[0m'[0m[90mis in the dictionary, saving as such.[0m
+08/08/2023 07:26:01 PM INFO: In the file 'A22560.P5.txt' at line 1, found a solution in the user_solutions file for the word 'the$Clinias'.
+08/08/2023 07:26:01 PM INFO: [32mA22560.P5.txt, line 1: 'the$Clinias' replaced with 'thenClinias' using a previous user solution
+08/08/2023 07:26:03 PM INFO: In the file 'A22560.P5.txt' at line 1, found a solution in the user_solutions file for the word 'whe$Clinias'.
+08/08/2023 07:26:04 PM INFO: In the file 'A02825.P5.txt' at line 1, found a solution in the user_solutions file for the word 'co$maunded'.
+08/08/2023 07:30:03 PM INFO: [32mA03456.P5.txt, line 1: 'apu$,or' replaced with 'apu$,or' using a previous user solution
+08/08/2023 07:30:04 PM INFO: [32mA02825.P5.txt, line 1: 'co$maunded' replaced with 'commaunded' using a previous user solution
+08/08/2023 07:33:38 PM INFO: [32mA03456.P5.txt, line 1: 'apu$,or' replaced with 'apu$,or' using a previous user solution
+08/08/2023 07:33:39 PM INFO: [32mA02825.P5.txt, line 1: 'co$maunded' replaced with 'commaunded' using a previous user solution
+08/08/2023 07:33:59 PM INFO: [32mA03456.P5.txt, line 1: 'apu$,or' replaced with 'apu$,or' using a previous user solution
+08/08/2023 07:34:00 PM INFO: [32mA02825.P5.txt, line 1: 'co$maunded' replaced with 'commaunded' using a previous user solution
+08/08/2023 07:34:47 PM INFO: [32mA03456.P5.txt, line 1: 'apu$,or' replaced with 'apu$,or' using a previous user solution
+08/08/2023 07:34:48 PM INFO: [32mA02825.P5.txt, line 1: 'co$maunded' replaced with 'commaunded' using a previous user solution
+08/08/2023 07:37:04 PM INFO: [32mA03456.P5.txt, line 1: 'apu$,or' replaced with 'apu$,or' using a previous user solution
+08/08/2023 07:37:05 PM INFO: [32mA02825.P5.txt, line 1: 'co$maunded' replaced with 'commaunded' using a previous user solution
+08/08/2023 07:38:42 PM INFO: [32mA03456.P5.txt, line 1: 'apu$,or' replaced with 'apu$,or' using a previous user solution
+08/08/2023 07:38:43 PM INFO: [32mA02825.P5.txt, line 1: 'co$maunded' replaced with 'commaunded' using a previous user solution
+08/08/2023 07:44:06 PM INFO: [32mA03456.P5.txt, line 1: 'apu$,or' replaced with 'apu$,or' using a previous user solution
+08/08/2023 07:44:07 PM INFO: [32mA02825.P5.txt, line 1: 'co$maunded' replaced with 'commaunded' using a previous user solution
+08/08/2023 07:45:14 PM INFO: [32mA03456.P5.txt, line 1: 'apu$,or' replaced with 'apu$,or' using a previous user solution
+08/08/2023 07:45:15 PM INFO: [32mA02825.P5.txt, line 1: 'co$maunded' replaced with 'commaunded' using a previous user solution
+08/08/2023 07:49:07 PM INFO: [32mA03456.P5.txt, line 1: 'apu$,or' replaced with 'apu$,or' using a previous user solution
+08/08/2023 07:49:08 PM INFO: [32mA02825.P5.txt, line 1: 'co$maunded' replaced with 'commaunded' using a previous user solution
+08/08/2023 07:52:52 PM INFO: [32mA03456.P5.txt, line 1: 'apu$,or' replaced with 'apu$,or' using a previous user solution
+08/08/2023 07:52:53 PM INFO: [32mA02825.P5.txt, line 1: 'co$maunded' replaced with 'commaunded' using a previous user solution
