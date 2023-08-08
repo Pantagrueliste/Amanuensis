@@ -4,6 +4,8 @@ Early 17th cent.: Latin, from (servus) a manu ‘(slave) at hand(writing), secre
 2. an assistant, especially one who writes or types for somebody.  
 
 # Amanuensis: A human-supervised normalization tool for early modern abbreviated texts
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8224585.svg)](https://doi.org/10.5281/zenodo.8224585)
+
 
 Amanuensis is a fairly robust Python application, tailored specifically for researchers and users in the Digital Humanities. It is designed to accelerate normalization tasks for large-scale text data, transforming old and complex texts into a more digestible format. This preparation is crucial for further digital analysis and manipulation. With Amanuensis, you can make your text data more accessible and easier to work with.
 
