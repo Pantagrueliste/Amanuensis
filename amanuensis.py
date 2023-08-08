@@ -63,8 +63,9 @@ def read_config(file_path):
         input_path = config['paths']['input_path']
         output_path = config['paths']['output_path']
         logging_level_key = config['logging']['level']
-        logging_level = LOGGING_LEVELS_MAP.get(logging_level_key.lower(), logging.WARNING)  # Assuming LOGGING_LEVELS_MAP is defined
+        logging_level = LOGGING_LEVELS_MAP.get(logging_level_key.lower(), logging.WARNING)
         context_size = config['settings']['context_size']
+        debug_mode = config['settings'].get('debug_mode', False)
         unicode_replacements = config['unicode_replacements']
         replacements_on = unicode_replacements['replacements_on']
         characters_to_delete = unicode_replacements['characters_to_delete']
@@ -77,7 +78,7 @@ def read_config(file_path):
             raise FileNotFoundError(f"Output path '{output_path}' not found.")
 
         return (input_path, output_path, logging_level, context_size,
-                replacements_on, characters_to_delete, characters_to_replace)
+                replacements_on, characters_to_delete, characters_to_replace, debug_mode)
 
     except TomlDecodeError:
         print("Error decoding TOML file. Please check the configuration file format.")
@@ -92,7 +93,7 @@ def read_config(file_path):
 current_directory = os.path.dirname(os.path.abspath(__file__))
 toml_file_path = os.path.join(current_directory, 'config.toml')
 
-input_path, output_path, logging_level, context_size, replacements_on, characters_to_delete, characters_to_replace = read_config(toml_file_path)
+input_path, output_path, logging_level, context_size, replacements_on, characters_to_delete, characters_to_replace, debug_mode = read_config(toml_file_path)
 
 print(current_directory, input_path, output_path, logging_level, context_size, replacements_on, characters_to_delete, characters_to_replace)
 
@@ -346,9 +347,14 @@ def normalize_word(word, file_name,
                    word_index,
                    unicode_replacements,
                    logger,
-                   context_size):
+                   context_size,
+                   debug_mode=False):
+
+    # print(f"Debug: Processing word '{word}' in line {line_number} of file '{file_name}'")
+    print("Debug mode inside normalize_word function:", debug_mode)
 
     original_word = word
+
 
     word_wo_punctuation, trailing_punctuation = remove_punctuation_from_word(word)
 
@@ -377,7 +383,8 @@ def normalize_line(line,
                    line_number,
                    unicode_replacements,
                    logger,
-                   context_size):
+                   context_size,
+                   debug_mode=False):
     """
     This function normalizes a given line and logs the replacements made.
     """
@@ -385,7 +392,7 @@ def normalize_line(line,
     line_words = line.split()
     for word_index, word in enumerate(line_words):
         if "$" in word:
-            word = normalize_word(word, file_name, line_number, line_words, word_index, unicode_replacements, logger, context_size)
+            word = normalize_word(word, file_name, line_number, line_words, word_index, unicode_replacements, logger, context_size, debug_mode)
             line_words[word_index] = word
 
     return ' '.join(line_words)
@@ -394,18 +401,22 @@ def normalize_line(line,
 def normalize_file(file_path,
                    unicode_replacements,
                    logger,
-                   context_size):
+                   context_size,
+                   debug_mode=False):
 
     """
     This function normalizes a given file and logs the replacements made.
     """
+    print(f"Debug mode value inside normalize_file function: {debug_mode}")
     global json_solutions_counter
     file_name = os.path.basename(file_path)
     with open(file_path, 'r', encoding='utf-8') as file:
         lines = file.readlines()
 
-    for line_number, line in enumerate(lines):
-        lines[line_number] = normalize_line(line, file_name, line_number, unicode_replacements, logger, context_size)
+    for index, line in enumerate(lines):
+        line_number = index + 1  # Create a line_number variable starting from 1
+        lines[index] = normalize_line(line, file_name, line_number, unicode_replacements, logger, context_size, debug_mode)
+
 
     with open(file_path, 'w', encoding='utf-8') as file:
         file.writelines(lines)
@@ -425,7 +436,10 @@ class ReplacementLogger:
 
 def main():
     # Get config parameters
-    input_path, output_path, logging_level, context_size, replacements_on, characters_to_delete, characters_to_replace = read_config('config.toml')
+    input_path, output_path, logging_level, context_size, replacements_on, characters_to_delete, characters_to_replace, debug_mode = read_config('config.toml')
+
+    # Signal Debug mode status
+    print(f"Debug mode is {'enabled' if debug_mode else 'disabled'}")
 
     # Define the path to the log file
     log_file = 'replacements.log'
@@ -476,14 +490,13 @@ def main():
         for filename in filenames:
             if filename.endswith(".txt"):  # process only .txt files
                 file_path = os.path.join(dirpath, filename)
-                normalize_file(file_path, unicode_replacements, logger, context_size)
+                normalize_file(file_path, unicode_replacements, logger, context_size, debug_mode)
                 processed_files += 1
                 pbar_normalization.update(processed_files)  # Update progress bar
 
     pbar_normalization.finish()  # Finish progress bar for normalization
 
     print(f"{Fore.GREEN}Normalization complete. Please check '{log_file}' for a log of the replacements.")
-
 
 
 if __name__ == "__main__":
