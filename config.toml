@@ -1,19 +1,14 @@
-[directories]
-working_directory = "users/name/directory" # working directory path
+[paths]
+input_path = "/Users/clem/Desktop/EEBOTest3/eng"
+output_path = "/Users/clem/Desktop/EEBOTest3/output"
 
-[logging] # don't change, still shaky
-level = "minimal"  # or "verbose" or "statistic"
+[logging]
+level = "verbose"  # select between "minimal", "verbose", or "statistic"
 
 [settings]
 context_size = 20
 
 [unicode_replacements]
-"\u00B6" = ""  # empty "" is a deletion
-"\u261E" = ""
-"\u2740" = ""
-"\u2767" = ""
-"Ʋ" = "U"
-"&c." = "etc."
-"ꝑ" = "per"
-"ꝭ" = "s"
-"ȝ" = "g"
+replacements_on = false # or false
+characters_to_delete = ["\u00B6", "\u261E", "\u2740", "\u2767"]
+characters_to_replace = {"Ʋ" = "U", "&c." = "etc.", "ꝑ" = "per", "ꝭ" = "s", "ȝ" = "g"}

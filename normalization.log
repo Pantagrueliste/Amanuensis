@@ -1,3 +1,65 @@
 08/07/2023 04:16:26 PM INFO: 
 Normalization completed. Total files normalized: 0. Total replacements made: 0. Total time taken: 0:00:00.000197.
 
+08/07/2023 04:33:42 PM INFO: In the file 'A68025.P5.txt' at line 0, found a solution in the user_solutions file for the word 'Ame$.Sent'.
+08/07/2023 04:34:00 PM INFO: In the file 'A03456.P5.txt' at line 0, found a solution in the user_solutions file for the word 'the$cum'.
+08/07/2023 04:34:02 PM INFO: In the file 'A03456.P5.txt' at line 0, found a solution in the user_solutions file for the word 'the$in'.
+08/07/2023 04:34:07 PM INFO: In the file 'A03456.P5.txt' at line 0, found a solution in the user_solutions file for the word 'apu$,or'.
+08/08/2023 06:01:21 PM INFO: [32mA03456.P5.txt, line 0: 'the$cum' replaced with 'themcum' using a previous user solution
+08/08/2023 06:01:21 PM INFO: [32mA03456.P5.txt, line 0: 'the$in' replaced with 'themin' using a previous user solution
+08/08/2023 06:01:21 PM INFO: [32mA03456.P5.txt, line 0: 'apu$,or' replaced with 'apu$,or' using a previous user solution
+08/08/2023 06:01:30 PM INFO: In the file 'A03456.P5.txt' at line 0, found a solution in the user_solutions file for the word 'the$:a'.
+08/08/2023 06:01:42 PM INFO: In the file 'A02630.P5.txt' at line 0, found a solution in the user_solutions file for the word 'Ephre$of'.
+08/08/2023 06:01:44 PM INFO: In the file 'A19723.P5.txt' at line 0, found a solution in the user_solutions file for the word 'co$ecuring'.
+08/08/2023 06:01:45 PM INFO: In the file 'A68674.P5.txt' at line 0, found a solution in the user_solutions file for the word 'wou$de'.
+08/08/2023 06:01:46 PM INFO: In the file 'A68674.P5.txt' at line 0, found a solution in the user_solutions file for the word 'cou$ceyll'.
+08/08/2023 06:01:48 PM INFO: In the file 'A68674.P5.txt' at line 0, found a solution in the user_solutions file for the word 'hy$blode.'.
+08/08/2023 06:01:50 PM INFO: In the file 'A68674.P5.txt' at line 0, found a solution in the user_solutions file for the word 'stro$ge'.
+08/08/2023 06:01:51 PM INFO: In the file 'A68674.P5.txt' at line 0, found a solution in the user_solutions file for the word 'bou$de'.
+08/08/2023 06:01:52 PM INFO: In the file 'A68674.P5.txt' at line 0, found a solution in the user_solutions file for the word 'chau$ged'.
+08/08/2023 06:01:53 PM INFO: In the file 'A68674.P5.txt' at line 0, found a solution in the user_solutions file for the word 'entysy$ge'.
+08/08/2023 06:01:54 PM INFO: In the file 'A68674.P5.txt' at line 0, found a solution in the user_solutions file for the word 'grau$ted'.
+08/08/2023 06:01:55 PM INFO: In the file 'A68674.P5.txt' at line 0, found a solution in the user_solutions file for the word 'vndsta$decharyte'.
+08/08/2023 06:01:57 PM INFO: In the file 'A68674.P5.txt' at line 0, found a solution in the user_solutions file for the word 'ky$ge'.
+08/08/2023 06:01:57 PM INFO: In the file 'A68674.P5.txt' at line 0, found a solution in the user_solutions file for the word 'penau$ce'.
+08/08/2023 06:02:00 PM INFO: In the file 'A68674.P5.txt' at line 0, found a solution in the user_solutions file for the word 'Quecu$quesuperbiu$'.
+08/08/2023 06:02:01 PM INFO: In the file 'A68674.P5.txt' at line 0, found a solution in the user_solutions file for the word 'kepy$ge'.
+08/08/2023 06:02:02 PM INFO: In the file 'A68674.P5.txt' at line 0, found a solution in the user_solutions file for the word 'grehou$de'.
+08/08/2023 06:32:26 PM INFO: [32mA03456.P5.txt, line 0: 'apu$,or' replaced with 'apu$,or' using a previous user solution
+08/08/2023 06:32:26 PM INFO: [32mA68674.P5.txt, line 0: 'wou$de' replaced with 'wounde' using a previous user solution
+08/08/2023 06:32:26 PM INFO: [32mA68674.P5.txt, line 0: 'cou$ceyll' replaced with 'counceyll' using a previous user solution
+08/08/2023 06:32:26 PM INFO: [32mA68674.P5.txt, line 0: 'hy$blode.' replaced with 'hymblode' using a previous user solution
+08/08/2023 06:32:26 PM INFO: [32mA68674.P5.txt, line 0: 'stro$ge' replaced with 'stronge' using a previous user solution
+08/08/2023 06:32:26 PM INFO: [32mA68674.P5.txt, line 0: 'bou$de' replaced with 'bounde' using a previous user solution
+08/08/2023 06:32:26 PM INFO: [32mA68674.P5.txt, line 0: 'chau$ged' replaced with 'chaunged' using a previous user solution
+08/08/2023 06:32:26 PM INFO: [32mA68674.P5.txt, line 0: 'entysy$ge' replaced with 'entysynge' using a previous user solution
+08/08/2023 06:32:26 PM INFO: [32mA68674.P5.txt, line 0: 'grau$ted' replaced with 'graunted' using a previous user solution
+08/08/2023 06:32:26 PM INFO: [32mA68674.P5.txt, line 0: 'vndsta$decharyte' replaced with 'vndstandecharyte' using a previous user solution
+08/08/2023 06:32:26 PM INFO: [32mA68674.P5.txt, line 0: 'ky$ge' replaced with 'kynge' using a previous user solution
+08/08/2023 06:32:26 PM INFO: [32mA68674.P5.txt, line 0: 'penau$ce' replaced with 'penaunce' using a previous user solution
+08/08/2023 06:32:26 PM INFO: [32mA68674.P5.txt, line 0: 'Quecu$quesuperbiu$' replaced with 'Quecumquesuperbiu' using a previous user solution
+08/08/2023 06:32:26 PM INFO: [32mA68674.P5.txt, line 0: 'kepy$ge' replaced with 'kepynge' using a previous user solution
+08/08/2023 06:32:26 PM INFO: [32mA68674.P5.txt, line 0: 'grehou$de' replaced with 'grehounde' using a previous user solution
+08/08/2023 06:32:33 PM INFO: In the file 'A68674.P5.txt' at line 0, found a solution in the user_solutions file for the word 'Inquacu$hora'.
+08/08/2023 06:32:33 PM INFO: [90mThe original word was '[31mvolu$tary.[0m'[0m[90min file 'A68674.P5.txt' at line 0. After replacing $, '[32mvoluntary.[0m'[0m[90mis in the dictionary, saving as such.[0m
+08/08/2023 06:32:41 PM INFO: In the file 'A68674.P5.txt' at line 0, found a solution in the user_solutions file for the word 'commau$ded'.
+08/08/2023 06:32:41 PM INFO: [32mA68674.P5.txt, line 0: 'cou$ceyll' replaced with 'counceyll' using a previous user solution
+08/08/2023 06:32:42 PM INFO: In the file 'A68674.P5.txt' at line 0, found a solution in the user_solutions file for the word 'spe$te'.
+08/08/2023 06:32:43 PM INFO: In the file 'A68674.P5.txt' at line 0, found a solution in the user_solutions file for the word 'commau$dynge'.
+08/08/2023 06:32:44 PM INFO: In the file 'A68674.P5.txt' at line 0, found a solution in the user_solutions file for the word 'cou$cell'.
+08/08/2023 06:32:45 PM INFO: In the file 'A68674.P5.txt' at line 0, found a solution in the user_solutions file for the word 'hy$the'.
+08/08/2023 06:32:49 PM INFO: In the file 'A68674.P5.txt' at line 0, found a solution in the user_solutions file for the word 'hangy$ge'.
+08/08/2023 06:32:50 PM INFO: In the file 'A68674.P5.txt' at line 0, found a solution in the user_solutions file for the word 'thy$ge'.
+08/08/2023 06:32:51 PM INFO: In the file 'A68674.P5.txt' at line 0, found a solution in the user_solutions file for the word 'thy$kynge'.
+08/08/2023 06:32:52 PM INFO: In the file 'A68674.P5.txt' at line 0, found a solution in the user_solutions file for the word 'husbo$de'.
+08/08/2023 06:32:53 PM INFO: In the file 'A68674.P5.txt' at line 0, found a solution in the user_solutions file for the word 'commaundy$ge'.
+08/08/2023 06:32:54 PM INFO: In the file 'A68674.P5.txt' at line 0, found a solution in the user_solutions file for the word 'commau$dement'.
+08/08/2023 06:32:55 PM INFO: In the file 'A68674.P5.txt' at line 0, found a solution in the user_solutions file for the word 'hu$tyngein'.
+08/08/2023 06:32:56 PM INFO: In the file 'A68674.P5.txt' at line 0, found a solution in the user_solutions file for the word 'say$ge'.
+08/08/2023 06:32:56 PM INFO: [32mA68674.P5.txt, line 0: 'commau$ded' replaced with 'commaunded' using a previous user solution
+08/08/2023 06:32:58 PM INFO: In the file 'A69343.P5.txt' at line 0, found a solution in the user_solutions file for the word 'co$prehendeth'.
+08/08/2023 06:32:58 PM INFO: [90mThe original word was '[31mco$cluded[0m'[0m[90min file 'A69343.P5.txt' at line 0. After replacing $, '[32mconcluded[0m'[0m[90mis in the dictionary, saving as such.[0m
+08/08/2023 06:32:58 PM INFO: [90mThe original word was '[31mcou$sels,[0m'[0m[90min file 'A69343.P5.txt' at line 0. After replacing $, '[32mcounsels,[0m'[0m[90mis in the dictionary, saving as such.[0m
+08/08/2023 06:32:58 PM INFO: [90mThe original word was '[31mbelo$ging[0m'[0m[90min file 'A69343.P5.txt' at line 0. After replacing $, '[32mbelonging[0m'[0m[90mis in the dictionary, saving as such.[0m
+08/08/2023 06:32:58 PM INFO: [90mThe original word was '[31mre$der[0m'[0m[90min file 'A69343.P5.txt' at line 0. After replacing $, '[32mrender[0m'[0m[90mis in the dictionary, saving as such.[0m
+08/08/2023 06:32:58 PM INFO: [90mThe original word was '[31mco$mon[0m'[0m[90min file 'A69343.P5.txt' at line 0. After replacing $, '[32mcommon[0m'[0m[90mis in the dictionary, saving as such.[0m
