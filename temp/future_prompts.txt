@@ -1,0 +1,479 @@
+I am rewriting from scratch a python application named Amanuensis. I used gpt-engineer to create the overall structure and parts of the code. The project is unfinished and might have some incoherences. Help me finish this project step by step. Here is a description and breakdown of the application:
+
+The application is meant to assist scholars in the long and rebarbative process of normalizing large amounts of early modern abbreviated texts. It is divided in two major parts: the Unicode Replacement part (UR) which is coded in unicode_replacement.py. It is optional and it can be disabled in the config.toml file. The Dynamic Word Normalization (DWN) is coded in the word_normalization.py file. Its goal is to convert abbreviated words (AWs) into resolved words (RW).
+
+DWN is divided in two parts: a pre_processing phase (DWN1), in which the application and the user resolve all the unresovled issues upfront, and a normalization phase (DWN2), in which all the changes are applied a posteriori using multiprocessing. The DWN1 is handled before the DWN2, so the normalization can run smoothly and in parallel.
+
+The DWN1, is divided in two major parts. The first part (DWN1.1) is automated and relies on NLTK's wordnet dictionary to determine Machine Solutions (MS). The second part (DWN1.2) is manual, and is meant to resolve all the abbreviations that the automated part could not resolve. It requires the input of the user. The user's solutions (US) are saved in a dictionary called user_solutions.json. Once a US is saved in this dictionary, the application will apply it to all similar AWs.
+
+During the DWN2 phase, the application possesses all the US and MS necessary to implement the desired word replacements in all the text files of the folder and subfolders. Before doing so, however, the app will verify that there is no conflicting information between MS and US. If the application finds them, it will prompt the user to resolve them. Once all conflicts are solved, the app can proceed to implement all the word replacements.
+
+Here's a more detailed breakdown of the app:
+
+1. Unicode Replacement (Optional)
+   - This part is responsible for replacing and or deleting specific unicode characters in all the text files present in the folder and subfolders defined by the user in the `config.toml` file.
+   - It can be enabled or disabled via a configuration setting in the `config.toml` file.
+   - The characters it deletes or changes are defined and mapped in the `config.toml` file.
+   _ It uses multiprocessing to maximize speed.
+   - It displays a progress bar (Rich), and prints statistics (total number of words replaced and/or deleted, total number of files processed)
+   - It logs every single change in a replacements_log.json file. (timestamp, file name, line within the text file where the replaced/deleted word is or was, replaced/deleted word, replacement word ("deleted" if deleted))
+
+2. DWN
+   - This is the main part of the application and is divided into two phases:
+     a. DWN1: Pre-processing Phase
+        - This phase is divided in two parts. DWN1.1, the automated part, and DWN1.2, the Manual part.
+            _ DWN1.1 relies on the the machine_solution.json dictionary and the wordnet dictionary. The app first checks the machine_solution.json dictionary to see if a MS already exit for this AW. If it doesn't, it resorts to consulting NLTK's wordnet dictionary: first it replaces the $ sign contained in or at the end of the AW with a "n" in order to check whether a similar word exist in the dictionary. If it doesn't, it tries with "m". If the word with "n" or "m" instead of the $ exists, then the application saves the solution in the machine_solution.json dictionary, and moves on to the next AW.
+            - DWN1.2 prompts the user for a solution, since DWN1.1 will never be able to resolve all the AWs on its own. This US is saved in a user_solution.json dictionary.
+                - The user should be constantly informed of their progress during this phase (progress bar, context information, summary after each file, option to pause/resume, clear indication of final step).
+                - The amount of words available in the context can be configured in the config.toml. When a user sets 20 words, it means that the application should display 20 words before and twenty words after that word.
+                - Before asking the user for a solution, the script should first check on the user_solution.json file, whether a US already exists. If it does it should move on to the next unresolved AW.
+
+     b. DWN2: Normalization phase
+        - After pre-processing, this phase is responsible for normalizing the early modern abbreviated texts.
+        - This phase should run smoothly and in parallel to optimize performance.
+        - Before the app makes any changes, it needs to compare the US and MS to make sure there are no inconsistencies. If there are inconsistencies, the application should prompt the user in order to fix them. Here again some information about the total number of inconsistencies and a progress bar would be helpful. IF thewre no inconsistencies, it should print "No inconsistencies detected, proceeding to modifications."
+        - Once all the inconsistencies have been fixed, the application can proceed to replace all the AWs with MS and US and save them in the output directory defined in config.toml.
+
+This is the desired arborescence of my application:
+
+amanuensis
+├── README.md
+├── run.sh
+├── config.toml
+├── modules
+│   ├── config.py
+│   ├── gpt_suggestions.py
+│   ├── unicode_replacement.py
+│   ├── word_normalization.py
+│   └── main.py
+├── data
+│   ├── user_solution.json
+│   └── machine_solution.json
+└── logs
+    ├── replacements_log.json
+    └── dynamic_word_normalization.json
+
+The code should be pep3 compliant. Modular and include error handling. I should also be able to test the different modules composing the application's code.
+
+In the next step I will paste all the code I currently have. It contains some inconsistencies so do not hesitate to ask questions if you misunderstand something.
+
+----
+
+This the main.py file:
+
+"""
+import os
+import toml
+from toml.decoder import TomlDecodeError
+
+class Config:
+    def __init__(self, file_path='config.toml'):
+        self.file_path = file_path
+        self.settings = self._read_config()
+
+    def _read_config(self):
+        """Read the configuration file"""
+        try:
+            config = toml.load(self.file_path)
+            return config
+        except TomlDecodeError:
+            raise Exception("Error decoding TOML file. Please check the configuration file format.")
+        except FileNotFoundError:
+            raise FileNotFoundError(f"Configuration file '{self.file_path}' not found.")
+
+    def get(self, section, key=None):
+        if key:
+            return self.settings.get(section, {}).get(key)
+        return self.settings.get(section)
+
+    def validate_paths(self):
+        input_path = self.get('paths', 'input_path')
+        output_path = self.get('paths', 'output_path')
+        if not os.path.exists(input_path):
+            raise FileNotFoundError(f"Input path '{input_path}' not found.")
+        if not os.path.exists(output_path):
+            raise FileNotFoundError(f"Output path '{output_path}' not found.")
+"""
+
+This is my current word_normalization.py file:
+
+"""
+import os
+import json
+import string
+import logging
+
+from nltk.corpus import wordnet
+from nltk.stem import WordNetLemmatizer
+from multiprocessing import Pool, Manager
+from config import Config
+
+class WordNormalization:
+
+    def __init__(self, config):
+        """
+        Initialize the WordNormalization object with configuration settings.
+        """
+        self.config = config
+        self.lemmatizer = WordNetLemmatizer()
+        self.load_user_solutions()
+        self.setup_logging()
+        self.progress_data = Manager().dict()
+        self.total_files = 0
+        self.processed_files = 0
+        self.total_words = 0
+        self.processed_words = 0
+
+    def load_user_solutions(self):
+        """
+        Load user solutions from a JSON file.
+        """
+        try:
+            with open(self.config.settings['paths']['user_solutions_path'], 'r', encoding='utf-8') as file:
+                self.user_solutions = json.load(file)
+        except FileNotFoundError:
+            self.user_solutions = {}
+
+    def save_user_solutions(self):
+        """
+        Save user solutions to a JSON file.
+        """
+        with open(self.config.settings['paths']['user_solutions_path'], 'w', encoding='utf-8') as file:
+            json.dump(self.user_solutions, file)
+
+    def setup_logging(self):
+        """
+        Set up logging based on configuration settings.
+        """
+        logging_level = self.config.settings['logging']['level']
+        log_file_path = self.config.settings['paths']['log_file_path']
+        logging.basicConfig(filename=log_file_path, level=logging_level,
+                            format='%(asctime)s %(levelname)s: %(message)s',
+                            datefmt='%m/%d/%Y %I:%M:%S %p')
+
+    def normalize_word(self, word):
+        """
+        Normalize a word based on user solutions and WordNet.
+        """
+        word_wo_punctuation, trailing_punctuation = self.remove_punctuation(word)
+
+        if word_wo_punctuation in self.user_solutions:
+            return self.user_solutions[word_wo_punctuation] + trailing_punctuation
+
+        lemma = self.lemmatizer.lemmatize(word_wo_punctuation)
+        if wordnet.synsets(lemma):
+            return lemma + trailing_punctuation
+
+        correct_word = input(f"Please enter the full replacement for '{word_wo_punctuation}' or press Enter to keep original: ")
+        if correct_word:
+            self.user_solutions[word_wo_punctuation] = correct_word
+            self.save_user_solutions()
+            return correct_word + trailing_punctuation
+
+        return word
+
+    def normalize_text(self, text):
+        """
+        Normalize the text by normalizing each word.
+        """
+        words = text.split()
+        normalized_words = [self.normalize_word(word) for word in words]
+        return ' '.join(normalized_words)
+
+    def remove_punctuation(self, word):
+        """
+        Remove punctuation from a word and return the word and trailing punctuation separately.
+        """
+        word_wo_punctuation = word.rstrip(string.punctuation)
+        trailing_punctuation = word[len(word_wo_punctuation):]
+        return word_wo_punctuation, trailing_punctuation
+
+    def preprocess_directory(self, input_directory):
+        """
+        Pre-process all files in a directory and its subdirectories.
+        """
+        # Initialize progress counts
+        self.total_files = self.count_total_files(input_directory)
+        self.processed_files = 0
+        self.total_words = 0
+        self.processed_words = 0
+
+        # Recursively process files in the directory and its subdirectories
+        for dirpath, _, filenames in os.walk(input_directory):
+            for filename in filenames:
+                file_path = os.path.join(dirpath, filename)
+                self.process_file(file_path)
+                self.processed_files += 1
+                self.log_file_progress(file_path)
+
+    def process_file(self, input_file_path):
+        """
+        Read a file, normalize its content, and save it to a new file.
+
+        Parameters:
+        - input_file_path (str): The path of the file to be processed.
+        """
+        # Read the content of the file
+        with open(input_file_path, 'r', encoding='utf-8') as file:
+            content = file.readlines()
+
+        # Normalize each line of the file
+        normalized_content = []
+        for line in content:
+            normalized_line = self.normalize_text(line)
+            normalized_content.append(normalized_line)
+            self.processed_words += len(line.split())
+
+        # Save the normalized content to a new file
+        output_file_path = os.path.join(self.config.settings['paths']['output_path'], os.path.basename(input_file_path))
+        with open(output_file_path, 'w', encoding='utf-8') as file:
+            file.writelines(normalized_content)
+
+        # Log the processing of the file
+        logging.info(f"Processed file: {input_file_path}")
+        self.progress_data[input_file_path] = 'Processed'
+
+    def count_total_files(self, input_directory):
+        """
+        Count the total number of files in a directory and its subdirectories.
+        """
+        total_files = 0
+        for _, _, filenames in os.walk(input_directory):
+            total_files += len(filenames)
+        return total_files
+
+    def log_file_progress(self, file_path):
+        """
+        Log the progress of file processing.
+        """
+        remaining_files = self.total_files - self.processed_files
+        remaining_words = self.total_words - self.processed_words
+        print(f"File '{file_path}' is complete. {remaining_files} files left to process. {remaining_words} words to process.")
+
+    def run(self):
+        """
+        Main method to start word normalization process.
+        """
+        input_directory = self.config.get('paths', 'input_path')
+        output_directory = self.config.get('paths', 'output_path')
+        self.process_files(input_directory, output_directory)
+"""
+
+This is my unicode_replacement.py file:
+
+"""
+import os
+from multiprocessing import Pool
+
+class UnicodeReplacement:
+    def __init__(self, config):
+        self.config = config
+
+    def replace(self, input_file_path):
+        """
+        Applies Unicode replacements on the given file and saves the modified text
+        in a separate path specified in the configuration file.
+
+        :param input_file_path: Path of the file to process
+        """
+        with open(input_file_path, 'r', encoding='utf-8') as file:
+            text = file.read()
+
+        if self.config.get('unicode_replacements', 'replacements_on'):
+            # Delete specified characters
+            characters_to_delete = self.config.get('unicode_replacements', 'characters_to_delete')
+            for char in characters_to_delete:
+                text = text.replace(char, "")
+
+            # Apply specified replacements
+            characters_to_replace = self.config.get('unicode_replacements', 'characters_to_replace')
+            for original, replacement in characters_to_replace.items():
+                text = text.replace(original, replacement)
+
+        # Prepare the output file path
+        output_path = self.config.get('paths', 'output_path')
+        file_name = os.path.basename(input_file_path)
+        output_file_path = os.path.join(output_path, file_name)
+
+        # Write the modified text to the output file
+        with open(output_file_path, 'w', encoding='utf-8') as file:
+            file.write(text)
+
+    def process_files(self, input_files):
+        """
+        Apply Unicode replacements on multiple files using multiprocessing.
+
+        :param input_files: List of file paths to process
+        """
+        with Pool() as pool:
+            pool.map(self.replace, input_files)
+
+"""
+
+This is my config.py file:
+"""
+import os
+import toml
+from toml.decoder import TomlDecodeError
+
+class Config:
+    def __init__(self, file_path='config.toml'):
+        self.file_path = file_path
+        self.settings = self._read_config()
+
+    def _read_config(self):
+        """Read the configuration file"""
+        try:
+            config = toml.load(self.file_path)
+            return config
+        except TomlDecodeError:
+            raise Exception("Error decoding TOML file. Please check the configuration file format.")
+        except FileNotFoundError:
+            raise FileNotFoundError(f"Configuration file '{self.file_path}' not found.")
+
+    def get(self, section, key=None):
+        if key:
+            return self.settings.get(section, {}).get(key)
+        return self.settings.get(section)
+
+    def validate_paths(self):
+        input_path = self.get('paths', 'input_path')
+        output_path = self.get('paths', 'output_path')
+        if not os.path.exists(input_path):
+            raise FileNotFoundError(f"Input path '{input_path}' not found.")
+        if not os.path.exists(output_path):
+            raise FileNotFoundError(f"Output path '{output_path}' not found.")
+"""
+
+
+This is my config.toml file:
+"""
+[paths]
+input_path = "/Users/clem/Desktop/EEBOTest3/eng"
+output_path = "/Users/clem/Desktop/EEBOTest3/output"
+
+[settings]
+context_size = 20
+debug_mode = false
+language = eng
+
+[unicode_replacements]
+replacements_on = true
+characters_to_delete = ["\u00B6", "\u261E", "\u2740", "\u2767"]
+characters_to_replace = {"Ʋ" = "U", "&c." = "etc.", "ꝑ" = "per", "ꝭ" = "s", "ȝ" = "g"}
+
+[OpenAI_integration]
+gpt_suggestions=false
+gpt_4=false
+API_Key=""
+"""
+
+
+----
+Perfectionnement 1.1:
+Application Description:
+I am rewriting from scratch a python application named Amanuensis. I used gpt-engineer to create the overall structure and parts of the code. The project is unfinished and might have some incoherences. Help me finish this project step by step. Here is a description and breakdown of the application:
+
+The application is meant to assist scholars in the long and rebarbative process of normalizing large amounts of early modern abbreviated texts. It is divided in two major parts: the Unicode Replacement part (UR) which is coded in unicode_replacement.py. It is optional and it can be disabled in the config.toml file. The Dynamic Word Normalization (DWN) is coded in the word_normalization.py file. Its goal is to convert abbreviated words (AWs) into resolved words (RW). An AW can be recognized by the $ symbol in contains either inside the word or at the end of the word. E.g.: ciru$cision. A RW is the a word that has no longer an abbreviation. E.g.: circumcision.
+
+DWN is divided in two parts: a pre_processing phase (DWN1), in which the application and the user resolve all the unresovled issues upfront, and a normalization phase (DWN2), in which all the changes are applied a posteriori using multiprocessing. The DWN1 is handled before the DWN2, so the normalization can run smoothly and in parallel.
+
+The DWN1, is divided in two major parts. The first part (DWN1.1) is automated and relies on NLTK's wordnet dictionary to determine Machine Solutions (MS). The second part (DWN1.2) is manual, and is meant to resolve all the abbreviations that the automated part could not resolve. It requires the input of the user. The user's solutions (US) are saved in a dictionary called user_solutions.json. Once a US is saved in this dictionary, the application will apply it to all similar AWs.
+
+During the DWN2 phase, the application possesses all the US and MS necessary to implement the desired word replacements in all the text files of the folder and subfolders. Before doing so, however, the app will verify that there is no conflicting information between MS and US. If the application finds them, it will prompt the user to resolve them. Once all conflicts are solved, the app can proceed to implement all the word replacements.
+
+
+amanuensis
+├── README.md
+├── run.sh
+├── config.toml
+├── modules
+│   ├── config.py
+│   ├── gpt_suggestions.py
+│   ├── unicode_replacement.py
+│   ├── word_normalization.py
+│   └── main.py
+├── data
+│   ├── user_solution.json
+│   └── machine_solution.json
+└── logs
+    ├── replacements_log.json
+    └── dynamic_word_normalization.json
+
+---
+
+Specific Issue to address:
+Users have no situational awareness. The application should log and print statements to indicate what it is doing, what it has done, and how much work remains to be done. This is a breakdown of the information expected: 1. The app started and found the config.toml file. 2. The app has read the settings and makes a brief recap of important settings such as whether replacements_on is  true or false, how many characters have been defined in config.toml for deletion and how many for replacement, whether gpt_suggestions option is activated or not. 3. Assuming the unicode replacement process is on, the app should show a progress bar (rich) to inform the user of how much has been done already, and how much is left. Once the unicode replacement process is over, the app show a recap of the replacement process, displaying the amount of words deleted and the amount of words replaced, how many files have been changed. 4. The app should inform the user of when the app starts the normalization process. And within that process, it should indicate if it's running through the automated pre-processing phase (DWN1.1) or the manual one (DWN1.2). When the app is running DWN1.1 it should show a progress bar and log every single change. When the app is running DWN1.2, the application should indicate which file it is currently processing, how many have been processed so far, how many files are left. When promting the user for a solution, the app should also provide the context in which the Abbreviated Word is placed in the text. The amount of words before and after the AW is set in config.toml. "context_size = 20" means 10 words before and 10 words after the AW.  5. when the DWN1.2 phase is complete , the app should print it. 6. In the DWN2 phase, if the app detects inconsistencies between user and machine solutions, then the app must signal it. If it doesn't it should also print it. 7. When the app begins to implement all the changes it should display a progress bar. 8. finally, when the whole process is finished, the app should print it and quit the app.
+
+---
+Perfectionnement 1.2: Print statements.
+Thank you for the comprehensive description of the Amanuensis application. Based on your description, the application appears to have a clear and well-structured design. Your specific request for enhancing user situational awareness through logging and progress indicators is a thoughtful improvement that will likely make the application significantly more user-friendly.
+
+Let’s break down the tasks step by step, and we can work on each one incrementally:
+
+### Step 1: Initialization and Configuration Recap
+- Read the `config.toml` file and confirm it was found and loaded.
+- Print a recap of important settings from the configuration file.
+
+### Step 2: Unicode Replacement Phase (UR)
+- If `replacements_on` is `true` in `config.toml`, initiate the UR process.
+- Display a progress bar to inform the user of the progress during the UR phase.
+- At the end of the UR phase, print a recap (number of words deleted, replaced, files changed, etc.)
+
+### Step 3: Starting the Normalization Process
+- Inform the user when the normalization process starts.
+
+### Step 4: Dynamic Word Normalization Phase 1 (DWN1)
+#### DWN1.1 (Automated Pre-processing)
+- Indicate that the DWN1.1 phase has started.
+- Show a progress bar and log every change.
+
+#### DWN1.2 (Manual Processing)
+- Indicate which file is currently being processed, how many have been processed so far, and how many are left.
+- When prompting the user for a solution, provide the context in which the Abbreviated Word (AW) is placed in the text, based on the `context_size` from `config.toml`.
+
+### Step 5: Completion of DWN1.2 Phase
+- Print a statement indicating the completion of the DWN1.2 phase.
+
+### Step 6: Dynamic Word Normalization Phase 2 (DWN2)
+- Detect and inform the user of inconsistencies between Machine Solutions (MS) and User Solutions (US).
+- If no inconsistencies are found, print a statement indicating that as well.
+
+### Step 7: Implementation of Changes
+- Display a progress bar as the changes are being implemented based on the resolutions from DWN1 and DWN2.
+
+### Step 8: Completion of the Process
+- Print a final statement indicating that the entire process has been completed, and then gracefully exit the application.
+
+Given this breakdown, we can start working on each of these steps one at a time, ensuring that we are adding appropriate logging and user feedback at each stage.
+
+Would you like to start with Step 1 (Initialization and Configuration Recap)? Once we complete each step, we can incrementally integrate the changes into your existing codebase.
+
+----
+Issues to address on Sunday:
+    - No log files for the UR phase
+    - UR Statistics to 0
+    - word_normalization not detecting AWs but all words (!)
+    - Order in main.py is wrong: Conflict Resolution should be at the end not the beginning
+    - Add colors to print statements
+
+---
+The application is meant to assist scholars in the long and rebarbative process of normalizing large amounts of early modern abbreviated texts. It is divided in two major parts: the Unicode Replacement part (UR) which is coded in unicode_replacement.py. It is optional and it can be disabled in the config.toml file. The Dynamic Word Normalization (DWN) is coded in the word_normalization.py file. Its goal is to convert abbreviated words (AWs) into resolved words (RW).
+
+
+amanuensis
+├── README.md
+├── run.sh
+├── config.toml
+├── modules
+│   ├── config.py
+│   ├── gpt_suggestions.py
+│   ├── unicode_replacement.py
+│   ├── word_normalization.py
+│   └── main.py
+├── data
+│   ├── user_solution.json
+│   └── machine_solution.json
+└── logs
+    ├── replacements_log.json
+    └── dynamic_word_normalization.json
