@@ -1,15 +1,22 @@
-[paths]
-input_path = "/Users/clem/Desktop/EEBOTest3/eng"
-output_path = "/Users/clem/Desktop/EEBOTest3/output"
+[paths] # define the paths for working directories
+input_path = "/Users/clem/Desktop/EEBOTest4/eng"
+output_path = "/Users/clem/Desktop/AmanuensisTest"
 
-[logging]
-level = "verbose"  # select between "minimal", "verbose", or "statistic"
-
-[settings]
+[settings] # settings related to the Dynamic Word Normalization process
 context_size = 20
-debug_mode = true
+debug_mode = false
+language = "eng"
 
-[unicode_replacements]
-replacements_on = false # or false
+[unicode_replacements] # settings related to the Unicode Replacement process
+replacements_on = true
 characters_to_delete = ["\u00B6", "\u261E", "\u2740", "\u2767"]
 characters_to_replace = {"Ʋ" = "U", "&c." = "etc.", "ꝑ" = "per", "ꝭ" = "s", "ȝ" = "g"}
+
+[data] # paths of the dictionaries. To be transferred to [paths].
+machine_solution_path = "data/machine_solution.json"
+user_solution_path = "data/user_solution.json"
+
+[OpenAI_integration] # settings related to GPT integration
+gpt_suggestions=false
+gpt_4=false
+API_Key=""
