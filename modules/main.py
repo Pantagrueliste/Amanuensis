@@ -69,5 +69,5 @@ if __name__ == '__main__':
         amanuensis = Amanuensis()
         amanuensis.run()
     except KeyboardInterrupt:
-        print("\nQuitting the app.")
+        print("Quitting the app.")
         sys.exit(0)
