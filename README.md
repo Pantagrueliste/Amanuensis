@@ -43,6 +43,11 @@ To use Amanuensis, simply clone this repository, navigate to the directory, and 
 - colorama
 - tqdm
 - art
+- toml
+- Pool
+- rich
+- Progress
+- text2art
 
 ## Contributing
 
