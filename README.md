@@ -41,7 +41,6 @@ To use Amanuensis, simply clone this repository, navigate to the directory, and 
 - NLTK
 - Levenshtein
 - colorama
-- tqdm
 - art
 - toml
 - Pool
