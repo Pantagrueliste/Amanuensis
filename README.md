@@ -3,7 +3,7 @@ Early 17th cent.: Latin, from (servus) a manu ‘(slave) at hand(writing), secre
 1. a person who writes down your words when you cannot write.
 2. an assistant, especially one who writes or types for somebody.  
 
-# Amanuensis: A normalization tool for early modern abbreviated texts
+# Amanuensis: a normalization tool for early modern abbreviated texts
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8224585.svg)](https://doi.org/10.5281/zenodo.8224585)
 
 
