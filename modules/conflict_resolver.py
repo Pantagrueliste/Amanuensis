@@ -14,6 +14,7 @@ class ConflictResolver:
         """
         Load machine solutions from a JSON file.
         """
+
         machine_solution_path = "data/machine_solution.json"
         try:
             with open(Config().machine_solution_path, "rb") as file:

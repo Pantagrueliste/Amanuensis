@@ -13,7 +13,7 @@ remaining edge cases.
 import os
 import signal
 import sys
-from typing import Dict, Any
+from typing import Any
 
 from art import text2art
 
@@ -175,7 +175,7 @@ class Amanuensis:
         """
         Perform Dynamic Word Normalization on all text files in the input directory.
         """
-        self.logger.info("Starting Dynamic Word Normalization...")
+        self.logger.info("run_word_normalization...")
         input_directory = self.config.get("paths", "input_path")
 
         self.word_normalization.preprocess_directory(input_directory)
