@@ -11,13 +11,17 @@ class ConflictResolver:
         """
         Load machine solutions from a JSON file.
         """
-        machine_solution_path = self.config.get('data', 'machine_solution_path')
+        machine_solution_path = 'data/machine_solution.json'
         try:
-            with open('data/machine_solution.json', 'r', encoding='utf-8') as file:
-                self.machine_solutions = json.load(file)
+            with open(machine_solution_path, 'r', encoding='utf-8') as file:
+                contents = file.read().strip()  # Strip leading and trailing whitespace
+                if contents:  # Check if the content is not empty
+                    self.machine_solutions = json.loads(contents)
+                else:
+                    self.machine_solutions = {}
         except FileNotFoundError:
             self.machine_solutions = {}
-            with open('data/machine_solution.json', 'w', encoding='utf-8') as file:
+            with open(machine_solution_path, 'w', encoding='utf-8') as file:
                 json.dump(self.machine_solutions, file)
 
     def load_user_solutions(self):
