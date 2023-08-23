@@ -1,8 +1,8 @@
 .DS_Store
 env/
 modules/__pychache__/
-modules/__pycache__/config.cpython-311.pyc
 *.pyc
 replacements_log.json
 tmp/*
 !tmp/.gitkeep
+amanuensis.log
