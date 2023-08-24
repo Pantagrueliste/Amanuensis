@@ -26,7 +26,7 @@ Amanuēsis is a fairly robust Python application, tailored specifically for rese
 - **Multilingual Support**: Addition of French, Italian, Latin, and Spanish.  
 - ~~- **Increased Customization**: More options in TOML config file.~~
 - **OpenAI API**: Optional step in the Dynamic Word Normalization leveraging Large Language Models such as GPT-4.
-- **Documentation**: Basic documentation in English.
+- **Documentation**: Basic documentation in English, French, and Spanish.
 
 Feel free to suggest new features in the Issues section.
 
