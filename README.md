@@ -14,7 +14,7 @@ Amanuēsis is a fairly robust Python application, tailored specifically for rese
 ## Features
 
 - **Unicode Character Replacement**: A powerful conversion tool to clean up text by removing undesirable characters.
-- **Dynamic Word Normalization**: Expanding abbreviated words using natural language processing, human inputs, and large language models to enhance elgibility.
+- **Dynamic Word Normalization**: Expanding abbreviated words using natural language processing, human inputs, and large language models to enhance legibility.
 - **Parallel Processing**: Leveraging the the full potential of your multicore CPU, this feature transforms time-consuming tasks into manageable ones.
 - **Comprehensive Logging**: Every single modification is meticulously traked and stored in accessible json files, enabling further analysis.
 - **Batch Processing**: Tailored for efficiently converting very large volumes of text. 
