@@ -7,7 +7,7 @@ Early 17th cent.: Latin, from (servus) a manu ‘(slave) at hand(writing), secre
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8224585.svg)](https://doi.org/10.5281/zenodo.8224585)
 
 
-Amanuēsis is a fairly robust Python application, tailored specifically for researchers in the Digital Humanities. Leveraging natural language and large language models, it is designed to accelerate normalization tasks for large-scale text data, transforming old and complex texts into a more digestible format. This preparation is crucial for further digital analysis and manipulation. With Amanuēsis, you can make your text data more accessible and easier to work with, using natural language and artificial intelligence to streamline an ortherwise rebarbative process..
+Amanuēsis is a fairly robust Python application, tailored specifically for researchers in the Digital Humanities. Leveraging natural language and large language models, it is designed to accelerate normalization tasks for large-scale text data, transforming old and complex texts into a more digestible format. This preparation is crucial for further digital analysis and manipulation. With Amanuēsis, you can make your text data more accessible and easier to work with, using natural language and artificial intelligence to streamline an ortherwise rebarbative process.
 
 <img width="1792" alt="Screenshot 2023-07-31 at 18 59 01" src="https://github.com/Pantagrueliste/Amanuensis/assets/9995536/33ccccc5-4287-4874-891a-e57035e5418e">
 
