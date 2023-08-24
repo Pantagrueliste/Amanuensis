@@ -116,14 +116,15 @@ class DynamicWordNormalization1:
         with open(file_path, 'r', encoding='utf-8') as file:
             lines = file.readlines()
             for line_number, line in enumerate(lines, start=1):
-                print(f"Processing line {line_number}: {line.strip()}")
+                #print(f"Processing line {line_number}: {line.strip()}")
+                #print(f"Processing file: {file_path}")
                 self.process_AWs(line, file_path, line_number)
+        self.save_unresolved_AWs()
 
 
     def preprocess_directory(self, directory_path):
         for root, _, files in os.walk(directory_path):
             for file_name in files:
                 file_path = os.path.join(root, file_name)
-                print(f"Processing file: {file_path}")
                 self.process_file(file_path)
         self.save_unresolved_AWs()
