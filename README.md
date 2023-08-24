@@ -36,16 +36,7 @@ To use Amanuēsis, simply clone this repository, navigate to the directory, and 
 
 ## Dependencies
 
-- Python 3.7+
-- NLTK
-- Levenshtein
-- colorama
-- art
-- toml
-- Pool
-- rich
-- Progress
-- text2art
+See requirements.txt
 
 ## Contributing
 
