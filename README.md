@@ -44,6 +44,6 @@ This project is licensed under the terms of the MIT license. For more details, s
 ---
 
 Amanuensis, *noun*. /əˌmænjuˈensɪs/.  
-Early 17th cent.: Latin, from (servus) a manu ‘(slave) at hand(writing), secretary’ + -ensis ‘belonging to’.  
+Early 17th cent.: Latin, from _a manu_ (short for secretary) and -ensis ‘belonging to’.  
 1. a person who writes down your words when you cannot write.
-2. an assistant, especially one who writes or types for somebody.  
+2. a literary assistant, especially one who writes, types for somebody or copies text.  
