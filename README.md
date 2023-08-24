@@ -13,12 +13,11 @@ Amanuēsis is a fairly robust Python application, tailored specifically for rese
 
 ## Features
 
-- **Unicode Replacement**: Handles a customizable dictionary of unicode characters and transforms them into understandable text representations.
-- **Dynamic Word Normalization**: Changes words that contain special characters into valid English words.
-- **Interactive Correction**: If a word can't be automatically normalized, the application prompts the user for input.
-- **Progress Stats**: Offers real-time statistics like elapsed time, estimated remaining time, and percentage of files processed to keep you informed about the normalization process.
-- **Batch Processing**: Processes all text files in a given directory, saving the output into a "FinalText" directory.
-- **Difficulty Log**: Logs difficult passages for later review and analysis.
+- **Unicode Character Replacement**: Powerful conversion tool cleanup the text from undesirable characters.
+- **Dynamic Word Normalization**: Expands abbreviated words using natural language processing, human inputs, and large language models.
+- **Parallel Processing**: Takles full advantage of your multicore CPU, converting excruciatingly long tasks into something manageable.
+- **Exhausitve Logging**: Keeps track of every single modification in accessible json files.
+- **Batch Processing**: Designed to convert large amounts of text files. 
 
 ## Upcoming Features
 
