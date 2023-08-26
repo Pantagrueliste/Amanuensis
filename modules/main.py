@@ -55,9 +55,9 @@ class Amanuensis:
         input_path = self.config.get("paths", "input_path")
         file_paths = self.get_all_text_files(input_path)
 
-        print("Launch process_files.")
+        # print("Launch process_files.")
         self.unicode_replacement.process_files(file_paths)
-        print("process_files done.")
+        # print("process_files done.")
         self.unicode_replacement.save_log()
         print("Unicode Replacement Complete.")
 
