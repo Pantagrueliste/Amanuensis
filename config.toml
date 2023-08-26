@@ -1,6 +1,6 @@
 [paths] # define the paths for working directories
-input_path = "/Users/clem/Desktop/EEBOTest4/eng"
-output_path = "/Users/clem/Desktop/AmanuensisTest"
+input_path = "/Users/clem/Desktop/EEBOTest4/SampleData"
+output_path = "/Users/clem/Desktop/AmanuensisTestSample"
 
 [settings] # settings related to the Dynamic Word Normalization process
 context_size = 20
