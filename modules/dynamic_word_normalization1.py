@@ -9,6 +9,7 @@ from rich.console import Console
 
 batch = {}
 batch_size = 10
+console = Console()
 
 def writer_process(queue, file_path):
     try:
@@ -75,7 +76,7 @@ class DynamicWordNormalization1:
         return re.findall(self.pattern, text)
 
     def process_AWs(self, text, filename, line_number, pattern):
-        words = re.findall(pattern, text)
+        words = text.split()
         AWs = [word for word in words if "$" in word]
         context_size = self.context_size
         for AW in AWs:
@@ -108,11 +109,10 @@ class DynamicWordNormalization1:
         return None
 
     def log_unresolved_AW(self, AW, filename, line_number, context_words, context_size):
-        # print(f"Logging unresolved AW: {AW} in {filename}")
         AW_index = context_words.index(AW)
         start_index = max(0, AW_index - self.context_size)
-        end_index = min(len(context_words) - 1, AW_index + self.context_size)
-        context = " ".join(context_words[start_index : end_index + 1])
+        end_index = min(len(context_words), AW_index + self.context_size + 1)
+        context = " ".join(context_words[start_index:end_index])
         self.unresolved_AWs_log.append(
             {
                 "filename": filename,
@@ -123,6 +123,7 @@ class DynamicWordNormalization1:
             }
         )
 
+
     def save_unresolved_AWs(self):
         unresolved_AWs_path = "data/unresolved_AW.json"
         self.save_json(unresolved_AWs_path, self.unresolved_AWs_log)
@@ -131,19 +132,20 @@ class DynamicWordNormalization1:
         with open(file_path, "r", encoding="utf-8") as file:
             lines = file.readlines()
             for line_number, line in enumerate(lines, start=1):
-                # print(f"Processing line {line_number}: {line.strip()}")
-                # print(f"Processing file: {file_path}")
                 self.process_AWs(line, file_path, line_number, pattern)
-                self.update_progress()
         self.save_unresolved_AWs()
 
     def preprocess_directory(self, directory_path):
-        for root, _, files in os.walk(directory_path):
-            for file_name in files:
-                file_path = os.path.join(root, file_name)
-                self.process_file(file_path, self.pattern)
-                self.update_progress()
-        self.save_unresolved_AWs()
+        total_files = self.total_files(directory_path)
+        with Progress() as progress:
+            task = progress.add_task("[cyan]Processing files...", total=total_files)
+
+            for root, _, files in os.walk(directory_path):
+                for file_name in files:
+                    file_path = os.path.join(root, file_name)
+                    self.process_file(file_path, self.pattern)
+                    progress.update(task, advance=1)
+            self.save_unresolved_AWs()
 
     def total_files(self, directory_path):
         count = 0
