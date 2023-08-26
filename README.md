@@ -4,8 +4,6 @@
 
 Amanuēsis is a fairly robust Python application, tailored specifically for researchers in the Digital Humanities. Leveraging natural language and large language models, it is designed to accelerate normalization tasks for large-scale text data, transforming old and complex texts into a more digestible format. This preparation is crucial for further digital analysis and manipulation. With Amanuēsis, you can make your text data more accessible and easier to work with, using natural language and artificial intelligence to accelerate and streamline an ortherwise rebarbative process.
 
-<img width="1792" alt="Screenshot 2023-07-31 at 18 59 01" src="https://github.com/Pantagrueliste/Amanuensis/assets/9995536/33ccccc5-4287-4874-891a-e57035e5418e">
-
 ## Features
 
 - **Unicode Character Replacement**: A powerful conversion tool to clean up text by removing undesirable characters.
@@ -27,7 +25,7 @@ Feel free to suggest new features in the Issues section.
 
 ## Usage
 
-To use Amanuēsis, simply clone this repository, navigate to the directory, and run `python amanuensis.py`. When prompted, enter the directory where your text files are located. The script will then normalize each file, line by line, applying the normalization function to each word. 
+To use Amanuēsis, simply clone this repository, navigate to the directory, and run `./run.sh`. Alternatively, you can run the app directly from the modules/ folder `python main.py`. Make sure before to indicate the input and destination paths in the config.toml file. 
 
 ## Dependencies
 
