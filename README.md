@@ -27,6 +27,8 @@ Feel free to suggest new features in the Issues section.
 
 To use Amanuēsis, simply clone this repository, navigate to the directory, and run `./run.sh`. Alternatively, you can run the app directly from the modules/ folder `python main.py`. Make sure before to indicate the input and destination paths in the config.toml file. 
 
+<img width="1205" alt="Screenshot 2023-08-26 at 17 03 30" src="https://github.com/Pantagrueliste/Amanuensis/assets/9995536/c257e5fc-b671-4b05-8f4c-193c80be8a5a">
+
 ## Dependencies
 
 See requirements.txt
