@@ -67,6 +67,7 @@ class Amanuensis:
         """
         print("Starting Dynamic Word Normalization...")
         input_directory = self.config.get("paths", "input_path")
+
         self.word_normalization.preprocess_directory(input_directory)
         print("Dynamic Word Normalization Complete.")
 
