@@ -1,3 +1,6 @@
 .DS_Store
 env/
 modules/__pychache__/
+modules/__pycache__/config.cpython-311.pyc
+modules/__pycache__/config.cpython-311.pyc
+*.pyc
