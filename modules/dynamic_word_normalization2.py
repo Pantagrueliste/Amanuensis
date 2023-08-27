@@ -11,11 +11,9 @@ class UserQuitException(Exception):
     pass
 
 class DynamicWordNormalization2:
-    def __init__(self, unresolved_AWs_path="data/unresolved_AW.json"):
-        # Load unresolved AWs
+    def __init__(self, unresolved_AWs_path="data/unresolved_AW.json", ambiguous_AWs=[]):
         self.unresolved_AWs = self.load_unresolved_AWs(unresolved_AWs_path)
-
-        # Initialize counters
+        self.ambiguous_AWs = ambiguous_AWs
         self.solved_AWs_count = 0
         self.processed_files_count = 0
         self.remaining_AWs_count = len(self.unresolved_AWs)
@@ -71,17 +69,40 @@ class DynamicWordNormalization2:
     def process_unresolved_AWs(self):
         """Process unresolved AWs by prompting the user for solutions."""
 
+        # Load existing user solutions
+        try:
+            with open("data/user_solution.json", "r", encoding="utf-8") as file:
+                existing_user_solutions = json.load(file)
+        except FileNotFoundError:
+            existing_user_solutions = {}
+
         for unresolved_AW in self.unresolved_AWs:
             word = unresolved_AW["unresolved_AW"]
+            if word in existing_user_solutions or word in self.ambiguous_AWs:
+                        continue
             context = unresolved_AW["context"]
             file_name = unresolved_AW["filename"]
             line_number = unresolved_AW["line"]
             column = unresolved_AW["column"]
 
+            # Check if the word is ambiguous and should be logged as a difficult passage
+            if word in self.ambiguous_AWs:
+                self.log_difficult_passage(file_name, line_number, column, context)
+                continue
+
+            # Skip the word if it already has a user-defined solution
+            if word in existing_user_solutions:
+                continue
+
+            # Handle user input for unresolved_AW
             correct_word = self.handle_user_input(
                 word, context, file_name, line_number, column
             )
+
+            # Update user solutions
             self.update_user_solution(word, correct_word)
+
+            # Update counters and print status
             self.solved_AWs_count += 1
             self.remaining_AWs_count -= 1
             if file_name not in [
@@ -90,6 +111,7 @@ class DynamicWordNormalization2:
                 self.processed_files_count += 1
                 self.remaining_files_count -= 1
             self.print_status()
+
 
     def log_difficult_passage(self, file_name, line_number, column, context):
         """Log a difficult passage."""
@@ -120,13 +142,13 @@ class DynamicWordNormalization2:
         while True:
             os.system("cls" if os.name == "nt" else "clear")
             message1 = (
-                f"Could not find a match for '{Fore.RED + word + Style.RESET_ALL}.'"
+                f"Could not find a match for '{Fore.RED + word + Style.RESET_ALL}'"
             )
-            message2 = f"\nFound in file '{file_name}' at line {line_number}."
+            message2 = f"\nFound in file '{file_name}' at line {line_number}"
             print(
                 f"{Fore.LIGHTBLACK_EX}{message1}{Style.RESET_ALL}{Fore.LIGHTBLACK_EX}{message2}{Style.RESET_ALL}"
             )
-            print("Context: ", context)
+            print("Context: \n...", context)
 
             correct_word_prompt = HTML(
                 "<ansired>Enter 'n' or 'm' to replace $, 'd' to discard it\nEnter the full replacement for '{}' \nType '`' if you don't know\nType 'quit' to exit:</ansired>\n".format(
