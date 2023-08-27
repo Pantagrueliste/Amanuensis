@@ -7,6 +7,8 @@ from rich.console import Console
 from colorama import Fore, Style
 import Levenshtein
 
+class UserQuitException(Exception):
+    pass
 
 class DynamicWordNormalization2:
     def __init__(self, unresolved_AWs_path="data/unresolved_AW.json"):
@@ -26,6 +28,7 @@ class DynamicWordNormalization2:
 
         # Print the initial status
         self.print_status()
+
 
     def load_unresolved_AWs(self, file_path):
         """Load unresolved alternative words (AWs) from the JSON file."""
@@ -67,8 +70,9 @@ class DynamicWordNormalization2:
 
     def process_unresolved_AWs(self):
         """Process unresolved AWs by prompting the user for solutions."""
+
         for unresolved_AW in self.unresolved_AWs:
-            word = unresolved_AW["AW"]
+            word = unresolved_AW["unresolved_AW"]
             context = unresolved_AW["context"]
             file_name = unresolved_AW["filename"]
             line_number = unresolved_AW["line"]
@@ -88,7 +92,7 @@ class DynamicWordNormalization2:
             self.print_status()
 
     def log_difficult_passage(self, file_name, line_number, column, context):
-        """Log a difficult passage to a JSON file."""
+        """Log a difficult passage."""
         difficult_passages_path = "data/difficult_passages.json"
 
         # Load existing difficult passages
@@ -113,27 +117,29 @@ class DynamicWordNormalization2:
             json.dump(difficult_passages, file, ensure_ascii=False, indent=4)
 
     def handle_user_input(self, word, context, file_name, line_number, column):
-        """Handle user input for a specific unresolved AW."""
         while True:
             os.system("cls" if os.name == "nt" else "clear")
             message1 = (
-                f"Could not find a match for '{Fore.RED + word + Style.RESET_ALL}'"
+                f"Could not find a match for '{Fore.RED + word + Style.RESET_ALL}.'"
             )
-            message2 = f"in the dictionary after trying both replacements. Found in file '{file_name}' at line {line_number}."
+            message2 = f"\nFound in file '{file_name}' at line {line_number}."
             print(
                 f"{Fore.LIGHTBLACK_EX}{message1}{Style.RESET_ALL}{Fore.LIGHTBLACK_EX}{message2}{Style.RESET_ALL}"
             )
             print("Context: ", context)
 
             correct_word_prompt = HTML(
-                "<ansired>Please enter 'n' or 'm' to replace $, or enter the full replacement for '{}' or type '`' if you don't know:</ansired>\n".format(
+                "<ansired>Enter 'n' or 'm' to replace $, 'd' to discard it\nEnter the full replacement for '{}' \nType '`' if you don't know\nType 'quit' to exit:</ansired>\n".format(
                     word
                 )
             )
             correct_word = prompt(correct_word_prompt)
 
             # Handle special commands
-            if correct_word == "`":
+            if correct_word.lower() == "quit":
+                raise UserQuitException()
+                break
+            elif correct_word == "`":
                 self.log_difficult_passage(file_name, line_number, column, context)
                 print("Difficult passage logged. Please continue with the next word.")
                 return word
@@ -141,6 +147,8 @@ class DynamicWordNormalization2:
                 correct_word = word.replace("$", "n")
             elif correct_word.lower() == "m":
                 correct_word = word.replace("$", "m")
+            elif correct_word.lower() == "d":
+                        correct_word = word.replace("$", "")
 
             # Validate user's input
             lev_distance = Levenshtein.distance(word.replace("$", ""), correct_word)
@@ -159,6 +167,6 @@ class DynamicWordNormalization2:
                     ).lower()
                 if confirmation == "no":
                     continue
-            break
 
+            break
         return correct_word

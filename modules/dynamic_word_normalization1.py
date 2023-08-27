@@ -138,7 +138,7 @@ class DynamicWordNormalization1:
     def preprocess_directory(self, directory_path):
         total_files = self.total_files(directory_path)
         with Progress() as progress:
-            task = progress.add_task("[cyan]Processing files...", total=total_files)
+            task = progress.add_task("[cyan]Analyzing files...", total=total_files)
 
             for root, _, files in os.walk(directory_path):
                 for file_name in files:
