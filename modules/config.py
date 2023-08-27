@@ -66,3 +66,9 @@ class Config:
             raise FileNotFoundError(f"Input path '{input_path}' not found.")
         if not os.path.exists(output_path):
             raise FileNotFoundError(f"Output path '{output_path}' not found.")
+
+    def get_ambiguous_AWs(self):
+        try:
+            return self.settings['ambiguity']['ambiguous_AWs']
+        except KeyError:
+            return []  # Return an empty list if not found
