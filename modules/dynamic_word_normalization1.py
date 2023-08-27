@@ -1,18 +1,12 @@
 import os
 import json
 import re
-import toml
 import tempfile
 import shutil
 
 from nltk.corpus import wordnet
 from nltk.stem import WordNetLemmatizer
 from rich.progress import Progress
-from rich.console import Console
-
-batch = {}
-batch_size = 10
-console = Console()
 
 
 def atomic_write(file_path, data):
@@ -26,28 +20,6 @@ def write_to_file(batch, file_path):
         data = json.load(file)
     data.update(batch)
     atomic_write(file_path, data)
-
-def writer_process(queue, file_path):
-    try:
-        counter = 0
-        while True:
-            update = queue.get()
-            if update == "DONE":
-                if batch:
-                    atomic_write(file_path, batch)
-                break
-
-            batch.update(update)
-            counter += 1
-
-            if counter >= batch_size:
-                atomic_write(file_path, batch)
-                batch.clear()
-                counter = 0
-
-    except Exception as e:
-        print(f"Error in writer process: {e}")
-
 
 class DynamicWordNormalization1:
     def __init__(self, config):
@@ -78,8 +50,7 @@ class DynamicWordNormalization1:
             self.save_json(self.machine_solutions_path, self.machine_solutions)
 
     def save_json(self, file_path, data):
-        with open(file_path, "w", encoding="utf-8") as file:
-            json.dump(data, file, ensure_ascii=False, indent=4)
+        atomic_write(file_path, data)
 
     def extract_AWs(self, text):
         return re.findall(self.pattern, text)
@@ -106,18 +77,21 @@ class DynamicWordNormalization1:
                     )
 
     def consult_wordnet(self, AW):
-        # print(f"Consulting WordNet for {AW}...") # debug
+        """
+        Consults WordNet to find a solution for the AW.
+        """
         word_n = AW.replace("$", "n")
         if wordnet.synsets(word_n):
-            # print(f"Found solution: {word_n}")
             return word_n
         word_m = AW.replace("$", "m")
         if wordnet.synsets(word_m):
-            # print(f"Found solution: {word_m}")
             return word_m
         return None
 
     def log_unresolved_AW(self, AW, filename, line_number, context_words, context_size):
+        """
+        Logs the unresolved AWs to a file.
+        """
         AW_index = context_words.index(AW)
         start_index = max(0, AW_index - self.context_size)
         end_index = min(len(context_words), AW_index + self.context_size + 1)
@@ -162,5 +136,6 @@ class DynamicWordNormalization1:
             count += len(files)
         return count
 
-        with dynamic_word_normalization1.progress:
-            dynamic_word_normalization1.preprocess_directory(directory_path, pattern)
+# orphaned code?
+        # with dynamic_word_normalization1.progress:
+        #     dynamic_word_normalization1.preprocess_directory(directory_path, pattern)

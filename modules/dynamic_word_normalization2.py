@@ -1,5 +1,7 @@
 import json
 import os
+import re
+import string
 
 from prompt_toolkit import prompt
 from prompt_toolkit.formatted_text import HTML
@@ -34,7 +36,6 @@ class DynamicWordNormalization2:
         # Print the initial status
         self.print_status()
 
-
     def load_unresolved_AWs(self, file_path):
         """Load unresolved alternative words (AWs) from the JSON file."""
         try:
@@ -67,25 +68,30 @@ class DynamicWordNormalization2:
             user_solutions = {}
 
         # Update the user solutions with the new solution
-        user_solutions[unresolved_AW] = correct_word
+        self.existing_user_solutions[unresolved_AW] = correct_word
 
         # Write the updated user solutions back to the file
-        atomic_write(user_solution_path, user_solutions)
+        atomic_write(user_solution_path, self.existing_user_solutions)
 
     def process_unresolved_AWs(self):
         """Process unresolved AWs by prompting the user for solutions."""
-
         # Load existing user solutions
         try:
             with open("data/user_solution.json", "r", encoding="utf-8") as file:
-                existing_user_solutions = json.load(file)
+                self.existing_user_solutions = json.load(file)
         except FileNotFoundError:
             existing_user_solutions = {}
 
         for unresolved_AW in self.unresolved_AWs:
-            word = unresolved_AW["unresolved_AW"]
-            if word in existing_user_solutions or word in self.ambiguous_AWs:
-                        continue
+            # Extracting words with "$" using regular expression
+            pattern = r"\w*\$+\w*"
+            AWs = re.findall(pattern, unresolved_AW["context"])
+            word = DynamicWordNormalization2.remove_trailing_punctuation(unresolved_AW["unresolved_AW"])
+
+            if word in self.existing_user_solutions or word in self.ambiguous_AWs:
+                print(f"Skipping {word} as it is already resolved.")
+                continue
+
             context = unresolved_AW["context"]
             file_name = unresolved_AW["filename"]
             line_number = unresolved_AW["line"]
@@ -97,7 +103,7 @@ class DynamicWordNormalization2:
                 continue
 
             # Skip the word if it already has a user-defined solution
-            if word in existing_user_solutions:
+            if word in self.existing_user_solutions:
                 continue
 
             # Handle user input for unresolved_AW
@@ -117,6 +123,11 @@ class DynamicWordNormalization2:
                 self.processed_files_count += 1
                 self.remaining_files_count -= 1
             self.print_status()
+
+    @staticmethod
+    def remove_trailing_punctuation(word):
+        # return re.sub(r'(\$?)[\.,;:!?(){}]$', r'\1', word)
+        return re.sub(r'^[\.,;:!?(){}]|[\.,;:!?(){}]$', '', word)
 
 
     def log_difficult_passage(self, file_name, line_number, column, context):
@@ -146,7 +157,8 @@ class DynamicWordNormalization2:
 
     def handle_user_input(self, word, context, file_name, line_number, column):
         while True:
-            os.system("cls" if os.name == "nt" else "clear")
+            print('-' * 100)
+            # os.system("cls" if os.name == "nt" else "clear")
             message1 = (
                 f"Could not find a match for '{Fore.RED + word + Style.RESET_ALL}'"
             )
