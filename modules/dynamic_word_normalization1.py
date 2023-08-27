@@ -2,6 +2,9 @@ import os
 import json
 import re
 import toml
+import tempfile
+import shutil
+
 from nltk.corpus import wordnet
 from nltk.stem import WordNetLemmatizer
 from rich.progress import Progress
@@ -11,6 +14,19 @@ batch = {}
 batch_size = 10
 console = Console()
 
+
+def atomic_write(file_path, data):
+    temp_file = tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", delete=False)
+    json.dump(data, temp_file, ensure_ascii=False, indent=4)
+    temp_file.close()
+    shutil.move(temp_file.name, file_path)
+
+def write_to_file(batch, file_path):
+    with open(file_path, "r", encoding="utf-8") as file:
+        data = json.load(file)
+    data.update(batch)
+    atomic_write(file_path, data)
+
 def writer_process(queue, file_path):
     try:
         counter = 0
@@ -18,26 +34,19 @@ def writer_process(queue, file_path):
             update = queue.get()
             if update == "DONE":
                 if batch:
-                    write_to_file(batch, file_path)
+                    atomic_write(file_path, batch)
                 break
 
             batch.update(update)
             counter += 1
 
             if counter >= batch_size:
-                write_to_file(batch, file_path)
+                atomic_write(file_path, batch)
                 batch.clear()
                 counter = 0
 
     except Exception as e:
         print(f"Error in writer process: {e}")
-
-def write_to_file(batch, file_path):
-    with open(file_path, "r", encoding="utf-8") as file:
-        data = json.load(file)
-    data.update(batch)
-    with open(file_path, "w", encoding="utf-8") as file:
-        json.dump(data, file, ensure_ascii=False, indent=4)
 
 
 class DynamicWordNormalization1:

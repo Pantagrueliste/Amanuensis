@@ -7,6 +7,13 @@ from rich.console import Console
 from colorama import Fore, Style
 import Levenshtein
 
+
+def atomic_write(file_path, data):
+    temp_file_path = file_path + ".tmp"
+    with open(temp_file_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+    os.rename(temp_file_path, file_path)
+
 class UserQuitException(Exception):
     pass
 
@@ -63,8 +70,7 @@ class DynamicWordNormalization2:
         user_solutions[unresolved_AW] = correct_word
 
         # Write the updated user solutions back to the file
-        with open(user_solution_path, "w", encoding="utf-8") as file:
-            json.dump(user_solutions, file, ensure_ascii=False, indent=4)
+        atomic_write(user_solution_path, user_solutions)
 
     def process_unresolved_AWs(self):
         """Process unresolved AWs by prompting the user for solutions."""
