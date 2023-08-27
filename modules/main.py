@@ -72,7 +72,8 @@ class Amanuensis:
         self.config.validate_paths()
         self.unicode_replacement = UnicodeReplacement(self.config)
         self.word_normalization = DynamicWordNormalization1(self.config)
-        self.word_normalization2 = DynamicWordNormalization2()
+        self.ambiguous_AWs = self.config.get_ambiguous_AWs()
+        self.word_normalization2 = DynamicWordNormalization2(ambiguous_AWs=self.ambiguous_AWs)
         self.conflict_resolver = ConflictResolver(self.config)
 
 
