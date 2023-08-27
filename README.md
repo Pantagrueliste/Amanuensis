@@ -2,7 +2,7 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8224585.svg)](https://doi.org/10.5281/zenodo.8224585)
 <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
 
-Amanuēsis is a fairly robust Python application, tailored specifically for researchers in the Digital Humanities. Leveraging natural language and large language models, it is designed to accelerate normalization tasks for large-scale text data, transforming old and complex texts into a more digestible format. This preparation is crucial for further digital analysis and manipulation. With Amanuēsis, you can make your text data more accessible and easier to work with, using natural language and artificial intelligence to accelerate and streamline an ortherwise rebarbative process.
+Amanuēsis is a Python application, tailored specifically for researchers in the Digital Humanities. Leveraging natural language and large language models, it is designed to accelerate normalization tasks for large-scale text data, transforming old and complex texts into a more digestible format. This preparation is crucial for further digital analysis and manipulation. With Amanuēsis, you can make your text data more accessible and easier to work with, using natural language and artificial intelligence to accelerate and streamline an ortherwise rebarbative process.
 
 ## Features
 
