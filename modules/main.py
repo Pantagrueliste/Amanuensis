@@ -23,8 +23,10 @@ from dynamic_word_normalization1 import DynamicWordNormalization1
 from dynamic_word_normalization2 import DynamicWordNormalization2
 from conflict_resolver import ConflictResolver
 from multiprocessing.pool import IMapUnorderedIterator
+from dynamic_word_normalization2 import UserQuitException
 from rich.logging import RichHandler
 from rich.progress import Progress
+from art import text2art
 
 nltk.download("wordnet")
 
@@ -48,7 +50,6 @@ def terminate_ongoing_processes():
         process.terminate()
     logging.info("Terminated all ongoing processes.")
 
-# define signal handler
 def signal_handler(signal, frame):
     """
     Handle Ctrl+C signal.
@@ -79,11 +80,26 @@ class Amanuensis:
         """
         Main method to start word normalization process.
         """
+        print(text2art("Amanuensis"))
         if self.config.get("unicode_replacements", "replacements_on"):
             self.run_unicode_replacement()
+            proceed = input("Unicode Replacement is complete. Do you want to proceed to Dynamic Word Normalization? (y/n): ")
+            if proceed.lower() != 'y':
+                print("Exiting.")
+                save_json_data()
+                terminate_ongoing_processes()
+                sys.exit(0)
 
         input_directory = self.config.get("paths", "input_path")
         self.run_word_normalization()
+        self.word_normalization2.process_unresolved_AWs()
+
+        proceed = input("Dynamic Word Normalization is complete. Do you want to proceed to Conflict Resolution? (y/n): ")
+        if proceed.lower() != 'y':
+            print("Exiting.")
+            save_json_data()
+            terminate_ongoing_processes()
+            sys.exit(0)
 
         print("Resolving conflicts between Machine and User Solutions...")
         self.conflict_resolver.detect_and_resolve_conflicts()
@@ -101,7 +117,7 @@ class Amanuensis:
         self.unicode_replacement.process_files(file_paths)
         # print("process_files done.")
         self.unicode_replacement.save_log()
-        print("Unicode Replacement Complete.")
+
 
     def run_word_normalization(self):
         """
@@ -111,7 +127,7 @@ class Amanuensis:
         input_directory = self.config.get("paths", "input_path")
 
         self.word_normalization.preprocess_directory(input_directory)
-        print("Dynamic Word Normalization Complete.")
+
 
     def get_all_text_files(self, dir_path):
         """
@@ -124,7 +140,12 @@ class Amanuensis:
                     text_files.append(os.path.join(subdir, file))
         return text_files
 
-# TODO: improve graceful exit on KeyboardInterrupt
 if __name__ == "__main__":
+    try:
         amanuensis = Amanuensis()
         amanuensis.run()
+    except UserQuitException:
+        print("Exiting the application.")
+        save_json_data()
+        terminate_ongoing_processes()
+        sys.exit(0)
