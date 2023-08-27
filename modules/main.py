@@ -14,24 +14,66 @@ import os
 import sys
 import logging
 import nltk
+import signal
+import json
 
 from config import Config
 from unicode_replacement import UnicodeReplacement
 from dynamic_word_normalization1 import DynamicWordNormalization1
+from dynamic_word_normalization2 import DynamicWordNormalization2
 from conflict_resolver import ConflictResolver
+from multiprocessing.pool import IMapUnorderedIterator
 from rich.logging import RichHandler
 from rich.progress import Progress
 
 nltk.download("wordnet")
 
+ongoing_processes = []
+pending_json_data = {}
+
+def save_json_data():
+    """
+    Save pending json data to json disk.
+    """
+    for filename, data in pending_json_data.items():
+        with open(filename, "w") as f:
+            json.dump(data, f)
+    logging.info("Saved pending json data to disk.")
+
+def terminate_ongoing_processes():
+    """
+    Terminate all ongoing processes.
+    """
+    for process in ongoing_processes:
+        process.terminate()
+    logging.info("Terminated all ongoing processes.")
+
+# define signal handler
+def signal_handler(signal, frame):
+    """
+    Handle Ctrl+C signal.
+    """
+    logging.info("Ctrl+C pressed.")
+    save_json_data()
+    print("\n\nYou pressed Ctrl+C. Initiating shutdown...")
+    terminate_ongoing_processes()
+    logging.info("Cleanup complete. Exiting.")
+    print("Au revoir!")
+    sys.exit(0)
+signal.signal(signal.SIGINT, signal_handler)
 
 class Amanuensis:
     def __init__(self):
+        """
+        Initialize Amanuensis.
+        """
         self.config = Config()
         self.config.validate_paths()
         self.unicode_replacement = UnicodeReplacement(self.config)
         self.word_normalization = DynamicWordNormalization1(self.config)
+        self.word_normalization2 = DynamicWordNormalization2()
         self.conflict_resolver = ConflictResolver(self.config)
+
 
     def run(self):
         """
@@ -82,11 +124,7 @@ class Amanuensis:
                     text_files.append(os.path.join(subdir, file))
         return text_files
 
-
+# TODO: improve graceful exit on KeyboardInterrupt
 if __name__ == "__main__":
-    try:
         amanuensis = Amanuensis()
         amanuensis.run()
-    except KeyboardInterrupt:
-        print("Quitting the app.")
-        sys.exit(0)

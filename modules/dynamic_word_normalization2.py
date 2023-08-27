@@ -34,6 +34,12 @@ class DynamicWordNormalization2:
                 return json.load(file)
         except FileNotFoundError:
             raise FileNotFoundError(f"Unresolved AWs file '{file_path}' not found.")
+        except json.JSONDecodeError as e:
+            raise json.JSONDecodeError(
+                f"Malformed JSON in file '{file_path}' at line {e.lineno}, column {e.colno}",
+                e.doc,
+                e.pos,
+            )
 
     def print_status(self):
         """Print the current status of the DWN1.2 phase."""
@@ -72,8 +78,6 @@ class DynamicWordNormalization2:
                 word, context, file_name, line_number, column
             )
             self.update_user_solution(word, correct_word)
-
-            # Update counters and print status
             self.solved_AWs_count += 1
             self.remaining_AWs_count -= 1
             if file_name not in [
