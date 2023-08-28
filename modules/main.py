@@ -33,6 +33,7 @@ nltk.download("wordnet")
 ongoing_processes = []
 pending_json_data = {}
 
+
 def save_json_data():
     """
     Save pending json data to json disk.
@@ -42,6 +43,7 @@ def save_json_data():
             json.dump(data, f)
     logging.info("Saved pending json data to disk.")
 
+
 def terminate_ongoing_processes():
     """
     Terminate all ongoing processes.
@@ -49,6 +51,7 @@ def terminate_ongoing_processes():
     for process in ongoing_processes:
         process.terminate()
     logging.info("Terminated all ongoing processes.")
+
 
 def signal_handler(signal, frame):
     """
@@ -61,7 +64,10 @@ def signal_handler(signal, frame):
     logging.info("Cleanup complete. Exiting.")
     print("Au revoir!")
     sys.exit(0)
+
+
 signal.signal(signal.SIGINT, signal_handler)
+
 
 class Amanuensis:
     def __init__(self):
@@ -74,9 +80,10 @@ class Amanuensis:
         self.unicode_replacement = UnicodeReplacement(self.config)
         self.word_normalization = DynamicWordNormalization1(self.config)
         self.ambiguous_AWs = self.config.get_ambiguous_AWs()
-        self.word_normalization2 = DynamicWordNormalization2(ambiguous_AWs=self.ambiguous_AWs)
+        self.word_normalization2 = DynamicWordNormalization2(
+            ambiguous_AWs=self.ambiguous_AWs
+        )
         self.conflict_resolver = ConflictResolver(self.config)
-
 
     def run(self):
         """
@@ -84,8 +91,10 @@ class Amanuensis:
         """
         if self.config.get("unicode_replacements", "replacements_on"):
             self.run_unicode_replacement()
-            proceed = input("Unicode Replacement is complete. Do you want to proceed to Dynamic Word Normalization? (y/n): ")
-            if proceed.lower() != 'y':
+            proceed = input(
+                "Unicode Replacement is complete. Do you want to proceed to Dynamic Word Normalization? (y/n): "
+            )
+            if proceed.lower() != "y":
                 print("Exiting.")
                 save_json_data()
                 terminate_ongoing_processes()
@@ -95,8 +104,10 @@ class Amanuensis:
         self.run_word_normalization()
         self.word_normalization2.process_unresolved_AWs()
 
-        proceed = input("Dynamic Word Normalization is complete. Do you want to proceed to Conflict Resolution? (y/n): ")
-        if proceed.lower() != 'y':
+        proceed = input(
+            "Dynamic Word Normalization is complete. Do you want to proceed to Conflict Resolution? (y/n): "
+        )
+        if proceed.lower() != "y":
             print("Exiting.")
             save_json_data()
             terminate_ongoing_processes()
@@ -119,7 +130,6 @@ class Amanuensis:
         # print("process_files done.")
         self.unicode_replacement.save_log()
 
-
     def run_word_normalization(self):
         """
         Perform Dynamic Word Normalization on all text files in the input directory.
@@ -128,7 +138,6 @@ class Amanuensis:
         input_directory = self.config.get("paths", "input_path")
 
         self.word_normalization.preprocess_directory(input_directory)
-
 
     def get_all_text_files(self, dir_path):
         """
@@ -140,6 +149,7 @@ class Amanuensis:
                 if file.endswith(".txt"):
                     text_files.append(os.path.join(subdir, file))
         return text_files
+
 
 if __name__ == "__main__":
     try:
