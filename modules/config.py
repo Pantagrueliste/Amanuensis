@@ -3,7 +3,9 @@ import toml
 import art
 from toml.decoder import TomlDecodeError
 from rich.console import Console
+
 console = Console()
+
 
 class PickleableTomlDecoder(toml.TomlDecoder):
     def get_empty_inline_table(self):
@@ -41,23 +43,42 @@ class Config:
     def print_config_recap(self):
         console.print("\n[bold]Current Settings:[/bold]")
 
-        replacements_on = self.settings.get("unicode_replacements", {}).get("replacements_on", False)
+        replacements_on = self.settings.get("unicode_replacements", {}).get(
+            "replacements_on", False
+        )
         color = "green" if replacements_on else "red"
-        console.print(f" - Unicode Replacement: [{color}]{'Enabled' if replacements_on else 'Disabled'}[/{color}]")
+        console.print(
+            f" - Unicode Replacement: [{color}]{'Enabled' if replacements_on else 'Disabled'}[/{color}]"
+        )
 
-        deletion_chars = len(self.settings.get("unicode_replacements", {}).get("characters_to_delete", []))
-        console.print(f" - Characters Defined for Deletion: [blue]{deletion_chars}[/blue]")
+        deletion_chars = len(
+            self.settings.get("unicode_replacements", {}).get(
+                "characters_to_delete", []
+            )
+        )
+        console.print(
+            f" - Characters Defined for Deletion: [blue]{deletion_chars}[/blue]"
+        )
 
-        replacement_chars = len(self.settings.get("unicode_replacements", {}).get("characters_to_replace", {}))
-        console.print(f" - Characters Defined for Replacement: [blue]{replacement_chars}[/blue]")
+        replacement_chars = len(
+            self.settings.get("unicode_replacements", {}).get(
+                "characters_to_replace", {}
+            )
+        )
+        console.print(
+            f" - Characters Defined for Replacement: [blue]{replacement_chars}[/blue]"
+        )
 
-        gpt_suggestions = self.settings.get("OpenAI_integration", {}).get("gpt_suggestions", False)
+        gpt_suggestions = self.settings.get("OpenAI_integration", {}).get(
+            "gpt_suggestions", False
+        )
         color = "green" if gpt_suggestions else "red"
-        console.print(f" - GPT Suggestions: [{color}]{'Activated' if gpt_suggestions else 'Deactivated'}[/{color}]")
+        console.print(
+            f" - GPT Suggestions: [{color}]{'Activated' if gpt_suggestions else 'Deactivated'}[/{color}]"
+        )
 
         context_size = self.settings.get("settings", {}).get("context_size", 20)
         console.print(f" - Context Size: [blue]{context_size}[/blue] words\n")
-
 
     def validate_paths(self):
         input_path = self.get("paths", "input_path")
@@ -69,6 +90,6 @@ class Config:
 
     def get_ambiguous_AWs(self):
         try:
-            return self.settings['ambiguity']['ambiguous_AWs']
+            return self.settings["ambiguity"]["ambiguous_AWs"]
         except KeyError:
             return []  # Return an empty list if not found

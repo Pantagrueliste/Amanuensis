@@ -20,8 +20,10 @@ def atomic_write(file_path, data):
         json.dump(data, f, ensure_ascii=False, indent=4)
     os.rename(temp_file_path, file_path)
 
+
 class UserQuitException(Exception):
     pass
+
 
 class DynamicWordNormalization2:
     def __init__(self, unresolved_AWs_path="data/unresolved_AW.json", ambiguous_AWs=[]):
@@ -34,12 +36,14 @@ class DynamicWordNormalization2:
             set([aw["filename"] for aw in self.unresolved_AWs])
         )
 
-        custom_theme = Theme({
-            "info": "rgb(128,128,128)",
-            "warning": "rgb(255,192,0)",
-            "danger": "rgb(255,0,0)",
-            "neutral": "rgb(128,128,128)"
-        })
+        custom_theme = Theme(
+            {
+                "info": "rgb(128,128,128)",
+                "warning": "rgb(255,192,0)",
+                "danger": "rgb(255,0,0)",
+                "neutral": "rgb(128,128,128)",
+            }
+        )
         self.console = Console(theme=custom_theme)
 
         # Load existing user solutions
@@ -55,7 +59,6 @@ class DynamicWordNormalization2:
                 self.existing_machine_solutions = json.load(file)
         except FileNotFoundError:
             self.existing_machine_solutions = {}
-
 
     def load_unresolved_AWs(self, file_path):
         """Load unresolved alternative words (AWs) from the JSON file."""
@@ -77,19 +80,22 @@ class DynamicWordNormalization2:
         solved_AWs = self.solved_AWs_count
         remaining_AWs = self.remaining_AWs_count
 
-
         self.console.rule("[green]Progress[/green]", style="green")
         with Progress(
             "[progress.description]{task.description}",
             BarColumn(bar_width=None),
             "[progress.percentage]{task.percentage:>3.0f}%",
         ) as progress:
-            task1 = progress.add_task("",total=total_AWs)
+            task1 = progress.add_task("", total=total_AWs)
             progress.update(task1, completed=solved_AWs)
         self.console.print(f"[info]Solved words:[/info] {self.solved_AWs_count}")
         self.console.print(f"[info]Remaining words:[/info] {self.remaining_AWs_count}")
-        self.console.print(f"[info]Processed files:[/info] {self.processed_files_count}")
-        self.console.print(f"[info]Remaining files:[/info] {self.remaining_files_count}")
+        self.console.print(
+            f"[info]Processed files:[/info] {self.processed_files_count}"
+        )
+        self.console.print(
+            f"[info]Remaining files:[/info] {self.remaining_files_count}"
+        )
         self.console.rule(style="green")
 
     def update_user_solution(self, unresolved_AW, correct_word):
@@ -122,20 +128,26 @@ class DynamicWordNormalization2:
             # Extracting words with "$" using regular expression
             pattern = r"\w*\$+\w*"
             AWs = re.findall(pattern, unresolved_AW["context"])
-            word = DynamicWordNormalization2.remove_trailing_punctuation(unresolved_AW["unresolved_AW"])
+            word = DynamicWordNormalization2.remove_trailing_punctuation(
+                unresolved_AW["unresolved_AW"]
+            )
 
             full_update_needed = True
 
             if word in self.existing_user_solutions:
-                self.console.print(f"[dim red]{word}[/dim red] [bright_black]solved.[/bright_black]")
+                self.console.print(
+                    f"[dim red]{word}[/dim red] [bright_black]solved.[/bright_black]"
+                )
                 self.solved_AWs_count += 1
                 self.remaining_AWs_count -= 1
                 full_update_needed = False
                 continue
 
             if word in self.ambiguous_AWs:
-                        self.console.print(f"[dim red]{word}[/dim red] [bright_black]solved.[/bright_black]")
-                        continue
+                self.console.print(
+                    f"[dim red]{word}[/dim red] [bright_black]solved.[/bright_black]"
+                )
+                continue
 
             context = unresolved_AW["context"]
             file_name = unresolved_AW["filename"]
@@ -175,14 +187,17 @@ class DynamicWordNormalization2:
     @staticmethod
     def remove_trailing_punctuation(word):
         # return re.sub(r'(\$?)[\.,;:!?(){}]$', r'\1', word)
-        return re.sub(r'^[\.,;:!?(){}]|[\.,;:!?(){}]$', '', word)
+        return re.sub(r"^[\.,;:!?(){}]|[\.,;:!?(){}]$", "", word)
 
     def generate_suggestions(self, unresolved_AW, threshold=3):
         best_suggestion = None
-        min_distance = float('inf')
+        min_distance = float("inf")
 
         # Combine user and machine solutions for comprehensive search
-        all_solutions = {**self.existing_user_solutions, **self.existing_machine_solutions}
+        all_solutions = {
+            **self.existing_user_solutions,
+            **self.existing_machine_solutions,
+        }
 
         for existing_AW, solution in all_solutions.items():
             curr_distance = lev_distance(unresolved_AW, existing_AW)
@@ -225,11 +240,19 @@ class DynamicWordNormalization2:
             self.console.print(f"{message1}\n{message2}")
             best_suggestion = self.generate_suggestions(word)
             if best_suggestion:
-                self.console.print(f"[info]Closest known word:[/info] [warning]{best_suggestion}[/warning]")
+                self.console.print(
+                    f"[info]Closest known word:[/info] [warning]{best_suggestion}[/warning]"
+                )
 
-            highlighted_context = re.sub(r'\b' + re.escape(word) + r'(\W)?', f'[danger]{word}\\1[/danger]', context)
+            highlighted_context = re.sub(
+                r"\b" + re.escape(word) + r"(\W)?",
+                f"[danger]{word}\\1[/danger]",
+                context,
+            )
             self.console.print(f"[info]Context:[/info]")
-            self.console.print(Panel.fit(highlighted_context, border_style="bright_black"))
+            self.console.print(
+                Panel.fit(highlighted_context, border_style="bright_black")
+            )
             correct_word_prompt = f"[info]Enter '[/info][danger]n[/danger][info]' or '[/info][danger]m[/danger][info]' to replace $, '[/info][danger]d[/danger][info]' to discard it\nEnter the full replacement for '[/info][danger]{word}[/danger][info]' \nType '[/info][danger]`[/danger][info]' if you don't know\nType '[/info][danger]quit[/danger][info]' to exit:[/info]\n"
 
             # Print the prompt using Rich Console
@@ -244,19 +267,23 @@ class DynamicWordNormalization2:
                 break
             elif correct_word == "`":
                 self.log_difficult_passage(file_name, line_number, column, context)
-                self.console.print("[green]Difficult passage logged. Please continue with the next word.[/green]")
+                self.console.print(
+                    "[green]Difficult passage logged. Please continue with the next word.[/green]"
+                )
                 return word
             elif correct_word.lower() == "n":
                 correct_word = word.replace("$", "n")
             elif correct_word.lower() == "m":
                 correct_word = word.replace("$", "m")
             elif correct_word.lower() == "d":
-                        correct_word = word.replace("$", "")
+                correct_word = word.replace("$", "")
 
             # Validate user's input
             lev_distance = Levenshtein.distance(word.replace("$", ""), correct_word)
             if lev_distance > word.count("$") + 1:
-                self.console.print("[yellow]Your input seems significantly different from the original word. Please confirm if this is correct.[/yellow]")
+                self.console.print(
+                    "[yellow]Your input seems significantly different from the original word. Please confirm if this is correct.[/yellow]"
+                )
                 confirmation = input(
                     "Type 'yes' to confirm, 'no' to input again: "
                 ).lower()
