@@ -36,6 +36,12 @@ class DynamicWordNormalization2:
         # Print the initial status
         self.print_status()
 
+    # def highlight_AW(self, context, aw):
+    #     """Highlight the Abbreviated Word within the context."""
+    #     highlighted_aw = f"[red]{aw}[/red]"
+    #     highlighted_context = context.replace(aw, highlighted_aw)
+    #     self.console.print(highlighted_context, style="bold")
+
     def load_unresolved_AWs(self, file_path):
         """Load unresolved alternative words (AWs) from the JSON file."""
         try:
@@ -89,7 +95,7 @@ class DynamicWordNormalization2:
             word = DynamicWordNormalization2.remove_trailing_punctuation(unresolved_AW["unresolved_AW"])
 
             if word in self.existing_user_solutions or word in self.ambiguous_AWs:
-                print(f"Skipping {word} as it is already resolved.")
+                print(f"Skipping {word} as it is already resolved.") # TODO: change color, use Rich
                 continue
 
             context = unresolved_AW["context"]
