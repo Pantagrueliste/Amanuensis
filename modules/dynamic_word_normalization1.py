@@ -15,11 +15,13 @@ def atomic_write(file_path, data):
     temp_file.close()
     shutil.move(temp_file.name, file_path)
 
+
 def write_to_file(batch, file_path):
     with open(file_path, "r", encoding="utf-8") as file:
         data = json.load(file)
     data.update(batch)
     atomic_write(file_path, data)
+
 
 class DynamicWordNormalization1:
     def __init__(self, config):
@@ -105,7 +107,6 @@ class DynamicWordNormalization1:
                 "context": context,
             }
         )
-
 
     def save_unresolved_AWs(self):
         unresolved_AWs_path = "data/unresolved_AW.json"
