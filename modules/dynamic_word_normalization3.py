@@ -11,8 +11,8 @@ class DynamicWordNormalization3:
         self.user_solutions = self.load_solutions(user_solution_path)
         self.machine_solutions = self.load_solutions(machine_solution_path)
 
-        # Resolve inconsistencies
-        self.resolve_inconsistencies()
+        # # Resolve inconsistencies
+        # self.resolve_inconsistencies()
 
     def load_solutions(self, file_path):
         """Load solutions from a JSON file."""
