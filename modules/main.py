@@ -68,6 +68,7 @@ class Amanuensis:
         """
         Initialize Amanuensis.
         """
+        print(text2art("Amanuensis"))
         self.config = Config()
         self.config.validate_paths()
         self.unicode_replacement = UnicodeReplacement(self.config)
@@ -81,7 +82,6 @@ class Amanuensis:
         """
         Main method to start word normalization process.
         """
-        print(text2art("Amanuensis"))
         if self.config.get("unicode_replacements", "replacements_on"):
             self.run_unicode_replacement()
             proceed = input("Unicode Replacement is complete. Do you want to proceed to Dynamic Word Normalization? (y/n): ")

@@ -135,7 +135,3 @@ class DynamicWordNormalization1:
         for root, _, files in os.walk(directory_path):
             count += len(files)
         return count
-
-# orphaned code?
-        # with dynamic_word_normalization1.progress:
-        #     dynamic_word_normalization1.preprocess_directory(directory_path, pattern)

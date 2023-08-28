@@ -6,8 +6,12 @@ import string
 from prompt_toolkit import prompt
 from prompt_toolkit.formatted_text import HTML
 from rich.console import Console
+from rich.panel import Panel
+from rich.theme import Theme
+from rich.progress import BarColumn, Progress
 from colorama import Fore, Style
 import Levenshtein
+from Levenshtein import distance as lev_distance
 
 
 def atomic_write(file_path, data):
@@ -30,11 +34,28 @@ class DynamicWordNormalization2:
             set([aw["filename"] for aw in self.unresolved_AWs])
         )
 
-        # Create a Rich Console for better display
-        self.console = Console()
+        custom_theme = Theme({
+            "info": "rgb(128,128,128)",
+            "warning": "rgb(255,192,0)",
+            "danger": "rgb(255,0,0)",
+            "neutral": "rgb(128,128,128)"
+        })
+        self.console = Console(theme=custom_theme)
 
-        # Print the initial status
-        self.print_status()
+        # Load existing user solutions
+        try:
+            with open("data/user_solution.json", "r", encoding="utf-8") as file:
+                self.existing_user_solutions = json.load(file)
+        except FileNotFoundError:
+            self.existing_user_solutions = {}
+
+        # Load existing machine solutions
+        try:
+            with open("data/machine_solution.json", "r", encoding="utf-8") as file:
+                self.existing_machine_solutions = json.load(file)
+        except FileNotFoundError:
+            self.existing_machine_solutions = {}
+
 
     def load_unresolved_AWs(self, file_path):
         """Load unresolved alternative words (AWs) from the JSON file."""
@@ -52,10 +73,24 @@ class DynamicWordNormalization2:
 
     def print_status(self):
         """Print the current status of the DWN1.2 phase."""
-        self.console.print(f"Solved AWs: {self.solved_AWs_count}")
-        self.console.print(f"Processed Files: {self.processed_files_count}")
-        self.console.print(f"Remaining AWs: {self.remaining_AWs_count}")
-        self.console.print(f"Remaining Files: {self.remaining_files_count}")
+        total_AWs = len(self.unresolved_AWs)
+        solved_AWs = self.solved_AWs_count
+        remaining_AWs = self.remaining_AWs_count
+
+
+        self.console.rule("[green]Progress[/green]", style="green")
+        with Progress(
+            "[progress.description]{task.description}",
+            BarColumn(bar_width=None),
+            "[progress.percentage]{task.percentage:>3.0f}%",
+        ) as progress:
+            task1 = progress.add_task("",total=total_AWs)
+            progress.update(task1, completed=solved_AWs)
+        self.console.print(f"[info]Solved words:[/info] {self.solved_AWs_count}")
+        self.console.print(f"[info]Remaining words:[/info] {self.remaining_AWs_count}")
+        self.console.print(f"[info]Processed files:[/info] {self.processed_files_count}")
+        self.console.print(f"[info]Remaining files:[/info] {self.remaining_files_count}")
+        self.console.rule(style="green")
 
     def update_user_solution(self, unresolved_AW, correct_word):
         user_solution_path = "data/user_solution.json"
@@ -91,7 +126,7 @@ class DynamicWordNormalization2:
             word = DynamicWordNormalization2.remove_trailing_punctuation(unresolved_AW["unresolved_AW"])
 
             if word in self.existing_user_solutions or word in self.ambiguous_AWs:
-                self.console.print(f"[yellow]Skipping {word} as it is already resolved.[/yellow]")
+                self.console.print(f"[dim red]{word}[/dim red] [bright_black]solved.[/bright_black]")
                 continue
 
             context = unresolved_AW["context"]
@@ -134,6 +169,21 @@ class DynamicWordNormalization2:
         # return re.sub(r'(\$?)[\.,;:!?(){}]$', r'\1', word)
         return re.sub(r'^[\.,;:!?(){}]|[\.,;:!?(){}]$', '', word)
 
+    def generate_suggestions(self, unresolved_AW, threshold=3):
+        best_suggestion = None
+        min_distance = float('inf')
+
+        # Combine user and machine solutions for comprehensive search
+        all_solutions = {**self.existing_user_solutions, **self.existing_machine_solutions}
+
+        for existing_AW, solution in all_solutions.items():
+            curr_distance = lev_distance(unresolved_AW, existing_AW)
+
+            if curr_distance < min_distance and curr_distance <= threshold:
+                min_distance = curr_distance
+                best_suggestion = solution
+
+        return best_suggestion
 
     def log_difficult_passage(self, file_name, line_number, column, context):
         """Log a difficult passage."""
@@ -162,18 +212,23 @@ class DynamicWordNormalization2:
 
     def handle_user_input(self, word, context, file_name, line_number, column):
         while True:
-            self.console.rule()
-            message1 = f"Could not find a match for '[red]{word}[/red]'"
-            message2 = f"Found in file '{file_name}' at line {line_number}"
+            message1 = f"[info]Could not find a match for '[/info][danger]{word}[/danger][info]'[/info]"
+            message2 = f"[info]Found in file '{file_name}' at line {line_number}[/info]"
             self.console.print(f"{message1}\n{message2}")
-            self.console.print(f"Context: \n...{context}")
+            best_suggestion = self.generate_suggestions(word)
+            if best_suggestion:
+                self.console.print(f"[info]Closest known word:[/info] [warning]{best_suggestion}[/warning]")
 
-            correct_word_prompt = HTML(
-                "<ansired>Enter 'n' or 'm' to replace $, 'd' to discard it\nEnter the full replacement for '{}' \nType '`' if you don't know\nType 'quit' to exit:</ansired>\n".format(
-                    word
-                )
-            )
-            correct_word = prompt(correct_word_prompt)
+            highlighted_context = re.sub(r'\b' + re.escape(word) + r'(\W)?', f'[danger]{word}\\1[/danger]', context)
+            self.console.print(f"[info]Context:[/info]")
+            self.console.print(Panel.fit(highlighted_context, border_style="bright_black"))
+            correct_word_prompt = f"[info]Enter '[/info][danger]n[/danger][info]' or '[/info][danger]m[/danger][info]' to replace $, '[/info][danger]d[/danger][info]' to discard it\nEnter the full replacement for '[/info][danger]{word}[/danger][info]' \nType '[/info][danger]`[/danger][info]' if you don't know\nType '[/info][danger]quit[/danger][info]' to exit:[/info]\n"
+
+            # Print the prompt using Rich Console
+            self.console.print(correct_word_prompt)
+
+            # Use prompt_toolkit for user input
+            correct_word = prompt("input: ")
 
             # Handle special commands
             if correct_word.lower() == "quit":
