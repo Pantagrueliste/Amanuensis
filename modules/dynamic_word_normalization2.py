@@ -36,12 +36,6 @@ class DynamicWordNormalization2:
         # Print the initial status
         self.print_status()
 
-    # def highlight_AW(self, context, aw):
-    #     """Highlight the Abbreviated Word within the context."""
-    #     highlighted_aw = f"[red]{aw}[/red]"
-    #     highlighted_context = context.replace(aw, highlighted_aw)
-    #     self.console.print(highlighted_context, style="bold")
-
     def load_unresolved_AWs(self, file_path):
         """Load unresolved alternative words (AWs) from the JSON file."""
         try:
@@ -86,7 +80,9 @@ class DynamicWordNormalization2:
             with open("data/user_solution.json", "r", encoding="utf-8") as file:
                 self.existing_user_solutions = json.load(file)
         except FileNotFoundError:
-            existing_user_solutions = {}
+            self.existing_user_solutions = {}
+
+        current_file = None
 
         for unresolved_AW in self.unresolved_AWs:
             # Extracting words with "$" using regular expression
@@ -123,11 +119,14 @@ class DynamicWordNormalization2:
             # Update counters and print status
             self.solved_AWs_count += 1
             self.remaining_AWs_count -= 1
-            if file_name not in [
-                aw["filename"] for aw in self.unresolved_AWs[self.solved_AWs_count :]
-            ]:
+
+            # Update counters for files, if we have moved on to a new file
+            file_name = unresolved_AW["filename"]
+
+            if current_file != file_name:
                 self.processed_files_count += 1
                 self.remaining_files_count -= 1
+                current_file = file_name
             self.print_status()
 
     @staticmethod
