@@ -110,14 +110,13 @@ class DynamicWordNormalization2:
 
     def process_unresolved_AWs(self):
         """Process unresolved AWs by prompting the user for solutions."""
-        # Load existing user solutions
+        current_file = None
+
         try:
             with open("data/user_solution.json", "r", encoding="utf-8") as file:
                 self.existing_user_solutions = json.load(file)
         except FileNotFoundError:
             self.existing_user_solutions = {}
-
-        current_file = None
 
         for unresolved_AW in self.unresolved_AWs:
             # Extracting words with "$" using regular expression
@@ -125,9 +124,18 @@ class DynamicWordNormalization2:
             AWs = re.findall(pattern, unresolved_AW["context"])
             word = DynamicWordNormalization2.remove_trailing_punctuation(unresolved_AW["unresolved_AW"])
 
-            if word in self.existing_user_solutions or word in self.ambiguous_AWs:
+            full_update_needed = True
+
+            if word in self.existing_user_solutions:
                 self.console.print(f"[dim red]{word}[/dim red] [bright_black]solved.[/bright_black]")
+                self.solved_AWs_count += 1
+                self.remaining_AWs_count -= 1
+                full_update_needed = False
                 continue
+
+            if word in self.ambiguous_AWs:
+                        self.console.print(f"[dim red]{word}[/dim red] [bright_black]solved.[/bright_black]")
+                        continue
 
             context = unresolved_AW["context"]
             file_name = unresolved_AW["filename"]
