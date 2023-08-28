@@ -91,7 +91,7 @@ class DynamicWordNormalization2:
             word = DynamicWordNormalization2.remove_trailing_punctuation(unresolved_AW["unresolved_AW"])
 
             if word in self.existing_user_solutions or word in self.ambiguous_AWs:
-                print(f"Skipping {word} as it is already resolved.") # TODO: change color, use Rich
+                self.console.print(f"[yellow]Skipping {word} as it is already resolved.[/yellow]")
                 continue
 
             context = unresolved_AW["context"]
@@ -162,16 +162,11 @@ class DynamicWordNormalization2:
 
     def handle_user_input(self, word, context, file_name, line_number, column):
         while True:
-            print('-' * 100)
-            # os.system("cls" if os.name == "nt" else "clear")
-            message1 = (
-                f"Could not find a match for '{Fore.RED + word + Style.RESET_ALL}'"
-            )
-            message2 = f"\nFound in file '{file_name}' at line {line_number}"
-            print(
-                f"{Fore.LIGHTBLACK_EX}{message1}{Style.RESET_ALL}{Fore.LIGHTBLACK_EX}{message2}{Style.RESET_ALL}"
-            )
-            print("Context: \n...", context)
+            self.console.rule()
+            message1 = f"Could not find a match for '[red]{word}[/red]'"
+            message2 = f"Found in file '{file_name}' at line {line_number}"
+            self.console.print(f"{message1}\n{message2}")
+            self.console.print(f"Context: \n...{context}")
 
             correct_word_prompt = HTML(
                 "<ansired>Enter 'n' or 'm' to replace $, 'd' to discard it\nEnter the full replacement for '{}' \nType '`' if you don't know\nType 'quit' to exit:</ansired>\n".format(
@@ -186,7 +181,7 @@ class DynamicWordNormalization2:
                 break
             elif correct_word == "`":
                 self.log_difficult_passage(file_name, line_number, column, context)
-                print("Difficult passage logged. Please continue with the next word.")
+                self.console.print("[green]Difficult passage logged. Please continue with the next word.[/green]")
                 return word
             elif correct_word.lower() == "n":
                 correct_word = word.replace("$", "n")
@@ -198,10 +193,7 @@ class DynamicWordNormalization2:
             # Validate user's input
             lev_distance = Levenshtein.distance(word.replace("$", ""), correct_word)
             if lev_distance > word.count("$") + 1:
-                print(
-                    Fore.YELLOW
-                    + "Your input seems significantly different from the original word. Please confirm if this is correct."
-                )
+                self.console.print("[yellow]Your input seems significantly different from the original word. Please confirm if this is correct.[/yellow]")
                 confirmation = input(
                     "Type 'yes' to confirm, 'no' to input again: "
                 ).lower()
