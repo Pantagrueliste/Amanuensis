@@ -21,6 +21,7 @@ from config import Config
 from unicode_replacement import UnicodeReplacement
 from dynamic_word_normalization1 import DynamicWordNormalization1
 from dynamic_word_normalization2 import DynamicWordNormalization2
+from dynamic_word_normalization3 import DynamicWordNormalization3
 from conflict_resolver import ConflictResolver
 from multiprocessing.pool import IMapUnorderedIterator
 from dynamic_word_normalization2 import UserQuitException
@@ -29,6 +30,7 @@ from rich.progress import Progress
 from art import text2art
 
 nltk.download("wordnet")
+
 
 ongoing_processes = []
 pending_json_data = {}
