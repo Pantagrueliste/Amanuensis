@@ -32,51 +32,48 @@ from art import text2art
 nltk.download("wordnet")
 
 
-ongoing_processes = []
-pending_json_data = {}
+class MainApp:
+    def __init__(self):
+        self.ongoing_processes = []
+        self.pending_json_data = {}
 
+    def save_json_data(self):
+        """
+        Save pending json data to json disk.
+        """
+        for filename, data in self.pending_json_data.items():
+            with open(filename, "w") as f:
+                json.dump(data, f)
+        logging.info("Saved pending json data to disk.")
 
-def save_json_data():
-    """
-    Save pending json data to json disk.
-    """
-    for filename, data in pending_json_data.items():
-        with open(filename, "w") as f:
-            json.dump(data, f)
-    logging.info("Saved pending json data to disk.")
+    def terminate_ongoing_processes(self):
+        """
+        Terminate all ongoing processes.
+        """
+        for process in self.ongoing_processes:
+            process.terminate()
+        logging.info("Terminated all ongoing processes.")
 
-
-def terminate_ongoing_processes():
-    """
-    Terminate all ongoing processes.
-    """
-    for process in ongoing_processes:
-        process.terminate()
-    logging.info("Terminated all ongoing processes.")
-
-
-def signal_handler(signal, frame):
-    """
-    Handle Ctrl+C signal.
-    """
-    logging.info("Ctrl+C pressed.")
-    save_json_data()
-    print("\n\nYou pressed Ctrl+C. Initiating shutdown...")
-    terminate_ongoing_processes()
-    logging.info("Cleanup complete. Exiting.")
-    print("Au revoir!")
-    sys.exit(0)
-
-
-signal.signal(signal.SIGINT, signal_handler)
+    def signal_handler(self, signal, frame):
+        """
+        Handle Ctrl+C signal.
+        """
+        logging.info("Ctrl+C pressed.")
+        self.save_json_data()
+        print("\n\nYou pressed Ctrl+C. Initiating shutdown...")
+        self.terminate_ongoing_processes()
+        logging.info("Cleanup complete. Exiting.")
+        print("Au revoir!")
+        sys.exit(0)
 
 
 class Amanuensis:
-    def __init__(self):
+    def __init__(self, main_app_instance):
         """
         Initialize Amanuensis.
         """
         print(text2art("Amanuensis"))
+        self.main_app = main_app_instance
         self.config = Config()
         self.config.validate_paths()
         self.unicode_replacement = UnicodeReplacement(self.config)
@@ -98,8 +95,8 @@ class Amanuensis:
             )
             if proceed.lower() != "y":
                 print("Exiting.")
-                save_json_data()
-                terminate_ongoing_processes()
+                self.main_app.save_json_data()
+                self.main_app.terminate_ongoing_processes()
                 sys.exit(0)
 
         input_directory = self.config.get("paths", "input_path")
@@ -111,8 +108,8 @@ class Amanuensis:
         )
         if proceed.lower() != "y":
             print("Exiting.")
-            save_json_data()
-            terminate_ongoing_processes()
+            self.main_app.save_json_data()
+            self.main_app.terminate_ongoing_processes()
             sys.exit(0)
 
         print("Resolving conflicts between Machine and User Solutions...")
@@ -154,11 +151,13 @@ class Amanuensis:
 
 
 if __name__ == "__main__":
+    main_app_instance = MainApp()
+    signal.signal(signal.SIGINT, lambda s, f: main_app_instance.signal_handler(s, f))
     try:
-        amanuensis = Amanuensis()
+        amanuensis = Amanuensis(main_app_instance)
         amanuensis.run()
     except UserQuitException:
         print("Exiting the application.")
-        save_json_data()
-        terminate_ongoing_processes()
+        main_app_instance.save_json_data()
+        main_app_instance.terminate_ongoing_processes()
         sys.exit(0)
