@@ -1,9 +1,10 @@
 import sys
 import unittest
 from unittest import TestCase
+from modules.config import Config
 
-sys.path.append("/Users/clem/GitHub/Amanuensis")
-from modules.unicode_replacement import UnicodeReplacement
+sys.path.append("/Users/clem/GitHub/Amanuensis/modules")
+from unicode_replacement import UnicodeReplacement
 
 class MockConfig:
     def get(self, section, key):
