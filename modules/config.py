@@ -11,11 +11,11 @@ class PickleableTomlDecoder(toml.TomlDecoder):
     def get_empty_inline_table(self):
         return self.get_empty_table()
 
-
 class Config:
     def __init__(self, file_path="config.toml"):
         self.file_path = file_path
         self.settings = self._read_config()
+        self.debug_level = self.settings["settings"]["logging_level"]
         self.print_config_recap()
 
     def _read_config(self):

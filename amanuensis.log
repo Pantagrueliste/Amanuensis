@@ -1,0 +1,230 @@
+2023-08-30 18:58:19,107 [INFO] main - Saved pending json data to disk.
+2023-08-30 18:58:19,107 [INFO] main - Terminated all ongoing processes.
+2023-08-30 21:17:12,789 [INFO] main - Starting Dynamic Word Normalization...
+2023-08-30 21:17:13,700 [INFO] dynamic_word_normalization1 - Saving 1 unresolved AWs.
+2023-08-30 21:17:13,700 [INFO] dynamic_word_normalization1 - Saving 1 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:13,728 [INFO] dynamic_word_normalization1 - Saving 13 unresolved AWs.
+2023-08-30 21:17:13,728 [INFO] dynamic_word_normalization1 - Saving 13 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:13,768 [INFO] dynamic_word_normalization1 - Saving 324 unresolved AWs.
+2023-08-30 21:17:13,768 [INFO] dynamic_word_normalization1 - Saving 324 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:13,806 [INFO] dynamic_word_normalization1 - Saving 324 unresolved AWs.
+2023-08-30 21:17:13,806 [INFO] dynamic_word_normalization1 - Saving 324 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:13,837 [INFO] dynamic_word_normalization1 - Saving 324 unresolved AWs.
+2023-08-30 21:17:13,837 [INFO] dynamic_word_normalization1 - Saving 324 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:13,875 [INFO] dynamic_word_normalization1 - Saving 505 unresolved AWs.
+2023-08-30 21:17:13,876 [INFO] dynamic_word_normalization1 - Saving 505 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:13,925 [INFO] dynamic_word_normalization1 - Saving 618 unresolved AWs.
+2023-08-30 21:17:13,925 [INFO] dynamic_word_normalization1 - Saving 618 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:13,959 [INFO] dynamic_word_normalization1 - Saving 618 unresolved AWs.
+2023-08-30 21:17:13,959 [INFO] dynamic_word_normalization1 - Saving 618 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:13,998 [INFO] dynamic_word_normalization1 - Saving 619 unresolved AWs.
+2023-08-30 21:17:13,998 [INFO] dynamic_word_normalization1 - Saving 619 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:14,038 [INFO] dynamic_word_normalization1 - Saving 620 unresolved AWs.
+2023-08-30 21:17:14,038 [INFO] dynamic_word_normalization1 - Saving 620 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:14,072 [INFO] dynamic_word_normalization1 - Saving 620 unresolved AWs.
+2023-08-30 21:17:14,073 [INFO] dynamic_word_normalization1 - Saving 620 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:14,112 [INFO] dynamic_word_normalization1 - Saving 621 unresolved AWs.
+2023-08-30 21:17:14,112 [INFO] dynamic_word_normalization1 - Saving 621 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:14,148 [INFO] dynamic_word_normalization1 - Saving 621 unresolved AWs.
+2023-08-30 21:17:14,148 [INFO] dynamic_word_normalization1 - Saving 621 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:14,187 [INFO] dynamic_word_normalization1 - Saving 621 unresolved AWs.
+2023-08-30 21:17:14,187 [INFO] dynamic_word_normalization1 - Saving 621 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:14,222 [INFO] dynamic_word_normalization1 - Saving 621 unresolved AWs.
+2023-08-30 21:17:14,222 [INFO] dynamic_word_normalization1 - Saving 621 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:14,261 [INFO] dynamic_word_normalization1 - Saving 622 unresolved AWs.
+2023-08-30 21:17:14,261 [INFO] dynamic_word_normalization1 - Saving 622 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:14,299 [INFO] dynamic_word_normalization1 - Saving 642 unresolved AWs.
+2023-08-30 21:17:14,300 [INFO] dynamic_word_normalization1 - Saving 642 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:14,341 [INFO] dynamic_word_normalization1 - Saving 684 unresolved AWs.
+2023-08-30 21:17:14,341 [INFO] dynamic_word_normalization1 - Saving 684 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:14,381 [INFO] dynamic_word_normalization1 - Saving 716 unresolved AWs.
+2023-08-30 21:17:14,381 [INFO] dynamic_word_normalization1 - Saving 716 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:14,432 [INFO] dynamic_word_normalization1 - Saving 757 unresolved AWs.
+2023-08-30 21:17:14,433 [INFO] dynamic_word_normalization1 - Saving 757 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:14,479 [INFO] dynamic_word_normalization1 - Saving 760 unresolved AWs.
+2023-08-30 21:17:14,479 [INFO] dynamic_word_normalization1 - Saving 760 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:14,528 [INFO] dynamic_word_normalization1 - Saving 1168 unresolved AWs.
+2023-08-30 21:17:14,528 [INFO] dynamic_word_normalization1 - Saving 1168 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:14,575 [INFO] dynamic_word_normalization1 - Saving 1213 unresolved AWs.
+2023-08-30 21:17:14,575 [INFO] dynamic_word_normalization1 - Saving 1213 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:14,626 [INFO] dynamic_word_normalization1 - Saving 1387 unresolved AWs.
+2023-08-30 21:17:14,626 [INFO] dynamic_word_normalization1 - Saving 1387 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:14,673 [INFO] dynamic_word_normalization1 - Saving 1387 unresolved AWs.
+2023-08-30 21:17:14,673 [INFO] dynamic_word_normalization1 - Saving 1387 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:14,718 [INFO] dynamic_word_normalization1 - Saving 1422 unresolved AWs.
+2023-08-30 21:17:14,719 [INFO] dynamic_word_normalization1 - Saving 1422 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:14,781 [INFO] dynamic_word_normalization1 - Saving 1931 unresolved AWs.
+2023-08-30 21:17:14,781 [INFO] dynamic_word_normalization1 - Saving 1931 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:14,833 [INFO] dynamic_word_normalization1 - Saving 1931 unresolved AWs.
+2023-08-30 21:17:14,833 [INFO] dynamic_word_normalization1 - Saving 1931 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:14,892 [INFO] dynamic_word_normalization1 - Saving 1931 unresolved AWs.
+2023-08-30 21:17:14,892 [INFO] dynamic_word_normalization1 - Saving 1931 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:14,945 [INFO] dynamic_word_normalization1 - Saving 1939 unresolved AWs.
+2023-08-30 21:17:14,945 [INFO] dynamic_word_normalization1 - Saving 1939 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:15,003 [INFO] dynamic_word_normalization1 - Saving 1958 unresolved AWs.
+2023-08-30 21:17:15,003 [INFO] dynamic_word_normalization1 - Saving 1958 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:15,056 [INFO] dynamic_word_normalization1 - Saving 1958 unresolved AWs.
+2023-08-30 21:17:15,056 [INFO] dynamic_word_normalization1 - Saving 1958 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:15,140 [INFO] dynamic_word_normalization1 - Saving 2949 unresolved AWs.
+2023-08-30 21:17:15,140 [INFO] dynamic_word_normalization1 - Saving 2949 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:15,210 [INFO] dynamic_word_normalization1 - Saving 3070 unresolved AWs.
+2023-08-30 21:17:15,210 [INFO] dynamic_word_normalization1 - Saving 3070 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:15,288 [INFO] dynamic_word_normalization1 - Saving 3070 unresolved AWs.
+2023-08-30 21:17:15,288 [INFO] dynamic_word_normalization1 - Saving 3070 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:15,368 [INFO] dynamic_word_normalization1 - Saving 3070 unresolved AWs.
+2023-08-30 21:17:15,369 [INFO] dynamic_word_normalization1 - Saving 3070 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:15,444 [INFO] dynamic_word_normalization1 - Saving 3104 unresolved AWs.
+2023-08-30 21:17:15,445 [INFO] dynamic_word_normalization1 - Saving 3104 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:15,516 [INFO] dynamic_word_normalization1 - Saving 3104 unresolved AWs.
+2023-08-30 21:17:15,516 [INFO] dynamic_word_normalization1 - Saving 3104 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:15,595 [INFO] dynamic_word_normalization1 - Saving 3105 unresolved AWs.
+2023-08-30 21:17:15,595 [INFO] dynamic_word_normalization1 - Saving 3105 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:15,662 [INFO] dynamic_word_normalization1 - Saving 3114 unresolved AWs.
+2023-08-30 21:17:15,663 [INFO] dynamic_word_normalization1 - Saving 3114 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:15,768 [INFO] dynamic_word_normalization1 - Saving 4241 unresolved AWs.
+2023-08-30 21:17:15,768 [INFO] dynamic_word_normalization1 - Saving 4241 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:15,861 [INFO] dynamic_word_normalization1 - Saving 4241 unresolved AWs.
+2023-08-30 21:17:15,861 [INFO] dynamic_word_normalization1 - Saving 4241 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:15,951 [INFO] dynamic_word_normalization1 - Saving 4250 unresolved AWs.
+2023-08-30 21:17:15,952 [INFO] dynamic_word_normalization1 - Saving 4250 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:16,056 [INFO] dynamic_word_normalization1 - Saving 4250 unresolved AWs.
+2023-08-30 21:17:16,056 [INFO] dynamic_word_normalization1 - Saving 4250 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:16,172 [INFO] dynamic_word_normalization1 - Saving 5139 unresolved AWs.
+2023-08-30 21:17:16,172 [INFO] dynamic_word_normalization1 - Saving 5139 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:16,275 [INFO] dynamic_word_normalization1 - Saving 5159 unresolved AWs.
+2023-08-30 21:17:16,275 [INFO] dynamic_word_normalization1 - Saving 5159 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:16,374 [INFO] dynamic_word_normalization1 - Saving 5159 unresolved AWs.
+2023-08-30 21:17:16,374 [INFO] dynamic_word_normalization1 - Saving 5159 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:16,480 [INFO] dynamic_word_normalization1 - Saving 5160 unresolved AWs.
+2023-08-30 21:17:16,480 [INFO] dynamic_word_normalization1 - Saving 5160 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:16,581 [INFO] dynamic_word_normalization1 - Saving 5160 unresolved AWs.
+2023-08-30 21:17:16,581 [INFO] dynamic_word_normalization1 - Saving 5160 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:16,682 [INFO] dynamic_word_normalization1 - Saving 5160 unresolved AWs.
+2023-08-30 21:17:16,682 [INFO] dynamic_word_normalization1 - Saving 5160 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:16,791 [INFO] dynamic_word_normalization1 - Saving 5171 unresolved AWs.
+2023-08-30 21:17:16,791 [INFO] dynamic_word_normalization1 - Saving 5171 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:16,887 [INFO] dynamic_word_normalization1 - Saving 5172 unresolved AWs.
+2023-08-30 21:17:16,887 [INFO] dynamic_word_normalization1 - Saving 5172 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:16,990 [INFO] dynamic_word_normalization1 - Saving 5172 unresolved AWs.
+2023-08-30 21:17:16,990 [INFO] dynamic_word_normalization1 - Saving 5172 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:17,088 [INFO] dynamic_word_normalization1 - Saving 5360 unresolved AWs.
+2023-08-30 21:17:17,088 [INFO] dynamic_word_normalization1 - Saving 5360 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:17,217 [INFO] dynamic_word_normalization1 - Saving 5360 unresolved AWs.
+2023-08-30 21:17:17,217 [INFO] dynamic_word_normalization1 - Saving 5360 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:17,323 [INFO] dynamic_word_normalization1 - Saving 5375 unresolved AWs.
+2023-08-30 21:17:17,323 [INFO] dynamic_word_normalization1 - Saving 5375 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:17,431 [INFO] dynamic_word_normalization1 - Saving 5376 unresolved AWs.
+2023-08-30 21:17:17,431 [INFO] dynamic_word_normalization1 - Saving 5376 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:17,541 [INFO] dynamic_word_normalization1 - Saving 5376 unresolved AWs.
+2023-08-30 21:17:17,542 [INFO] dynamic_word_normalization1 - Saving 5376 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:17,646 [INFO] dynamic_word_normalization1 - Saving 5380 unresolved AWs.
+2023-08-30 21:17:17,646 [INFO] dynamic_word_normalization1 - Saving 5380 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:17,748 [INFO] dynamic_word_normalization1 - Saving 5492 unresolved AWs.
+2023-08-30 21:17:17,748 [INFO] dynamic_word_normalization1 - Saving 5492 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:17,910 [INFO] dynamic_word_normalization1 - Saving 5502 unresolved AWs.
+2023-08-30 21:17:17,911 [INFO] dynamic_word_normalization1 - Saving 5502 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:18,004 [INFO] dynamic_word_normalization1 - Saving 5530 unresolved AWs.
+2023-08-30 21:17:18,004 [INFO] dynamic_word_normalization1 - Saving 5530 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:18,105 [INFO] dynamic_word_normalization1 - Saving 5530 unresolved AWs.
+2023-08-30 21:17:18,105 [INFO] dynamic_word_normalization1 - Saving 5530 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:18,201 [INFO] dynamic_word_normalization1 - Saving 5535 unresolved AWs.
+2023-08-30 21:17:18,201 [INFO] dynamic_word_normalization1 - Saving 5535 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:18,310 [INFO] dynamic_word_normalization1 - Saving 5793 unresolved AWs.
+2023-08-30 21:17:18,310 [INFO] dynamic_word_normalization1 - Saving 5793 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:18,410 [INFO] dynamic_word_normalization1 - Saving 5793 unresolved AWs.
+2023-08-30 21:17:18,410 [INFO] dynamic_word_normalization1 - Saving 5793 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:18,516 [INFO] dynamic_word_normalization1 - Saving 5794 unresolved AWs.
+2023-08-30 21:17:18,516 [INFO] dynamic_word_normalization1 - Saving 5794 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:18,627 [INFO] dynamic_word_normalization1 - Saving 5794 unresolved AWs.
+2023-08-30 21:17:18,627 [INFO] dynamic_word_normalization1 - Saving 5794 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:18,758 [INFO] dynamic_word_normalization1 - Saving 5794 unresolved AWs.
+2023-08-30 21:17:18,758 [INFO] dynamic_word_normalization1 - Saving 5794 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:18,857 [INFO] dynamic_word_normalization1 - Saving 5799 unresolved AWs.
+2023-08-30 21:17:18,857 [INFO] dynamic_word_normalization1 - Saving 5799 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:18,997 [INFO] dynamic_word_normalization1 - Saving 7377 unresolved AWs.
+2023-08-30 21:17:18,997 [INFO] dynamic_word_normalization1 - Saving 7377 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:19,114 [INFO] dynamic_word_normalization1 - Saving 7380 unresolved AWs.
+2023-08-30 21:17:19,114 [INFO] dynamic_word_normalization1 - Saving 7380 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:19,238 [INFO] dynamic_word_normalization1 - Saving 7381 unresolved AWs.
+2023-08-30 21:17:19,238 [INFO] dynamic_word_normalization1 - Saving 7381 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:19,370 [INFO] dynamic_word_normalization1 - Saving 7381 unresolved AWs.
+2023-08-30 21:17:19,370 [INFO] dynamic_word_normalization1 - Saving 7381 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:19,500 [INFO] dynamic_word_normalization1 - Saving 7381 unresolved AWs.
+2023-08-30 21:17:19,500 [INFO] dynamic_word_normalization1 - Saving 7381 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:19,623 [INFO] dynamic_word_normalization1 - Saving 7499 unresolved AWs.
+2023-08-30 21:17:19,623 [INFO] dynamic_word_normalization1 - Saving 7499 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:19,744 [INFO] dynamic_word_normalization1 - Saving 7499 unresolved AWs.
+2023-08-30 21:17:19,744 [INFO] dynamic_word_normalization1 - Saving 7499 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:19,875 [INFO] dynamic_word_normalization1 - Saving 7511 unresolved AWs.
+2023-08-30 21:17:19,875 [INFO] dynamic_word_normalization1 - Saving 7511 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:20,003 [INFO] dynamic_word_normalization1 - Saving 7511 unresolved AWs.
+2023-08-30 21:17:20,003 [INFO] dynamic_word_normalization1 - Saving 7511 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:20,129 [INFO] dynamic_word_normalization1 - Saving 7511 unresolved AWs.
+2023-08-30 21:17:20,129 [INFO] dynamic_word_normalization1 - Saving 7511 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:20,258 [INFO] dynamic_word_normalization1 - Saving 7511 unresolved AWs.
+2023-08-30 21:17:20,258 [INFO] dynamic_word_normalization1 - Saving 7511 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:20,475 [INFO] dynamic_word_normalization1 - Saving 11392 unresolved AWs.
+2023-08-30 21:17:20,475 [INFO] dynamic_word_normalization1 - Saving 11392 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:20,641 [INFO] dynamic_word_normalization1 - Saving 11542 unresolved AWs.
+2023-08-30 21:17:20,641 [INFO] dynamic_word_normalization1 - Saving 11542 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:20,839 [INFO] dynamic_word_normalization1 - Saving 12296 unresolved AWs.
+2023-08-30 21:17:20,839 [INFO] dynamic_word_normalization1 - Saving 12296 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:21,018 [INFO] dynamic_word_normalization1 - Saving 12296 unresolved AWs.
+2023-08-30 21:17:21,018 [INFO] dynamic_word_normalization1 - Saving 12296 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:21,195 [INFO] dynamic_word_normalization1 - Saving 12324 unresolved AWs.
+2023-08-30 21:17:21,195 [INFO] dynamic_word_normalization1 - Saving 12324 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:21,373 [INFO] dynamic_word_normalization1 - Saving 12328 unresolved AWs.
+2023-08-30 21:17:21,373 [INFO] dynamic_word_normalization1 - Saving 12328 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:21,553 [INFO] dynamic_word_normalization1 - Saving 12330 unresolved AWs.
+2023-08-30 21:17:21,553 [INFO] dynamic_word_normalization1 - Saving 12330 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:21,726 [INFO] dynamic_word_normalization1 - Saving 12330 unresolved AWs.
+2023-08-30 21:17:21,727 [INFO] dynamic_word_normalization1 - Saving 12330 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:21,917 [INFO] dynamic_word_normalization1 - Saving 12451 unresolved AWs.
+2023-08-30 21:17:21,917 [INFO] dynamic_word_normalization1 - Saving 12451 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:22,099 [INFO] dynamic_word_normalization1 - Saving 12451 unresolved AWs.
+2023-08-30 21:17:22,099 [INFO] dynamic_word_normalization1 - Saving 12451 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:22,280 [INFO] dynamic_word_normalization1 - Saving 12451 unresolved AWs.
+2023-08-30 21:17:22,281 [INFO] dynamic_word_normalization1 - Saving 12451 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:22,456 [INFO] dynamic_word_normalization1 - Saving 12451 unresolved AWs.
+2023-08-30 21:17:22,456 [INFO] dynamic_word_normalization1 - Saving 12451 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:22,664 [INFO] dynamic_word_normalization1 - Saving 12950 unresolved AWs.
+2023-08-30 21:17:22,664 [INFO] dynamic_word_normalization1 - Saving 12950 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:22,857 [INFO] dynamic_word_normalization1 - Saving 13050 unresolved AWs.
+2023-08-30 21:17:22,858 [INFO] dynamic_word_normalization1 - Saving 13050 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:23,052 [INFO] dynamic_word_normalization1 - Saving 13407 unresolved AWs.
+2023-08-30 21:17:23,052 [INFO] dynamic_word_normalization1 - Saving 13407 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:23,246 [INFO] dynamic_word_normalization1 - Saving 13407 unresolved AWs.
+2023-08-30 21:17:23,246 [INFO] dynamic_word_normalization1 - Saving 13407 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:23,449 [INFO] dynamic_word_normalization1 - Saving 13521 unresolved AWs.
+2023-08-30 21:17:23,450 [INFO] dynamic_word_normalization1 - Saving 13521 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:23,695 [INFO] dynamic_word_normalization1 - Saving 13522 unresolved AWs.
+2023-08-30 21:17:23,695 [INFO] dynamic_word_normalization1 - Saving 13522 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:23,891 [INFO] dynamic_word_normalization1 - Saving 13522 unresolved AWs.
+2023-08-30 21:17:23,891 [INFO] dynamic_word_normalization1 - Saving 13522 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:24,106 [INFO] dynamic_word_normalization1 - Saving 13522 unresolved AWs.
+2023-08-30 21:17:24,106 [INFO] dynamic_word_normalization1 - Saving 13522 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:24,311 [INFO] dynamic_word_normalization1 - Saving 13522 unresolved AWs.
+2023-08-30 21:17:24,312 [INFO] dynamic_word_normalization1 - Saving 13522 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:24,510 [INFO] dynamic_word_normalization1 - Saving 13523 unresolved AWs.
+2023-08-30 21:17:24,510 [INFO] dynamic_word_normalization1 - Saving 13523 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:24,705 [INFO] dynamic_word_normalization1 - Saving 13594 unresolved AWs.
+2023-08-30 21:17:24,705 [INFO] dynamic_word_normalization1 - Saving 13594 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:24,912 [INFO] dynamic_word_normalization1 - Saving 13594 unresolved AWs.
+2023-08-30 21:17:24,912 [INFO] dynamic_word_normalization1 - Saving 13594 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:25,107 [INFO] dynamic_word_normalization1 - Saving 13594 unresolved AWs.
+2023-08-30 21:17:25,107 [INFO] dynamic_word_normalization1 - Saving 13594 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:25,307 [INFO] dynamic_word_normalization1 - Saving 13594 unresolved AWs.
+2023-08-30 21:17:25,307 [INFO] dynamic_word_normalization1 - Saving 13594 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:25,499 [INFO] dynamic_word_normalization1 - Saving 13596 unresolved AWs.
+2023-08-30 21:17:25,499 [INFO] dynamic_word_normalization1 - Saving 13596 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:25,713 [INFO] dynamic_word_normalization1 - Saving 13941 unresolved AWs.
+2023-08-30 21:17:25,713 [INFO] dynamic_word_normalization1 - Saving 13941 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:25,936 [INFO] dynamic_word_normalization1 - Saving 14465 unresolved AWs.
+2023-08-30 21:17:25,936 [INFO] dynamic_word_normalization1 - Saving 14465 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:26,172 [INFO] dynamic_word_normalization1 - Saving 14465 unresolved AWs.
+2023-08-30 21:17:26,172 [INFO] dynamic_word_normalization1 - Saving 14465 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:26,356 [INFO] dynamic_word_normalization1 - Saving 14465 unresolved AWs.
+2023-08-30 21:17:26,356 [INFO] dynamic_word_normalization1 - Saving 14465 machine solutions to data/unresolved_AW.json
+2023-08-30 21:17:34,738 [INFO] main - Resolving conflicts between Machine and User Solutions...
+2023-08-30 21:17:39,325 [INFO] main - Conflict Resolution Complete.
+2023-08-30 21:17:43,584 [INFO] main - Starting DWN2...

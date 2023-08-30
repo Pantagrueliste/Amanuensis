@@ -16,6 +16,7 @@ import logging
 import nltk
 import signal
 import json
+import logging
 
 from config import Config
 from unicode_replacement import UnicodeReplacement
@@ -31,11 +32,22 @@ from art import text2art
 
 nltk.download("wordnet")
 
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s [%(levelname)s] %(module)s - %(message)s",
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler("amanuensis.log", mode="a")
+    ]
+)
 
 class MainApp:
     def __init__(self):
         self.ongoing_processes = []
         self.pending_json_data = {}
+        self.config = Config()
+        logging_level = self.config.get("settings", "logging_level")
+        logging.basicConfig(level=getattr(logging, logging_level))
 
     def save_json_data(self):
         """
@@ -83,6 +95,7 @@ class Amanuensis:
             ambiguous_AWs=self.ambiguous_AWs
         )
         self.conflict_resolver = ConflictResolver(self.config)
+        self.word_normalization3 = DynamicWordNormalization3()
 
     def run(self):
         """
@@ -95,6 +108,7 @@ class Amanuensis:
             )
             if proceed.lower() != "y":
                 print("Exiting.")
+                logging.info("User exited after Unicode Replacement was complete.")
                 self.main_app.save_json_data()
                 self.main_app.terminate_ongoing_processes()
                 sys.exit(0)
@@ -108,19 +122,42 @@ class Amanuensis:
         )
         if proceed.lower() != "y":
             print("Exiting.")
+            logging.info("User exited after Dynamic Word Normalization was complete.")
             self.main_app.save_json_data()
             self.main_app.terminate_ongoing_processes()
             sys.exit(0)
 
         print("Resolving conflicts between Machine and User Solutions...")
+        logging.info("Resolving conflicts between Machine and User Solutions...")
         self.conflict_resolver.detect_and_resolve_conflicts()
         print("Conflict Resolution Complete.")
+        logging.info("Conflict Resolution Complete.")
+
+        proceed = input(
+            "Conflict Resolution is complete. Do you want to proceed to Dynamic Word Normalization 2? (y/n): "
+        )
+        if proceed.lower() != "y":
+            print("Exiting.")
+            logging.info("User exited after Conflict Resolution was complete.")
+            self.main_app.save_json_data()
+            self.main_app.terminate_ongoing_processes()
+            sys.exit(0)
+
+        print("Starting Dynamic Word Normalization 2...")
+        logging.info("Starting DWN2...")
+        difficult_passages_json_path = self.config.get("data", "difficult_passages_path")
+        user_solution_json_path = self.config.get("data", "user_solution_path")
+        input_path = self.config.get("paths", "input_path")
+        output_path = self.config.get("paths", "output_path")
+        self.word_normalization3.handle_problematic_files_with_atomic_update(sorted_problematic_ratios, user_solution_json_path)
+        self.word_normalization3.final_processing(input_path, output_path)
 
     def run_unicode_replacement(self):
         """
         Perform Unicode replacements on all text files in the input directory.
         """
         print("Starting Unicode Replacement...")
+        logging.info("Starting Unicode Replacement...")
         input_path = self.config.get("paths", "input_path")
         file_paths = self.get_all_text_files(input_path)
 
@@ -134,6 +171,7 @@ class Amanuensis:
         Perform Dynamic Word Normalization on all text files in the input directory.
         """
         print("Starting Dynamic Word Normalization...")
+        logging.info("Starting Dynamic Word Normalization...")
         input_directory = self.config.get("paths", "input_path")
 
         self.word_normalization.preprocess_directory(input_directory)
@@ -157,6 +195,7 @@ if __name__ == "__main__":
         amanuensis = Amanuensis(main_app_instance)
         amanuensis.run()
     except UserQuitException:
+        logging.info("User quit the application.")
         print("Exiting the application.")
         main_app_instance.save_json_data()
         main_app_instance.terminate_ongoing_processes()
