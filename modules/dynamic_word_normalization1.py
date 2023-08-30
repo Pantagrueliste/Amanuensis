@@ -3,6 +3,7 @@ import json
 import re
 import tempfile
 import shutil
+import logging
 
 from nltk.corpus import wordnet
 from nltk.stem import WordNetLemmatizer
@@ -48,10 +49,12 @@ class DynamicWordNormalization1:
                 else:
                     self.machine_solutions = {}
         except FileNotFoundError:
+            logging.error("Machine solutions file not found.")
             self.machine_solutions = {}
             self.save_json(self.machine_solutions_path, self.machine_solutions)
 
     def save_json(self, file_path, data):
+        logging.info(f"Saving {len(data)} machine solutions to {file_path}")
         atomic_write(file_path, data)
 
     def extract_AWs(self, text):
@@ -109,6 +112,7 @@ class DynamicWordNormalization1:
         )
 
     def save_unresolved_AWs(self):
+        logging.info(f"Saving {len(self.unresolved_AWs_log)} unresolved AWs.")
         unresolved_AWs_path = "data/unresolved_AW.json"
         self.save_json(unresolved_AWs_path, self.unresolved_AWs_log)
 

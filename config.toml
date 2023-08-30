@@ -8,7 +8,7 @@ user_solution_path = "data/user_solution.json"
 
 [settings] # settings related to the Dynamic Word Normalization process
 context_size = 20
-debug_mode = false
+logging_level = "DEBUG" # DEBUG, INFO, WARNING, ERROR, CRITICAL
 language = "eng"
 
 [unicode_replacements] # settings related to the Unicode Replacement process
