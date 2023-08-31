@@ -35,6 +35,7 @@ class DynamicWordNormalization1:
         self.context_size = self.config.get("settings", "context_size")
         self.progress = Progress()
         self.task_id = self.progress.add_task("[cyan]Processing...", total=100)
+        initial_logging_level = self.config.get("settings", "logging_level")
 
     def update_progress(self, advance_by=1):
         self.progress.update(self.task_id, advance=advance_by)
@@ -124,6 +125,7 @@ class DynamicWordNormalization1:
         self.save_unresolved_AWs()
 
     def preprocess_directory(self, directory_path):
+        logging.getLogger().setLevel(logging.CRITICAL)
         total_files = self.total_files(directory_path)
         with Progress() as progress:
             task = progress.add_task("[cyan]Analyzing files...", total=total_files)
