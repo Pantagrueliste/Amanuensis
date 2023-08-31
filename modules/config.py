@@ -30,15 +30,17 @@ class Config:
         except FileNotFoundError:
             raise FileNotFoundError(f"Configuration file '{self.file_path}' not found.")
 
-    def get(self, section, key=None):
+
+    def get(self, section, key=None, default=None):
         try:
             if key:
                 return self.settings[section][key]
             return self.settings[section]
         except KeyError:
-            raise KeyError(
-                f"Section '{section}' or key '{key}' not found in configuration file."
-            )
+            if default is not None:
+                return default
+            raise KeyError(f"Section '{section}' or key '{key}' not found in configuration file.")
+
 
     def print_config_recap(self):
         console.print("\n[bold]Current Settings:[/bold]")
@@ -93,3 +95,6 @@ class Config:
             return self.settings["ambiguity"]["ambiguous_AWs"]
         except KeyError:
             return []  # Return an empty list if not found
+
+    def get_openai_integration(self, key):
+        return self.settings['OpenAI_integration'].get(key)

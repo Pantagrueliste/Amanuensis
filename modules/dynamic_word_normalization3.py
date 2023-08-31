@@ -3,10 +3,18 @@ import os
 import logging
 from collections import Counter
 from config import Config
+from dynamic_word_normalization2 import DynamicWordNormalization2
+from gpt_suggestions import GPTSuggestions
 
 class DynamicWordNormalization3:
-    def __init__(self, difficult_passages_file='difficult_passages.json', user_solution_file='user_solution.json', input_folder=None):
+    def __init__(self, config, difficult_passages_file='data/difficult_passages.json', user_solution_file='user_solution.json', input_folder=None):
         self.config = Config()
+        use_gpt = self.config.get_openai_integration('gpt_suggestions')
+        if use_gpt == True:
+            self.gpt4 = GPTSuggestions(config)
+        else:
+            self.gpt4 = None
+        self.dwn2 = DynamicWordNormalization2()
         self.input_path = self.config.get("paths", "input_path")
         self.difficult_passages_file = difficult_passages_file
         self.user_solution_file = user_solution_file
@@ -59,53 +67,56 @@ class DynamicWordNormalization3:
 
         return difficulties_per_file, top_10_ratios
 
-def handle_problematic_files(self, top_10_ratios):
-        for file, ratio in top_10_ratios.items():
-            print(f"File: {file}, Ratio: {ratio:.4f}")
-            choice = input("Choose an option: [D]iscard or [F]ix: ").strip().upper()
+        def handle_problematic_files(self, top_10_ratios):
+                for file, ratio in top_10_ratios.items():
+                    print(f"File: {file}, Ratio: {ratio:.4f}")
+                    choice = input("Choose an option: [D]iscard or [F]ix: ").strip().upper()
 
-            if choice == 'D':
-                self.discard_file(file)
-            elif choice == 'F':
-                self.fix_file(file)
-            else:
-                print("Invalid choice. Skipping this file.")
+                    if choice == 'D':
+                        self.discard_file(file)
+                    elif choice == 'F':
+                        self.fix_file(file)
+                    else:
+                        print("Invalid choice. Skipping this file.")
 
-def discard_file(self, file):
-        # Remove the file from self.difficult_passages to discard it from further processing
-        if file in self.difficult_passages:
-            del self.difficult_passages[file]
-        print(f"Discarded file: {file}")
+        def discard_file(self, file):
+                # Remove the file from self.difficult_passages to discard it from further processing
+                if file in self.difficult_passages:
+                    del self.difficult_passages[file]
+                print(f"Discarded file: {file}")
 
-def fix_file(self, file):
-        print(f"Fixing file: {file}")
-        logging.info(f"Fixing file: {file}")
+        def get_initial_solutions(self, word):
+            # Reuse the logic from DynamicWordNormalization2 to get initial solutions
+            initial_solution = self.dwn2.get_solution_for_word(word)
+            return initial_solution
 
-        difficult_passages = self.difficult_passages.get(file, [])
+        def get_gpt4_suggestions(self, passage):
+            # Fetch GPT-4 suggestions for the passage
+            suggestions = self.gpt4.get_suggestions(passage)
+            return suggestions
 
-        # TODO: Reuse logic from DynamicWordNormalization2 to get initial solutions
+        def accept_gpt4_suggestion(self, word, suggestion):
+            # Update the user_solution.json with the accepted GPT-4 suggestion
+            self.update_user_solution(word, suggestion)
 
-        for passage in difficult_passages:
-            print(f"Fixing passage: {passage}")
-            logging.info(f"Fixing passage: {passage}")
+        def reject_gpt4_suggestion(self):
+            # Do nothing and move on
+            pass
 
-            # TODO: Fetch GPT-4 suggestions for the passage
-            choice = input(f"Choose an option: [A]ccept GPT-4 suggestion, [R]eject, [M]anual fix: ").strip().upper()
+        def manual_fix(self, word, user_input):
+            # Update the user_solution.json with the user's manual input
+            self.update_user_solution(word, user_input)
 
-            if choice == 'A':
-                # TODO: Accept GPT-4 suggestion and update user_solution.json
-                # self.update_user_solution(passage, gpt_suggestions)
-                pass
-            elif choice == 'R':
-                # TODO: Reject GPT-4 suggestion, do nothing
-                pass
-            elif choice == 'M':
-                # TODO: Allow user to manually fix the passage and update user_solution.json
-                # self.update_user_solution(passage, manual_solution)
-                pass
-            else:
-                print("Invalid choice. Skipping this passage.")
-                logging.error("Invalid choice. Skipping this passage.")
+        def update_user_solution(self, word, solution):
+            # Atomic update to user_solution.json
+            temp_file_path = 'user_solution.json.tmp'
+            with open(temp_file_path, 'w', encoding='utf-8') as f:
+                json.dump({word: solution}, f, ensure_ascii=False, indent=4)
+            os.rename(temp_file_path, 'user_solution.json')
 
-def update_user_solution(self, passage, solution):
-    # TODO: Implement atomic update to user_solution.json
+        def get_gpt4_suggestions(self, passage):
+                if self.gpt4:
+                    suggestions = self.gpt4.get_suggestions(passage)
+                    return suggestions
+                else:
+                    return None

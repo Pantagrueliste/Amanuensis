@@ -5,6 +5,7 @@ output_path = "/Users/clem/Desktop/AmanuensisTestSample"
 [data] # paths of the dictionaries. To be transferred to [paths].
 machine_solution_path = "data/machine_solution.json"
 user_solution_path = "data/user_solution.json"
+difficult_passages = "data/difficult_passages.json"
 
 [settings] # settings related to the Dynamic Word Normalization process
 context_size = 20

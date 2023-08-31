@@ -47,7 +47,8 @@ class MainApp:
         self.pending_json_data = {}
         self.config = Config()
         logging_level = self.config.get("settings", "logging_level")
-        logging.basicConfig(level=getattr(logging, logging_level))
+        difficult_passages_json_path = self.config.get("data", "difficult_passages_path", "Amanuensis/data")
+        #logging.basicConfig(level=getattr(logging, logging_level))
 
     def save_json_data(self):
         """
@@ -80,13 +81,13 @@ class MainApp:
 
 
 class Amanuensis:
-    def __init__(self, main_app_instance):
+    def __init__(self, main_app_instance, config):
         """
         Initialize Amanuensis.
         """
         print(text2art("Amanuensis"))
         self.main_app = main_app_instance
-        self.config = Config()
+        self.config = config
         self.config.validate_paths()
         self.unicode_replacement = UnicodeReplacement(self.config)
         self.word_normalization = DynamicWordNormalization1(self.config)
@@ -95,7 +96,7 @@ class Amanuensis:
             ambiguous_AWs=self.ambiguous_AWs
         )
         self.conflict_resolver = ConflictResolver(self.config)
-        self.word_normalization3 = DynamicWordNormalization3()
+        self.word_normalization3 = DynamicWordNormalization3(self.config)
 
     def run(self):
         """
@@ -143,9 +144,8 @@ class Amanuensis:
             self.main_app.terminate_ongoing_processes()
             sys.exit(0)
 
-        print("Starting Dynamic Word Normalization 2...")
         logging.info("Starting DWN2...")
-        difficult_passages_json_path = self.config.get("data", "difficult_passages_path")
+        difficult_passages_json_path = self.config.get("data", "difficult_passages")
         user_solution_json_path = self.config.get("data", "user_solution_path")
         input_path = self.config.get("paths", "input_path")
         output_path = self.config.get("paths", "output_path")
@@ -192,7 +192,7 @@ if __name__ == "__main__":
     main_app_instance = MainApp()
     signal.signal(signal.SIGINT, lambda s, f: main_app_instance.signal_handler(s, f))
     try:
-        amanuensis = Amanuensis(main_app_instance)
+        amanuensis = Amanuensis(main_app_instance, main_app_instance.config)
         amanuensis.run()
     except UserQuitException:
         logging.info("User quit the application.")
