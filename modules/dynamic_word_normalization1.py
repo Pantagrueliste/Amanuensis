@@ -8,13 +8,15 @@ import logging
 from nltk.corpus import wordnet
 from nltk.stem import WordNetLemmatizer
 from rich.progress import Progress
+from atomic_update import atomic_write_json
 
 
-def atomic_write(file_path, data):
-    temp_file = tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", delete=False)
-    json.dump(data, temp_file, ensure_ascii=False, indent=4)
-    temp_file.close()
-    shutil.move(temp_file.name, file_path)
+
+# def atomic_write(file_path, data):
+#     temp_file = tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", delete=False)
+#     json.dump(data, temp_file, ensure_ascii=False, indent=4)
+#     temp_file.close()
+#     shutil.move(temp_file.name, file_path)
 
 
 def write_to_file(batch, file_path):
@@ -56,7 +58,7 @@ class DynamicWordNormalization1:
 
     def save_json(self, file_path, data):
         logging.info(f"Saving {len(data)} machine solutions to {file_path}")
-        atomic_write(file_path, data)
+        atomic_write_json(data, file_path)
 
     def extract_AWs(self, text):
         return re.findall(self.pattern, text)

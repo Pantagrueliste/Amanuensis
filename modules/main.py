@@ -149,8 +149,8 @@ class Amanuensis:
         user_solution_json_path = self.config.get("data", "user_solution_path")
         input_path = self.config.get("paths", "input_path")
         output_path = self.config.get("paths", "output_path")
-        self.word_normalization3.handle_problematic_files_with_atomic_update(sorted_problematic_ratios, user_solution_json_path)
-        self.word_normalization3.final_processing(input_path, output_path)
+        # self.word_normalization3.handle_problematic_files_with_atomic_update(sorted_problematic_ratios, user_solution_json_path)
+        # self.word_normalization3.final_processing(input_path, output_path)
 
     def run_unicode_replacement(self):
         """
