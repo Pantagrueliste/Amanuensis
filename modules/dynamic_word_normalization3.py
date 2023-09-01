@@ -5,6 +5,8 @@ from collections import Counter
 from config import Config
 from dynamic_word_normalization2 import DynamicWordNormalization2
 from gpt_suggestions import GPTSuggestions
+from atomic_update import atomic_write_json
+
 
 class DynamicWordNormalization3:
     def __init__(self, config, difficult_passages_file='data/difficult_passages.json', user_solution_file='user_solution.json', input_folder=None):
@@ -108,11 +110,11 @@ class DynamicWordNormalization3:
             self.update_user_solution(word, user_input)
 
         def update_user_solution(self, word, solution):
+            # Prepare the data
+            data_to_write = {word: solution}
+
             # Atomic update to user_solution.json
-            temp_file_path = 'user_solution.json.tmp'
-            with open(temp_file_path, 'w', encoding='utf-8') as f:
-                json.dump({word: solution}, f, ensure_ascii=False, indent=4)
-            os.rename(temp_file_path, 'user_solution.json')
+            atomic_write_json(data_to_write, 'user_solution.json')
 
         def get_gpt4_suggestions(self, passage):
                 if self.gpt4:

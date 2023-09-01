@@ -12,13 +12,15 @@ from rich.progress import BarColumn, Progress
 from colorama import Fore, Style
 import Levenshtein
 from Levenshtein import distance as lev_distance
+from atomic_update import atomic_write_json
 
 
-def atomic_write(file_path, data):
-    temp_file_path = file_path + ".tmp"
-    with open(temp_file_path, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
-    os.rename(temp_file_path, file_path)
+
+# def atomic_write_json(file_path, data):
+#     temp_file_path = file_path + ".tmp"
+#     with open(temp_file_path, "w", encoding="utf-8") as f:
+#         json.dump(data, f, ensure_ascii=False, indent=4)
+#     os.rename(temp_file_path, file_path)
 
 
 class UserQuitException(Exception):
@@ -35,6 +37,8 @@ class DynamicWordNormalization2:
         self.remaining_files_count = len(
             set([aw["filename"] for aw in self.unresolved_AWs])
         )
+        from atomic_update import atomic_write_json
+
 
         custom_theme = Theme(
             {
@@ -112,7 +116,7 @@ class DynamicWordNormalization2:
         self.existing_user_solutions[unresolved_AW] = correct_word
 
         # Write the updated user solutions back to the file
-        atomic_write(user_solution_path, self.existing_user_solutions)
+        atomic_write_json(self.existing_user_solutions, user_solution_path)
 
     def process_unresolved_AWs(self):
         """Process unresolved AWs by prompting the user for solutions."""
