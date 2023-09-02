@@ -250,13 +250,9 @@ class DynamicWordNormalization2:
             }
         )
 
-        # # Write the updated difficult passages back to the file # stray code.
-        # with open(difficult_passages_path, "w", encoding="utf-8") as file:
-        #     json.dump(difficult_passages, file, ensure_ascii=False, indent=4)
-
-    # Write the updated difficult passages back to the file
-    with open(difficult_passages_path, "w", encoding="utf-8") as file:
-        json.dump(difficult_passages, file, ensure_ascii=False, indent=4)
+        # Write the updated difficult passages back to the file
+        with open(difficult_passages_path, "w", encoding="utf-8") as file:
+            json.dump(difficult_passages, file, ensure_ascii=False, indent=4)
 
     def handle_user_input(self, word, context, file_name, line_number, column):
         while True:
