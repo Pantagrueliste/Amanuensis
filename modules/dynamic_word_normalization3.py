@@ -31,6 +31,7 @@ from config import Config
 from dynamic_word_normalization2 import DynamicWordNormalization2
 from gpt_suggestions import GPTSuggestions
 from atomic_update import atomic_write_json
+from collections import Counter
 
 
 
@@ -68,21 +69,22 @@ class DynamicWordNormalization3:
                 if remainder > 0:
                     bar += chr(ord('█') + (8 - remainder))
                 bar = bar or '▏'
-                print(f'{label.rjust(longest_label_length)} ▏ {count:#4d} {bar}')
+                print(f'{label.rjust(longest_label_length)} ▏ {int(count * 100):#4d} {bar}')
 
     def analyze_difficult_passages(self):
         difficulties_per_file = {}
         ratios_per_file = {}
 
-        for item in self.difficult_passages:
-            file = item.get('file_name')
-            difficulties = item.get('difficulties')
+        # Count the frequency of each filename in difficult_passages
+        filenames = [entry['file_name'] for entry in self.difficult_passages]
+        filename_counts = Counter(filenames)
+
+        for file, difficulties_count in filename_counts.items():
             if self.input_path is None:
                 raise ValueError("input_path is not set.")
             file_path = os.path.join(self.input_path, file)
             if os.path.exists(file_path):
                 total_words = self.word_count_in_file(file_path)
-                difficulties_count = len(difficulties)
 
                 difficulties_per_file[file] = difficulties_count
                 ratios_per_file[file] = difficulties_count / total_words if total_words else 0.0
