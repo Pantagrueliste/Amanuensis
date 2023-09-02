@@ -1,11 +1,36 @@
+"""
+Dynamic Word Normalization - Phase 2 (dynamic_word_normalization3.py)
+
+This module serves as a higher-level handler for Dynamic Word Normalization,
+incorporating GPT-based suggestions as an optional feature.
+It orchestrates the activities of the lower-level DynamicWordNormalization2 class
+and provides additional functionalities like managing difficult passages
+and handling problematic files (i.e.: files that contain a high proportion of )
+
+Modules:
+- json: For parsing and dumping JSON files.
+- os: For interacting with the operating system.
+- logging: For logging activities and errors.
+- Counter: For counting occurrences of items in collections.
+
+Third-party Libraries:
+- Config: Custom class for managing configurations.
+- DynamicWordNormalization2: Lower-level class for handling Dynamic Word Normalization.
+- GPTSuggestions: Class for generating GPT-based suggestions.
+- atomic_write_json: Function for atomic JSON writes.
+
+"""
+
+
 import json
 import os
 import logging
+
 from collections import Counter
 from config import Config
 from dynamic_word_normalization2 import DynamicWordNormalization2
 from gpt_suggestions import GPTSuggestions
-from .atomic_update import atomic_write_json
+from atomic_update import atomic_write_json
 
 
 
@@ -49,7 +74,11 @@ class DynamicWordNormalization3:
         difficulties_per_file = {}
         ratios_per_file = {}
 
-        for file, difficulties in self.difficult_passages.items():
+        for item in self.difficult_passages:
+            file = item.get('file_name')
+            difficulties = item.get('difficulties')
+            if self.input_path is None:
+                raise ValueError("input_path is not set.")
             file_path = os.path.join(self.input_path, file)
             if os.path.exists(file_path):
                 total_words = self.word_count_in_file(file_path)

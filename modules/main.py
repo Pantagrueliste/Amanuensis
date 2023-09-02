@@ -47,7 +47,7 @@ class MainApp:
         self.config = Config()
         logging_level = self.config.get("settings", "logging_level")
         difficult_passages_json_path = self.config.get("data", "difficult_passages_path", "Amanuensis/data")
-        from .atomic_update import atomic_write_json
+        from atomic_update import atomic_write_json
 
     def save_json_data(self):
         """

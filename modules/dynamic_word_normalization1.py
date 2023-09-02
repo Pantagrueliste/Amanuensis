@@ -4,11 +4,12 @@ import re
 import tempfile
 import shutil
 import logging
+import nltk
 
 from nltk.corpus import wordnet
 from nltk.stem import WordNetLemmatizer
 from rich.progress import Progress
-from .atomic_update import atomic_write_json
+from atomic_update import atomic_write_json
 
 
 

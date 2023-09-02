@@ -1,3 +1,24 @@
+"""
+Dynamic Word Normalization - Phase 1.2 (dynamic_word_normalization2.py)
+
+This module handles phase 1.2 of Dynamic Word Normalization. It focuses on unresolved
+abbreviated words (AWs) and provides a series of utilities to resolve them either via user
+input or predefined solutions. It also maintains counters for tracking the resolution process
+and logs difficult passages for further review.
+
+Modules:
+- json: For parsing and dumping JSON files.
+- os: For interacting with the operating system.
+- re: For regular expression operations.
+- string: For string manipulations.
+
+Third-party Libraries:
+- prompt_toolkit: For enhancing the CLI experience.
+- rich: For rich text and formatting in the console.
+
+"""
+
+
 import json
 import os
 import re
@@ -12,7 +33,7 @@ from rich.progress import BarColumn, Progress
 from colorama import Fore, Style
 import Levenshtein
 from Levenshtein import distance as lev_distance
-from .atomic_update import atomic_write_json
+from atomic_update import atomic_write_json
 
 
 
@@ -41,6 +62,8 @@ class DynamicWordNormalization2:
             }
         )
         self.console = Console(theme=custom_theme)
+        self.difficult_passages_path = "data/difficult_passages.json"
+
 
         # Load existing user solutions
         try:
@@ -152,7 +175,8 @@ class DynamicWordNormalization2:
 
             # Check if the word is ambiguous and should be logged as a difficult passage
             if word in self.ambiguous_AWs:
-                self.log_difficult_passage(file_name, line_number, column, context)
+                file_name = unresolved_AW["filename"]
+                self.log_difficult_passage(file_name, line_number, column, context, word)
                 continue
 
             # Skip the word if it already has a user-defined solution
@@ -204,7 +228,7 @@ class DynamicWordNormalization2:
 
         return best_suggestion
 
-    def log_difficult_passage(self, file_name, line_number, column, context):
+    def log_difficult_passage(self, file_name, line_number, column, context, abbreviated_word):
         """Log a difficult passage."""
         difficult_passages_path = "data/difficult_passages.json"
 
@@ -222,12 +246,17 @@ class DynamicWordNormalization2:
                 "line_number": line_number,
                 "column": column,
                 "context": context,
+                "abbreviated_word": abbreviated_word
             }
         )
 
-        # Write the updated difficult passages back to the file
-        with open(difficult_passages_path, "w", encoding="utf-8") as file:
-            json.dump(difficult_passages, file, ensure_ascii=False, indent=4)
+        # # Write the updated difficult passages back to the file # stray code.
+        # with open(difficult_passages_path, "w", encoding="utf-8") as file:
+        #     json.dump(difficult_passages, file, ensure_ascii=False, indent=4)
+
+    # Write the updated difficult passages back to the file
+    with open(difficult_passages_path, "w", encoding="utf-8") as file:
+        json.dump(difficult_passages, file, ensure_ascii=False, indent=4)
 
     def handle_user_input(self, word, context, file_name, line_number, column):
         while True:
