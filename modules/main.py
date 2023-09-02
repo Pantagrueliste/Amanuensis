@@ -12,7 +12,6 @@ remaining edge cases.
 
 import os
 import sys
-import logging
 import nltk
 import signal
 import json
@@ -48,7 +47,7 @@ class MainApp:
         self.config = Config()
         logging_level = self.config.get("settings", "logging_level")
         difficult_passages_json_path = self.config.get("data", "difficult_passages_path", "Amanuensis/data")
-        #logging.basicConfig(level=getattr(logging, logging_level))
+        from .atomic_update import atomic_write_json
 
     def save_json_data(self):
         """
@@ -97,6 +96,7 @@ class Amanuensis:
         )
         self.conflict_resolver = ConflictResolver(self.config)
         self.word_normalization3 = DynamicWordNormalization3(self.config)
+        self.word_normalization3.analyze_difficult_passages()
 
     def run(self):
         """
@@ -149,8 +149,9 @@ class Amanuensis:
         user_solution_json_path = self.config.get("data", "user_solution_path")
         input_path = self.config.get("paths", "input_path")
         output_path = self.config.get("paths", "output_path")
-        # self.word_normalization3.handle_problematic_files_with_atomic_update(sorted_problematic_ratios, user_solution_json_path)
-        # self.word_normalization3.final_processing(input_path, output_path)
+        self.word_normalization3.analyze_difficult_passages()
+
+
 
     def run_unicode_replacement(self):
         """

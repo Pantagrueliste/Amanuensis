@@ -5,7 +5,8 @@ from collections import Counter
 from config import Config
 from dynamic_word_normalization2 import DynamicWordNormalization2
 from gpt_suggestions import GPTSuggestions
-from atomic_update import atomic_write_json
+from .atomic_update import atomic_write_json
+
 
 
 class DynamicWordNormalization3:
