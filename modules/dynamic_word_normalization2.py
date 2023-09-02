@@ -12,15 +12,8 @@ from rich.progress import BarColumn, Progress
 from colorama import Fore, Style
 import Levenshtein
 from Levenshtein import distance as lev_distance
-from atomic_update import atomic_write_json
+from .atomic_update import atomic_write_json
 
-
-
-# def atomic_write_json(file_path, data):
-#     temp_file_path = file_path + ".tmp"
-#     with open(temp_file_path, "w", encoding="utf-8") as f:
-#         json.dump(data, f, ensure_ascii=False, indent=4)
-#     os.rename(temp_file_path, file_path)
 
 
 class UserQuitException(Exception):
@@ -37,7 +30,6 @@ class DynamicWordNormalization2:
         self.remaining_files_count = len(
             set([aw["filename"] for aw in self.unresolved_AWs])
         )
-        from atomic_update import atomic_write_json
 
 
         custom_theme = Theme(
