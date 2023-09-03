@@ -22,6 +22,7 @@ from unicode_replacement import UnicodeReplacement
 from dynamic_word_normalization1 import DynamicWordNormalization1
 from dynamic_word_normalization2 import DynamicWordNormalization2
 from dynamic_word_normalization3 import DynamicWordNormalization3
+from atomic_update import atomic_write_json
 from conflict_resolver import ConflictResolver
 from multiprocessing.pool import IMapUnorderedIterator
 from dynamic_word_normalization2 import UserQuitException
@@ -49,13 +50,12 @@ class MainApp:
         difficult_passages_json_path = self.config.get("data", "difficult_passages_path", "Amanuensis/data")
         from atomic_update import atomic_write_json
 
-    def save_json_data(self):
+    def save_json_data(self):  ## connect to atomic_update.py
         """
         Save pending json data to json disk.
         """
         for filename, data in self.pending_json_data.items():
-            with open(filename, "w") as f:
-                json.dump(data, f)
+            atomic_write_json(filename, data)
         logging.info("Saved pending json data to disk.")
 
     def terminate_ongoing_processes(self):
@@ -87,22 +87,26 @@ class Amanuensis:
         print(text2art("Amanuensis"))
         self.main_app = main_app_instance
         self.config = config
+        config.print_config_recap()
         self.config.validate_paths()
         self.unicode_replacement = UnicodeReplacement(self.config)
         self.word_normalization = DynamicWordNormalization1(self.config)
         self.ambiguous_AWs = self.config.get_ambiguous_AWs()
         self.word_normalization2 = DynamicWordNormalization2(
-            ambiguous_AWs=self.ambiguous_AWs
-        )
+                    self.config, ambiguous_AWs=self.ambiguous_AWs
+                )
         self.conflict_resolver = ConflictResolver(self.config)
         self.word_normalization3 = DynamicWordNormalization3(self.config)
-        self.word_normalization3.analyze_difficult_passages()
+
+
 
     def run(self):
         """
-        Main method to start word normalization process.
+        Execution sequence of Amanuenis.
         """
+        # Unicode Replacement (optional)
         if self.config.get("unicode_replacements", "replacements_on"):
+            print("Starting Unicode Replacement...")
             self.run_unicode_replacement()
             proceed = input(
                 "Unicode Replacement is complete. Do you want to proceed to Dynamic Word Normalization? (y/n): "
@@ -114,10 +118,20 @@ class Amanuensis:
                 self.main_app.terminate_ongoing_processes()
                 sys.exit(0)
 
-        input_directory = self.config.get("paths", "input_path")
+        # DWN1.1
+        print("Starting DWN1.1...")
         self.run_word_normalization()
+        # DWN1.2
+        print("Starting DWN1.2...")
         self.word_normalization2.process_unresolved_AWs()
+        # DWN2
+        print("Starting DWN2...")
+        #logging.info("Starting DWN2...")
+        self.word_normalization3.analyze_difficult_passages()
 
+        #input_directory = self.config.get("paths", "input_path")
+
+        # Conflict Resolution
         proceed = input(
             "Dynamic Word Normalization is complete. Do you want to proceed to Conflict Resolution? (y/n): "
         )
@@ -135,7 +149,7 @@ class Amanuensis:
         logging.info("Conflict Resolution Complete.")
 
         proceed = input(
-            "Conflict Resolution is complete. Do you want to proceed to Dynamic Word Normalization 2? (y/n): "
+            "Conflict Resolution is complete. Do you want to proceed to processing all files? (y/n): "
         )
         if proceed.lower() != "y":
             print("Exiting.")
@@ -144,13 +158,12 @@ class Amanuensis:
             self.main_app.terminate_ongoing_processes()
             sys.exit(0)
 
-        logging.info("Starting DWN2...")
         difficult_passages_json_path = self.config.get("data", "difficult_passages")
         user_solution_json_path = self.config.get("data", "user_solution_path")
         input_path = self.config.get("paths", "input_path")
         output_path = self.config.get("paths", "output_path")
-        self.word_normalization3.analyze_difficult_passages()
 
+        # TODO files processing section
 
 
     def run_unicode_replacement(self):

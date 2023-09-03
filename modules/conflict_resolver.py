@@ -6,7 +6,6 @@ class ConflictResolver:
         self.config = config
         self.load_machine_solutions()
         self.load_user_solutions()
-        self.detect_and_resolve_conflicts()
 
     def load_machine_solutions(self):
         """

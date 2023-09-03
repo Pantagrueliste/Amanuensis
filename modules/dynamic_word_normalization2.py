@@ -42,7 +42,8 @@ class UserQuitException(Exception):
 
 
 class DynamicWordNormalization2:
-    def __init__(self, unresolved_AWs_path="data/unresolved_AW.json", ambiguous_AWs=[]):
+    def __init__(self, config, unresolved_AWs_path="data/unresolved_AW.json", ambiguous_AWs=[]):
+        self.config = config
         self.unresolved_AWs = self.load_unresolved_AWs(unresolved_AWs_path)
         self.ambiguous_AWs = ambiguous_AWs
         self.solved_AWs_count = 0
