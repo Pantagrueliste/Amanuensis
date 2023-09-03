@@ -16,7 +16,6 @@ class Config:
         self.file_path = file_path
         self.settings = self._read_config()
         self.debug_level = self.settings["settings"]["logging_level"]
-        self.print_config_recap()
 
     def _read_config(self):
         """Read the configuration file"""
