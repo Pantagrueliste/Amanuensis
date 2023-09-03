@@ -43,7 +43,7 @@ class DynamicWordNormalization3:
             self.gpt4 = GPTSuggestions(config)
         else:
             self.gpt4 = None
-        self.dwn2 = DynamicWordNormalization2()
+        self.dwn2 = DynamicWordNormalization2(config)
         self.input_path = self.config.get("paths", "input_path")
         self.difficult_passages_file = difficult_passages_file
         self.user_solution_file = user_solution_file
