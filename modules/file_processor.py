@@ -32,6 +32,7 @@ class FastFileProcessor:
 
     def process_file(self, file_path: str):
         """Implement the logic to process a single file."""
+        logging.debug(f"Processing file: {file_path}")
         try:
             with open(file_path, 'r') as f:
                 content = f.read()
@@ -40,6 +41,7 @@ class FastFileProcessor:
 
             output_file_path = os.path.join(self.output_path, os.path.basename(file_path))
             atomic_write_text(file_path=output_file_path, data=content)
+            logging.debug(f"Output path: {self.output_path}")
 
         except Exception as e:
             logging.error(f"Failed to process {file_path}: {e}")
@@ -55,6 +57,7 @@ class FastFileProcessor:
             pool.map(self.process_file, files)
 
     def run(self):
+        logging.debug("FastFileProcessor run method started.")
         # Load your AW mappings from JSON files
         user_solutions = self.user_solutions
         machine_solutions = self.machine_solutions

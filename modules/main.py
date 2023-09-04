@@ -31,8 +31,13 @@ from rich.logging import RichHandler
 from rich.progress import Progress
 from art import text2art
 
-nltk.download("wordnet")
+# # Download Wordnet if not already present.
+# try:
+#     nltk.data.find("corpora/wordnet")
+# except LookupError:
+#     nltk.download("wordnet")
 
+# Set up logging.
 logging.basicConfig(
     level=logging.DEBUG,
     format="%(asctime)s [%(levelname)s] %(module)s - %(message)s",
@@ -41,6 +46,7 @@ logging.basicConfig(
         logging.FileHandler("amanuensis.log", mode="a")
     ]
 )
+
 
 class MainApp:
     def __init__(self):
@@ -51,7 +57,7 @@ class MainApp:
         difficult_passages_json_path = self.config.get("data", "difficult_passages_path", "Amanuensis/data")
         from atomic_update import atomic_write_json
 
-    def save_json_data(self):  ## connect to atomic_update.py
+    def save_json_data(self):
         """
         Save pending json data to json disk.
         """
@@ -91,7 +97,11 @@ class Amanuensis:
         config.print_config_recap()
         self.config.validate_paths()
         self.unicode_replacement = UnicodeReplacement(self.config)
-        self.word_normalization = DynamicWordNormalization1(self.config)
+        @property
+        def word_normalization(self):
+            if not hasattr(self, "_word_normalization"):
+                self._word_normalization = DynamicWordNormalization1(self.config)
+            return self._word_normalization
         self.ambiguous_AWs = self.config.get_ambiguous_AWs()
         self.word_normalization2 = DynamicWordNormalization2(
                     self.config, ambiguous_AWs=self.ambiguous_AWs
@@ -100,14 +110,12 @@ class Amanuensis:
         self.word_normalization3 = DynamicWordNormalization3(self.config)
 
 
-
     def run(self):
         """
         Execution sequence of Amanuenis.
         """
-        # Unicode Replacement (optional)
         if self.config.get("unicode_replacements", "replacements_on"):
-            print("Starting Unicode Replacement...")
+            #print("Starting Unicode Replacement...")
             self.run_unicode_replacement()
             proceed = input(
                 "Unicode Replacement is complete. Do you want to proceed to Dynamic Word Normalization? (y/n): "
