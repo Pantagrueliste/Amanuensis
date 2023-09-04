@@ -22,6 +22,7 @@ from unicode_replacement import UnicodeReplacement
 from dynamic_word_normalization1 import DynamicWordNormalization1
 from dynamic_word_normalization2 import DynamicWordNormalization2
 from dynamic_word_normalization3 import DynamicWordNormalization3
+from file_processor import FastFileProcessor
 from atomic_update import atomic_write_json
 from conflict_resolver import ConflictResolver
 from multiprocessing.pool import IMapUnorderedIterator
@@ -129,8 +130,6 @@ class Amanuensis:
         #logging.info("Starting DWN2...")
         self.word_normalization3.analyze_difficult_passages()
 
-        #input_directory = self.config.get("paths", "input_path")
-
         # Conflict Resolution
         proceed = input(
             "Dynamic Word Normalization is complete. Do you want to proceed to Conflict Resolution? (y/n): "
@@ -142,15 +141,11 @@ class Amanuensis:
             self.main_app.terminate_ongoing_processes()
             sys.exit(0)
 
-        print("Resolving conflicts between Machine and User Solutions...")
         logging.info("Resolving conflicts between Machine and User Solutions...")
         self.conflict_resolver.detect_and_resolve_conflicts()
         print("Conflict Resolution Complete.")
         logging.info("Conflict Resolution Complete.")
 
-        proceed = input(
-            "Conflict Resolution is complete. Do you want to proceed to processing all files? (y/n): "
-        )
         if proceed.lower() != "y":
             print("Exiting.")
             logging.info("User exited after Conflict Resolution was complete.")
@@ -163,7 +158,13 @@ class Amanuensis:
         input_path = self.config.get("paths", "input_path")
         output_path = self.config.get("paths", "output_path")
 
-        # TODO files processing section
+        logging.info("Starting file processing...")
+        processor = FastFileProcessor(config_file='config.toml',
+                                        user_solution_file='user_solution.json',
+                                        machine_solution_file='machine_solution.json')
+        processor.run()
+        print("File processing complete.")
+        logging.info("File processing complete.")
 
 
     def run_unicode_replacement(self):
