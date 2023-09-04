@@ -4,9 +4,7 @@ import re
 import tempfile
 import shutil
 import logging
-import nltk
 
-from nltk.corpus import wordnet
 from nltk.stem import WordNetLemmatizer
 from rich.progress import Progress
 from atomic_update import atomic_write_json
@@ -84,6 +82,9 @@ class DynamicWordNormalization1:
         """
         Consults WordNet to find a solution for the AW.
         """
+        import nltk
+        from nltk.corpus import wordnet
+
         word_n = AW.replace("$", "n")
         if wordnet.synsets(word_n):
             return word_n

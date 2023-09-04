@@ -23,7 +23,7 @@ class UnicodeReplacement:
 
     def replace(self, input_file_path):
         """Applies Unicode replacements on the given file and saves the modified text."""
-        print(f"Processing file: {input_file_path}")  # Debug
+        #print(f"Processing file: {input_file_path}")  # Debug
         with open(input_file_path, "r", encoding="utf-8") as file:
             lines = file.readlines()
 
@@ -60,9 +60,9 @@ class UnicodeReplacement:
         """
         Log a replacement or deletion to the log list.
         """
-        print(
-            f"Logging change: {original} -> {replacement} in {input_file_path} at line {line_num}"
-        )
+        # print(
+        #     f"Logging change: {original} -> {replacement} in {input_file_path} at line {line_num}"
+        # )
         log_entry = {
             "timestamp": time(),
             "file_name": os.path.basename(input_file_path),
@@ -76,7 +76,7 @@ class UnicodeReplacement:
         """
         Save the log list to a JSON file in the logs directory.
         """
-        print("Entering save_log method...")  # debug
+        #print("Entering save_log method...")  # debug
         # Determine the base directory of the app
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         log_dir = os.path.join(base_dir, "logs")
@@ -126,6 +126,6 @@ class UnicodeReplacement:
 
         self.save_log()
         self.print_summary()
-        print(
-            f"Processed {len(input_files)} files. Check the replacements_log.json for details."
-        )
+        #print(
+        #     f"Processed {len(input_files)} files. Check the replacements_log.json for details."
+        # )

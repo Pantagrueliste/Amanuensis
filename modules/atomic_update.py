@@ -1,4 +1,5 @@
 import json
+import logging
 from atomicwrites import atomic_write
 
 def atomic_write_json(data, file_path):
@@ -8,3 +9,4 @@ def atomic_write_json(data, file_path):
 def atomic_write_text(data, file_path):
     with atomic_write(file_path, overwrite=True, mode='w', encoding='utf-8') as f:
         f.write(data)
+        logging.debug(f"Writing to file: {file_path}")
