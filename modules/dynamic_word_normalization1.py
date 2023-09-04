@@ -8,6 +8,8 @@ import logging
 from nltk.stem import WordNetLemmatizer
 from rich.progress import Progress
 from atomic_update import atomic_write_json
+from functools import lru_cache
+
 
 
 
@@ -32,6 +34,18 @@ class DynamicWordNormalization1:
         self.progress = Progress()
         self.task_id = self.progress.add_task("[cyan]Processing...", total=100)
         initial_logging_level = self.config.get("settings", "logging_level")
+        self._machine_solutions = None
+        self.load_machine_solutions()
+
+    @property
+    def machine_solutions(self):
+        if self._machine_solutions is None:
+            self.load_machine_solutions()
+        return self._machine_solutions
+
+    @machine_solutions.setter
+    def machine_solutions(self, value):
+        self._machine_solutions = value
 
     def update_progress(self, advance_by=1):
         self.progress.update(self.task_id, advance=advance_by)
@@ -40,15 +54,10 @@ class DynamicWordNormalization1:
         try:
             with open(self.machine_solutions_path, "r", encoding="utf-8") as file:
                 contents = file.read().strip()
-                if contents:
-                    self.machine_solutions = json.loads(contents)
-                    print(f"Loaded {len(self.machine_solutions)} machine solutions.")
-                else:
-                    self.machine_solutions = {}
+                self.machine_solutions = json.loads(contents) if contents else {}
         except FileNotFoundError:
             logging.error("Machine solutions file not found.")
             self.machine_solutions = {}
-            self.save_json(self.machine_solutions_path, self.machine_solutions)
 
     def save_json(self, file_path, data):
         logging.info(f"Saving {len(data)} machine solutions to {file_path}")
@@ -78,6 +87,7 @@ class DynamicWordNormalization1:
                         AW, filename, line_number, context_words, context_size
                     )
 
+    @lru_cache(maxsize=4096)
     def consult_wordnet(self, AW):
         """
         Consults WordNet to find a solution for the AW.

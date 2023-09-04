@@ -31,11 +31,6 @@ from rich.logging import RichHandler
 from rich.progress import Progress
 from art import text2art
 
-# # Download Wordnet if not already present.
-# try:
-#     nltk.data.find("corpora/wordnet")
-# except LookupError:
-#     nltk.download("wordnet")
 
 # Set up logging.
 logging.basicConfig(
@@ -97,17 +92,20 @@ class Amanuensis:
         config.print_config_recap()
         self.config.validate_paths()
         self.unicode_replacement = UnicodeReplacement(self.config)
-        @property
-        def word_normalization(self):
-            if not hasattr(self, "_word_normalization"):
-                self._word_normalization = DynamicWordNormalization1(self.config)
-            return self._word_normalization
+        self._word_normalization = DynamicWordNormalization1(self.config)
         self.ambiguous_AWs = self.config.get_ambiguous_AWs()
         self.word_normalization2 = DynamicWordNormalization2(
                     self.config, ambiguous_AWs=self.ambiguous_AWs
                 )
         self.conflict_resolver = ConflictResolver(self.config)
         self.word_normalization3 = DynamicWordNormalization3(self.config)
+
+    @property
+    def word_normalization(self):
+        if not hasattr(self, "_word_normalization"):
+            self._word_normalization = DynamicWordNormalization1(self.config)
+        return self._word_normalization
+
 
 
     def run(self):
