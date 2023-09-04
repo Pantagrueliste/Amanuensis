@@ -4,15 +4,17 @@ from logging_config import get_logger
 
 logger = get_logger(__name__)
 
+
 def atomic_write_json(data, file_path, temp_dir='tmp/'):
     with atomic_write(file_path, overwrite=True, mode='wb', dir=temp_dir) as f:
         f.write(orjson.dumps(data))
+        # logger.debug(f"Successfully wrote data to {file_path}")
 
 
 def atomic_write_text(data, file_path, temp_dir='tmp/'):
     with atomic_write(file_path, overwrite=True, mode='w', encoding='utf-8', dir=temp_dir) as f:
         f.write(data)
-        logger.debug(f"Writing to file: {file_path}")
+        # logger.debug(f"Writing to file: {file_path}")
 
 
 def atomic_append_json(new_data, file_path, temp_dir='tmp/'):
