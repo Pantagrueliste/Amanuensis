@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Black">
+    <option name="executionMode" value="BINARY" />
+    <option name="pathToExecutable" value="/usr/local/bin/black" />
+    <option name="sdkUUID" value="c396de19-683d-4268-878a-59226a9fa6e8" />
+  </component>
+  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.11 (Amanuensis)" project-jdk-type="Python SDK" />
+</project>

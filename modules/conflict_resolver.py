@@ -28,7 +28,6 @@ class ConflictResolver:
         """
         Load user solutions from a JSON file.
         """
-        user_solution_path = self.config.get("data", "user_solution_path")
         try:
             with open("data/user_solution.json", "r", encoding="utf-8") as file:
                 self.user_solutions = json.load(file)
