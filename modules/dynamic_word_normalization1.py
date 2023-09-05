@@ -1,16 +1,12 @@
 import os
 import json
 import re
-import tempfile
-import shutil
 import logging
 
 from nltk.stem import WordNetLemmatizer
 from rich.progress import Progress
 from atomic_update import atomic_write_json
 from functools import lru_cache
-
-
 
 
 def save_json_data(self):
@@ -33,9 +29,9 @@ class DynamicWordNormalization1:
         self.context_size = self.config.get("settings", "context_size")
         self.progress = Progress()
         self.task_id = self.progress.add_task("[cyan]Processing...", total=100)
-        initial_logging_level = self.config.get("settings", "logging_level")
         self._machine_solutions = None
         self.load_machine_solutions()
+        self.compiled_pattern = re.compile(self.pattern)
 
     @property
     def machine_solutions(self):
@@ -64,11 +60,11 @@ class DynamicWordNormalization1:
         atomic_write_json(data, file_path)
 
     def extract_AWs(self, text):
-        return re.findall(self.pattern, text)
+        self.compiled_pattern.findall(text)
 
-    def process_AWs(self, text, filename, line_number, pattern):
+    def process_AWs(self, text, filename, line_number):
         words = text.split()
-        AWs = [word for word in words if "$" in word]
+        AWs = {word: True for word in words if "$" in word}
         context_size = self.context_size
         for AW in AWs:
             AW_index = words.index(AW)
@@ -84,15 +80,14 @@ class DynamicWordNormalization1:
                     self.save_json(self.machine_solutions_path, self.machine_solutions)
                 else:
                     self.log_unresolved_AW(
-                        AW, filename, line_number, context_words, context_size
+                        AW, filename, line_number, context_words
                     )
 
-    @lru_cache(maxsize=4096)
+    @lru_cache(maxsize=40960)
     def consult_wordnet(self, AW):
         """
         Consults WordNet to find a solution for the AW.
         """
-        import nltk
         from nltk.corpus import wordnet
 
         word_n = AW.replace("$", "n")
@@ -103,7 +98,7 @@ class DynamicWordNormalization1:
             return word_m
         return None
 
-    def log_unresolved_AW(self, AW, filename, line_number, context_words, context_size):
+    def log_unresolved_AW(self, AW, filename, line_number, context_words):
         """
         Logs the unresolved AWs to a file.
         """
@@ -130,7 +125,7 @@ class DynamicWordNormalization1:
         with open(file_path, "r", encoding="utf-8") as file:
             lines = file.readlines()
             for line_number, line in enumerate(lines, start=1):
-                self.process_AWs(line, file_path, line_number, pattern)
+                self.process_AWs(line, file_path, line_number)
         self.save_unresolved_AWs()
 
     def preprocess_directory(self, directory_path):

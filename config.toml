@@ -13,7 +13,7 @@ logging_level = "DEBUG" # DEBUG, INFO, WARNING, ERROR, CRITICAL
 language = "eng"
 
 [unicode_replacements] # settings related to the Unicode Replacement process
-replacements_on = true
+replacements_on = false
 characters_to_delete = ["\u00B6", "\u261E", "\u2740", "\u2767"]
 characters_to_replace = {"Ʋ" = "U", "&c." = "etc.", "ꝑ" = "per", "ꝭ" = "s", "ȝ" = "g", "ꝓ" = "pr"}
 

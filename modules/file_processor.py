@@ -1,10 +1,11 @@
-from multiprocessing import Pool, cpu_count
-import os
-import json
+import orjson
 import logging
+import os
+from multiprocessing import Pool
 
 from atomic_update import atomic_write_text
 from config import Config
+
 
 class FastFileProcessor:
     def __init__(self, config_file='config.toml', user_solution_file='user_solution.json', machine_solution_file='machine_solution.json'):
@@ -18,8 +19,8 @@ class FastFileProcessor:
     def load_solutions(self, file_path: str) -> dict:
         """Load solutions from a JSON file."""
         try:
-            with open(file_path, 'r') as f:
-                return json.load(f)
+            with open(file_path, 'rb') as f:
+                return orjson.loads(f.read())
         except FileNotFoundError:
             return {}
 

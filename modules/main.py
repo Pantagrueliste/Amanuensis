@@ -10,27 +10,22 @@ and on the optional suggestions of GPT-4, to solve all the
 remaining edge cases.
 """
 
-import os
-import sys
-import nltk
-import signal
-import json
 import logging
+import os
+import signal
+import sys
 
-from config import Config
-from unicode_replacement import UnicodeReplacement
-from dynamic_word_normalization1 import DynamicWordNormalization1
-from dynamic_word_normalization2 import DynamicWordNormalization2
-from dynamic_word_normalization3 import DynamicWordNormalization3
-from file_processor import FastFileProcessor
-from atomic_update import atomic_write_json
-from conflict_resolver import ConflictResolver
-from multiprocessing.pool import IMapUnorderedIterator
-from dynamic_word_normalization2 import UserQuitException
-from rich.logging import RichHandler
-from rich.progress import Progress
 from art import text2art
 
+from atomic_update import atomic_write_json
+from config import Config
+from conflict_resolver import ConflictResolver
+from dynamic_word_normalization1 import DynamicWordNormalization1
+from dynamic_word_normalization2 import DynamicWordNormalization2
+from dynamic_word_normalization2 import UserQuitException
+from dynamic_word_normalization3 import DynamicWordNormalization3
+from file_processor import FastFileProcessor
+from unicode_replacement import UnicodeReplacement
 
 # Set up logging.
 logging.basicConfig(
@@ -50,7 +45,6 @@ class MainApp:
         self.config = Config()
         logging_level = self.config.get("settings", "logging_level")
         difficult_passages_json_path = self.config.get("data", "difficult_passages_path", "Amanuensis/data")
-        from atomic_update import atomic_write_json
 
     def save_json_data(self):
         """
