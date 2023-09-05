@@ -1,8 +1,8 @@
 import os
+
 import toml
-import art
-from toml.decoder import TomlDecodeError
 from rich.console import Console
+from toml.decoder import TomlDecodeError
 
 console = Console()
 
@@ -10,6 +10,7 @@ console = Console()
 class PickleableTomlDecoder(toml.TomlDecoder):
     def get_empty_inline_table(self):
         return self.get_empty_table()
+
 
 class Config:
     def __init__(self, file_path="config.toml"):
@@ -29,7 +30,6 @@ class Config:
         except FileNotFoundError:
             raise FileNotFoundError(f"Configuration file '{self.file_path}' not found.")
 
-
     def get(self, section, key=None, default=None):
         try:
             if key:
@@ -39,7 +39,6 @@ class Config:
             if default is not None:
                 return default
             raise KeyError(f"Section '{section}' or key '{key}' not found in configuration file.")
-
 
     def print_config_recap(self):
         console.print("\n[bold]Current Settings:[/bold]")

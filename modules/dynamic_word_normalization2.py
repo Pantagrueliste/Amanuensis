@@ -19,22 +19,21 @@ Third-party Libraries:
 """
 
 
-import json
-import os
+import orjson
 import re
-import string
 
-from prompt_toolkit import prompt
-from prompt_toolkit.formatted_text import HTML
-from rich.console import Console
-from rich.panel import Panel
-from rich.theme import Theme
-from rich.progress import BarColumn, Progress
-from colorama import Fore, Style
 import Levenshtein
 from Levenshtein import distance as lev_distance
-from atomic_update import atomic_write_json
+from colorama import Fore
+from prompt_toolkit import prompt
+from rich.console import Console
+from rich.panel import Panel
+from rich.progress import BarColumn, Progress
+from rich.theme import Theme
+from json import JSONDecodeError
 
+
+from atomic_update import atomic_write_json
 
 
 class UserQuitException(Exception):
@@ -42,7 +41,9 @@ class UserQuitException(Exception):
 
 
 class DynamicWordNormalization2:
-    def __init__(self, config, unresolved_AWs_path="data/unresolved_AW.json", ambiguous_AWs=[]):
+    def __init__(self, config, unresolved_AWs_path="data/unresolved_AW.json", ambiguous_AWs=None):
+        if ambiguous_AWs is None:
+            ambiguous_AWs = []
         self.config = config
         self.unresolved_AWs = self.load_unresolved_AWs(unresolved_AWs_path)
         self.ambiguous_AWs = ambiguous_AWs
@@ -52,7 +53,6 @@ class DynamicWordNormalization2:
         self.remaining_files_count = len(
             set([aw["filename"] for aw in self.unresolved_AWs])
         )
-
 
         custom_theme = Theme(
             {
@@ -65,34 +65,31 @@ class DynamicWordNormalization2:
         self.console = Console(theme=custom_theme)
         self.difficult_passages_path = "data/difficult_passages.json"
 
-
         # Load existing user solutions
         try:
-            with open("data/user_solution.json", "r", encoding="utf-8") as file:
-                self.existing_user_solutions = json.load(file)
+            with open('user_solution_path', 'rb') as f:
+                data = orjson.loads(f.read())
         except FileNotFoundError:
             self.existing_user_solutions = {}
 
         # Load existing machine solutions
         try:
-            with open("data/machine_solution.json", "r", encoding="utf-8") as file:
-                self.existing_machine_solutions = json.load(file)
+            with open('machine_solution_path', 'rb') as f:
+                data = orjson.loads(f.read())
         except FileNotFoundError:
             self.existing_machine_solutions = {}
 
     def load_unresolved_AWs(self, file_path):
         """Load unresolved alternative words (AWs) from the JSON file."""
         try:
-            with open(file_path, "r", encoding="utf-8") as file:
-                return json.load(file)
+            with open(file_path, 'rb') as f:
+                return orjson.loads(f.read())
         except FileNotFoundError:
-            raise FileNotFoundError(f"Unresolved AWs file '{file_path}' not found.")
-        except json.JSONDecodeError as e:
-            raise json.JSONDecodeError(
-                f"Malformed JSON in file '{file_path}' at line {e.lineno}, column {e.colno}",
-                e.doc,
-                e.pos,
-            )
+            self.console.print(f"[red]Error:[/red] Unresolved AWs file '{file_path}' not found.")
+            return []
+        except JSONDecodeError as e:
+            self.console.print(f"[red]Error:[/red] Malformed JSON in file '{file_path}'.")
+            return []
 
     def print_status(self):
         """Print the current status of the DWN1.2 phase."""
@@ -123,8 +120,8 @@ class DynamicWordNormalization2:
 
         # Load existing user solutions
         try:
-            with open(user_solution_path, "r", encoding="utf-8") as file:
-                user_solutions = json.load(file)
+            with open('user_solution_path', 'rb') as f:
+                data = orjson.loads(f.read())
         except FileNotFoundError:
             user_solutions = {}
 
@@ -139,8 +136,8 @@ class DynamicWordNormalization2:
         current_file = None
 
         try:
-            with open("data/user_solution.json", "r", encoding="utf-8") as file:
-                self.existing_user_solutions = json.load(file)
+            with open('unresolved_AWs_path', 'rb') as f:
+                data = orjson.loads(f.read())
         except FileNotFoundError:
             self.existing_user_solutions = {}
 
@@ -235,8 +232,8 @@ class DynamicWordNormalization2:
 
         # Load existing difficult passages
         try:
-            with open(difficult_passages_path, "r", encoding="utf-8") as file:
-                difficult_passages = json.load(file)
+            with open('difficult_passages_path', 'rb') as f:
+                data = orjson.loads(f.read())
         except FileNotFoundError:
             difficult_passages = []
 
@@ -252,8 +249,8 @@ class DynamicWordNormalization2:
         )
 
         # Write the updated difficult passages back to the file
-        with open(difficult_passages_path, "w", encoding="utf-8") as file:
-            json.dump(difficult_passages, file, ensure_ascii=False, indent=4)
+        with open('difficult_passages_path', 'wb') as f:
+            f.write(orjson.dumps(difficult_passages))
 
     def handle_user_input(self, word, context, file_name, line_number, column):
         while True:
@@ -275,7 +272,11 @@ class DynamicWordNormalization2:
             self.console.print(
                 Panel.fit(highlighted_context, border_style="bright_black")
             )
-            correct_word_prompt = f"[info]Enter '[/info][danger]n[/danger][info]' or '[/info][danger]m[/danger][info]' to replace $, '[/info][danger]d[/danger][info]' to discard it\nEnter the full replacement for '[/info][danger]{word}[/danger][info]' \nType '[/info][danger]`[/danger][info]' if you don't know\nType '[/info][danger]quit[/danger][info]' to exit:[/info]\n"
+            correct_word_prompt = (f"[info]Enter '[/info][danger]n[/danger][info]' or '[/info][danger]m[/danger]["
+                                   f"info]' to replace $, '[/info][danger]d[/danger][info]' to discard it\nEnter the "
+                                   f"full replacement for '[/info][danger]{word}[/danger][info]' \nType '[/info]["
+                                   f"danger]`[/danger][info]' if you don't know\nType '[/info][danger]quit[/danger]["
+                                   f"info]' to exit:[/info]\n")
 
             # Print the prompt using Rich Console
             self.console.print(correct_word_prompt)
@@ -304,7 +305,8 @@ class DynamicWordNormalization2:
             lev_distance = Levenshtein.distance(word.replace("$", ""), correct_word)
             if lev_distance > word.count("$") + 1:
                 self.console.print(
-                    "[yellow]Your input seems significantly different from the original word. Please confirm if this is correct.[/yellow]"
+                    "[yellow]Your input seems significantly different from the original word. Please confirm if this "
+                    "is correct.[/yellow]"
                 )
                 confirmation = input(
                     "Type 'yes' to confirm, 'no' to input again: "

@@ -1,11 +1,13 @@
+import orjson
 import os
-import json
-from typing import Dict, List, Optional, Union
 from multiprocessing import Pool
 from time import time
-from config import Config
-from rich.progress import Progress
+from typing import List, Optional
+
 from rich.console import Console
+from rich.progress import Progress
+
+from config import Config
 
 
 class UnicodeReplacement:
@@ -75,9 +77,8 @@ class UnicodeReplacement:
         """
         Save the log list to a JSON file in the logs directory.
         """
-        with open("replacements_log.json", "w", encoding="utf-8") as file:
-            json.dump(self.log, file, indent=4)
-
+        with open('file.json', 'wb') as f:
+            f.write(orjson.dumps(self.log))
 
     def print_summary(self):
         """

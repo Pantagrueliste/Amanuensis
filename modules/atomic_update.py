@@ -1,10 +1,12 @@
-import json
+import orjson
 import logging
 from atomicwrites import atomic_write
 
+
 def atomic_write_json(data, file_path):
-    with atomic_write(file_path, overwrite=True, mode='w', encoding='utf-8') as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
+    with atomic_write(file_path, overwrite=True, mode='wb') as f:
+        f.write(orjson.dumps(data))
+
 
 def atomic_write_text(data, file_path):
     with atomic_write(file_path, overwrite=True, mode='w', encoding='utf-8') as f:
