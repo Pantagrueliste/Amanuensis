@@ -7,7 +7,7 @@ Amanuēsis is a Python application, tailored specifically for researchers in the
 language processing and large language models, it is designed to accelerate normalization tasks for large-scale text
 data, transforming old and complex texts into a more digestible format. This preparation is crucial for further digital
 analysis and manipulation. With Amanuēsis, you can make your text data more legible and accessible, accelerating and
-streamlining a long and rebarbative process.
+streamlining an otherwise long and rebarbative task.
 
 ## Features
 
