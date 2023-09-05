@@ -1,10 +1,10 @@
 import sys
 import unittest
-from unittest import TestCase
-from modules.config import Config
+
+from modules.unicode_replacement import UnicodeReplacement
 
 sys.path.append("/Users/clem/GitHub/Amanuensis/modules")
-from unicode_replacement import UnicodeReplacement
+
 
 class MockConfig:
     def get(self, section, key):
@@ -20,10 +20,12 @@ class MockConfig:
         }
         return mock_data.get(section, {}).get(key)
 
+
 class TestUnicodeReplacement(unittest.TestCase):
     def test_initialization(self):
         mock_config = MockConfig()
         ur_instance = UnicodeReplacement(mock_config)
+
 
 if __name__ == '__main__':
     unittest.main()
