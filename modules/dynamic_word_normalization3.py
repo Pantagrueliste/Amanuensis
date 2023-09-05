@@ -22,7 +22,7 @@ Third-party Libraries:
 """
 
 
-import json
+import orjson
 import os
 from collections import Counter
 
@@ -30,10 +30,13 @@ from atomic_update import atomic_write_json
 from config import Config
 from dynamic_word_normalization2 import DynamicWordNormalization2
 from gpt_suggestions import GPTSuggestions
+from json import JSONDecodeError
+
 
 
 class DynamicWordNormalization3:
     def __init__(self, config, difficult_passages_file='data/difficult_passages.json', user_solution_file='user_solution.json', input_folder=None):
+        self.console = None
         self.config = Config()
         use_gpt = self.config.get_openai_integration('gpt_suggestions')
         if use_gpt == True:
@@ -47,8 +50,17 @@ class DynamicWordNormalization3:
         self.difficult_passages = self.load_difficult_passages()
 
     def load_difficult_passages(self):
-        with open(self.difficult_passages_file, 'r', encoding="utf-8") as f:
-            return json.load(f)
+        try:
+            with open(self.difficult_passages_file, 'rb') as f:  # Assuming you've set this variable
+                return orjson.loads(f.read())
+        except FileNotFoundError:
+            if self.console:
+                self.console.print(f"[red]Error:[/red] File '{self.difficult_passages_file}' not found.")
+            return []
+        except JSONDecodeError as e:
+            if self.console:
+                self.console.print(f"[red]Error:[/red] Malformed JSON in file '{self.difficult_passages_file}'.")
+            return []
 
     def word_count_in_file(self, file_path):
         with open(file_path, 'r') as f:

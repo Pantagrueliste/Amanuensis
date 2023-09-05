@@ -1,4 +1,4 @@
-import json
+import orjson
 import logging
 import os
 from multiprocessing import Pool
@@ -19,8 +19,8 @@ class FastFileProcessor:
     def load_solutions(self, file_path: str) -> dict:
         """Load solutions from a JSON file."""
         try:
-            with open(file_path, 'r') as f:
-                return json.load(f)
+            with open(file_path, 'rb') as f:
+                return orjson.loads(f.read())
         except FileNotFoundError:
             return {}
 

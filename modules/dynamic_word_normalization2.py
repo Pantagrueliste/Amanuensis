@@ -19,7 +19,7 @@ Third-party Libraries:
 """
 
 
-import json
+import orjson
 import re
 
 import Levenshtein
@@ -30,6 +30,8 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.progress import BarColumn, Progress
 from rich.theme import Theme
+from json import JSONDecodeError
+
 
 from atomic_update import atomic_write_json
 
@@ -65,31 +67,29 @@ class DynamicWordNormalization2:
 
         # Load existing user solutions
         try:
-            with open("data/user_solution.json", "r", encoding="utf-8") as file:
-                self.existing_user_solutions = json.load(file)
+            with open('user_solution_path', 'rb') as f:
+                data = orjson.loads(f.read())
         except FileNotFoundError:
             self.existing_user_solutions = {}
 
         # Load existing machine solutions
         try:
-            with open("data/machine_solution.json", "r", encoding="utf-8") as file:
-                self.existing_machine_solutions = json.load(file)
+            with open('machine_solution_path', 'rb') as f:
+                data = orjson.loads(f.read())
         except FileNotFoundError:
             self.existing_machine_solutions = {}
 
     def load_unresolved_AWs(self, file_path):
         """Load unresolved alternative words (AWs) from the JSON file."""
         try:
-            with open(file_path, "r", encoding="utf-8") as file:
-                return json.load(file)
+            with open(file_path, 'rb') as f:
+                return orjson.loads(f.read())
         except FileNotFoundError:
-            raise FileNotFoundError(f"Unresolved AWs file '{file_path}' not found.")
-        except json.JSONDecodeError as e:
-            raise json.JSONDecodeError(
-                f"Malformed JSON in file '{file_path}' at line {e.lineno}, column {e.colno}",
-                e.doc,
-                e.pos,
-            )
+            self.console.print(f"[red]Error:[/red] Unresolved AWs file '{file_path}' not found.")
+            return []
+        except JSONDecodeError as e:
+            self.console.print(f"[red]Error:[/red] Malformed JSON in file '{file_path}'.")
+            return []
 
     def print_status(self):
         """Print the current status of the DWN1.2 phase."""
@@ -120,8 +120,8 @@ class DynamicWordNormalization2:
 
         # Load existing user solutions
         try:
-            with open(user_solution_path, "r", encoding="utf-8") as file:
-                user_solutions = json.load(file)
+            with open('user_solution_path', 'rb') as f:
+                data = orjson.loads(f.read())
         except FileNotFoundError:
             user_solutions = {}
 
@@ -136,8 +136,8 @@ class DynamicWordNormalization2:
         current_file = None
 
         try:
-            with open("data/user_solution.json", "r", encoding="utf-8") as file:
-                self.existing_user_solutions = json.load(file)
+            with open('unresolved_AWs_path', 'rb') as f:
+                data = orjson.loads(f.read())
         except FileNotFoundError:
             self.existing_user_solutions = {}
 
@@ -232,8 +232,8 @@ class DynamicWordNormalization2:
 
         # Load existing difficult passages
         try:
-            with open(difficult_passages_path, "r", encoding="utf-8") as file:
-                difficult_passages = json.load(file)
+            with open('difficult_passages_path', 'rb') as f:
+                data = orjson.loads(f.read())
         except FileNotFoundError:
             difficult_passages = []
 
@@ -249,8 +249,8 @@ class DynamicWordNormalization2:
         )
 
         # Write the updated difficult passages back to the file
-        with open(difficult_passages_path, "w", encoding="utf-8") as file:
-            json.dump(difficult_passages, file, ensure_ascii=False, indent=4)
+        with open('difficult_passages_path', 'wb') as f:
+            f.write(orjson.dumps(difficult_passages))
 
     def handle_user_input(self, word, context, file_name, line_number, column):
         while True:
