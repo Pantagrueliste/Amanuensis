@@ -31,6 +31,7 @@ class DynamicWordNormalization1:
         self.task_id = self.progress.add_task("[cyan]Processing...", total=100)
         self._machine_solutions = None
         self.load_machine_solutions()
+        self.compiled_pattern = re.compile(self.pattern)
 
     @property
     def machine_solutions(self):
@@ -59,11 +60,11 @@ class DynamicWordNormalization1:
         atomic_write_json(data, file_path)
 
     def extract_AWs(self, text):
-        return re.findall(self.pattern, text)
+        self.compiled_pattern.findall(text)
 
     def process_AWs(self, text, filename, line_number):
         words = text.split()
-        AWs = [word for word in words if "$" in word]
+        AWs = {word: True for word in words if "$" in word}
         context_size = self.context_size
         for AW in AWs:
             AW_index = words.index(AW)
@@ -82,7 +83,7 @@ class DynamicWordNormalization1:
                         AW, filename, line_number, context_words
                     )
 
-    @lru_cache(maxsize=4096)
+    @lru_cache(maxsize=40960)
     def consult_wordnet(self, AW):
         """
         Consults WordNet to find a solution for the AW.
