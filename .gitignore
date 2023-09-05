@@ -1,6 +1,6 @@
 .DS_Store
 env/
-modules/__pychache__/
+modules/__pychache__/*
 *.pyc
 replacements_log.json
 tmp/*
