@@ -1,4 +1,4 @@
-import json
+import orjson
 
 
 class ConflictResolver:
@@ -13,42 +13,37 @@ class ConflictResolver:
         """
         machine_solution_path = "data/machine_solution.json"
         try:
-            with open(machine_solution_path, "r", encoding="utf-8") as file:
-                contents = file.read().strip()  # Strip leading and trailing whitespace
-                if contents:  # Check if the content is not empty
-                    self.machine_solutions = json.loads(contents)
-                else:
-                    self.machine_solutions = {}
+            with open(machine_solution_path, "rb") as file:
+                contents = file.read().strip()
+                self.machine_solutions = orjson.loads(contents) if contents else {}
         except FileNotFoundError:
             self.machine_solutions = {}
-            with open(machine_solution_path, "w", encoding="utf-8") as file:
-                json.dump(self.machine_solutions, file)
+            self.save_machine_solutions()
 
     def load_user_solutions(self):
         """
         Load user solutions from a JSON file.
         """
         try:
-            with open("data/user_solution.json", "r", encoding="utf-8") as file:
-                self.user_solutions = json.load(file)
+            with open('user_solutions.json', 'rb') as f:
+                self.user_solutions = orjson.loads(f.read())
         except FileNotFoundError:
             self.user_solutions = {}
-            with open("data/user_solution.json", "w", encoding="utf-8") as file:
-                json.dump(self.user_solutions, file)
+            self.save_user_solutions()
 
     def save_machine_solutions(self):
         """
         Save machine solutions to a JSON file.
         """
-        with open("data/machine_solution.json", "w", encoding="utf-8") as file:
-            json.dump(self.machine_solutions, file)
+        with open('machine_solutions.json', 'wb') as f:
+            f.write(orjson.dumps(self.machine_solutions))
 
     def save_user_solutions(self):
         """
         Save user solutions to a JSON file.
         """
-        with open("data/user_solution.json", "w", encoding="utf-8") as file:
-            json.dump(self.user_solutions, file)
+        with open('user_solutions.json', 'wb') as f:
+            f.write(orjson.dumps(self.user_solutions))
 
     def detect_and_resolve_conflicts(self):
         """
