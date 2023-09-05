@@ -18,6 +18,7 @@ Third-party Libraries:
 
 """
 import re
+import os
 import orjson
 import Levenshtein
 import ijson
@@ -44,6 +45,14 @@ class DynamicWordNormalization2:
         self.config = config
         if ambiguous_aws is None:
             ambiguous_aws = []
+
+        if not unresolved_aws_path:
+            unresolved_aws_path = self.config.unresolved_aw_path
+
+        if not os.path.exists(unresolved_aws_path):
+            with open(unresolved_aws_path, "w") as file:
+                file.write("{}")
+            self.logger.info(f"Created missing file: {unresolved_aws_path}")
 
         if not unresolved_aws_path:
             unresolved_aws_path = self.config.unresolved_aw_path
@@ -272,7 +281,11 @@ class DynamicWordNormalization2:
             self.console.print(correct_word_prompt)
 
             # Use prompt_toolkit for user input
-            correct_word = prompt("input: ")
+            try:
+                correct_word = prompt("input: ")
+            except KeyboardInterrupt:
+                self.logger.warning("User interrupted the input process")
+                raise UserQuitException()
 
             # Handle special commands
             if correct_word.lower() == "quit":

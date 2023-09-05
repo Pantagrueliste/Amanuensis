@@ -1,4 +1,5 @@
 import os
+
 import toml
 from rich.console import Console
 from toml.decoder import TomlDecodeError

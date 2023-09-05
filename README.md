@@ -6,9 +6,9 @@
 
 Amanuēsis is a Python application, tailored specifically for researchers in the Digital Humanities. Leveraging natural
 language processing and large language models, it is designed to accelerate normalization tasks for large-scale text
-data, transforming old and complex texts into a more digestible format. This preparation is crucial for further digital
-analysis and manipulation. With Amanuēsis, you can make your text data more legible and accessible, 
+data, transforming old and complex texts into a more digestible format. This preparation is crucial for further digital analysis and manipulation. With Amanuēsis, you can make your text data more legible and accessible,
 streamlining an otherwise long and rebarbative task.
+
 
 ## Features
 
@@ -52,8 +52,8 @@ This project is licensed under the terms of the MIT license. For more details, s
 
 ---
 
-Amanuensis, *noun*. /əˌmænjuˈensɪs/.  
+Amanuensis, *noun*. /əˌmænjuˈensɪs/.
 Early 17th cent.: Latin, from _a manu_ (short for secretary) and -ensis ‘belonging to’.
 
 1. a person who writes down your words when you cannot write.
-2. a literary assistant, especially one who writes, types for somebody or copies text.  
+2. a literary assistant, especially one who writes, types for somebody or copies text.
