@@ -15,7 +15,7 @@ streamlining a long and rebarbative process.
   undesirable characters.
 - **Dynamic Word Normalization**: Expanding abbreviated words leveraging natural language processing, human inputs, and
   large language models to enhance legibility.
-- **Parallel Processing**: Built with efficiency in mind, Amanuēsis uses the full potential of your multicore CPU,
+- **Parallel Processing**: Built with efficiency in mind, Amanuēsis is optimized to use the full potential of your multicore CPU,
   making large normalization tasks more manageable.
 - **Comprehensive Logging**: Every single modification is meticulously tracked and stored in accessible json files,
   enabling further statistical analysis.
