@@ -7,6 +7,8 @@ from nltk.stem import WordNetLemmatizer
 from rich.progress import Progress
 from atomic_update import atomic_write_json
 from functools import lru_cache
+from concurrent.futures import ThreadPoolExecutor
+from threading import Lock
 
 
 def save_json_data(self):
@@ -32,6 +34,7 @@ class DynamicWordNormalization1:
         self._machine_solutions = None
         self.load_machine_solutions()
         self.compiled_pattern = re.compile(self.pattern)
+        self.wordnet_lock = Lock()
 
     @property
     def machine_solutions(self):
@@ -88,14 +91,15 @@ class DynamicWordNormalization1:
         """
         Consults WordNet to find a solution for the AW.
         """
-        from nltk.corpus import wordnet
+        with self.wordnet_lock:
+            from nltk.corpus import wordnet
 
-        word_n = AW.replace("$", "n")
-        if wordnet.synsets(word_n):
-            return word_n
-        word_m = AW.replace("$", "m")
-        if wordnet.synsets(word_m):
-            return word_m
+            word_n = AW.replace("$", "n")
+            if wordnet.synsets(word_n):
+                return word_n
+            word_m = AW.replace("$", "m")
+            if wordnet.synsets(word_m):
+                return word_m
         return None
 
     def log_unresolved_AW(self, AW, filename, line_number, context_words):
@@ -128,21 +132,32 @@ class DynamicWordNormalization1:
                 self.process_AWs(line, file_path, line_number)
         self.save_unresolved_AWs()
 
-    def preprocess_directory(self, directory_path):
-        logging.getLogger().setLevel(logging.CRITICAL)
-        total_files = self.total_files(directory_path)
-        with Progress() as progress:
-            task = progress.add_task("[cyan]Analyzing files...", total=total_files)
-
-            for root, _, files in os.walk(directory_path):
-                for file_name in files:
-                    file_path = os.path.join(root, file_name)
-                    self.process_file(file_path, self.pattern)
-                    progress.update(task, advance=1)
-            self.save_unresolved_AWs()
-
     def total_files(self, directory_path):
         count = 0
         for root, _, files in os.walk(directory_path):
             count += len(files)
         return count
+
+    def process_file_wrapper(self, args):
+        file_path, pattern = args
+        self.process_file(file_path, pattern)
+
+    def preprocess_directory(self, directory_path):
+        logging.getLogger().setLevel(logging.CRITICAL)
+        total_files = self.total_files(directory_path)
+
+        with ThreadPoolExecutor() as executor, Progress() as progress:
+            task = progress.add_task("[cyan]Analyzing files...", total=total_files)
+            file_args = []
+
+            for root, _, files in os.walk(directory_path):
+                for file_name in files:
+                    file_path = os.path.join(root, file_name)
+                    file_args.append((file_path, self.pattern))
+
+            results = executor.map(self.process_file_wrapper, file_args)
+
+            for _ in results:
+                progress.update(task, advance=1)
+
+            self.save_unresolved_AWs()
