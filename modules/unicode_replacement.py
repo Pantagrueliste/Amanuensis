@@ -1,11 +1,13 @@
-import os
 import json
-from typing import Dict, List, Optional, Union
+import os
 from multiprocessing import Pool
 from time import time
-from config import Config
-from rich.progress import Progress
+from typing import List, Optional
+
 from rich.console import Console
+from rich.progress import Progress
+
+from config import Config
 
 
 class UnicodeReplacement:

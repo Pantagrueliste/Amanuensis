@@ -24,15 +24,12 @@ Third-party Libraries:
 
 import json
 import os
-import logging
-
 from collections import Counter
+
+from atomic_update import atomic_write_json
 from config import Config
 from dynamic_word_normalization2 import DynamicWordNormalization2
 from gpt_suggestions import GPTSuggestions
-from atomic_update import atomic_write_json
-from collections import Counter
-
 
 
 class DynamicWordNormalization3:

@@ -1,10 +1,11 @@
-from multiprocessing import Pool, cpu_count
-import os
 import json
 import logging
+import os
+from multiprocessing import Pool
 
 from atomic_update import atomic_write_text
 from config import Config
+
 
 class FastFileProcessor:
     def __init__(self, config_file='config.toml', user_solution_file='user_solution.json', machine_solution_file='machine_solution.json'):
