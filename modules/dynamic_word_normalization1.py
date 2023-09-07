@@ -20,6 +20,11 @@ def save_json_data(self):
     logging.info("Saved pending json data to disk.")
 
 
+def save_json(file_path, data):
+    logging.info(f"Saving {len(data)} machine solutions to {file_path}")
+    atomic_write_json(data, file_path)
+
+
 class DynamicWordNormalization1:
     def __init__(self, config):
         self.config = config
@@ -58,10 +63,6 @@ class DynamicWordNormalization1:
             logging.error("Machine solutions file not found.")
             self.machine_solutions = {}
 
-    def save_json(self, file_path, data):
-        logging.info(f"Saving {len(data)} machine solutions to {file_path}")
-        atomic_write_json(data, file_path)
-
     def extract_AWs(self, text):
         self.compiled_pattern.findall(text)
 
@@ -80,7 +81,7 @@ class DynamicWordNormalization1:
                 solution = self.consult_wordnet(AW)
                 if solution:
                     self.machine_solutions[AW] = solution
-                    self.save_json(self.machine_solutions_path, self.machine_solutions)
+                    save_json(self.machine_solutions_path, self.machine_solutions)
                 else:
                     self.log_unresolved_AW(
                         AW, filename, line_number, context_words
@@ -123,9 +124,9 @@ class DynamicWordNormalization1:
     def save_unresolved_AWs(self):
         logging.info(f"Saving {len(self.unresolved_AWs_log)} unresolved AWs.")
         unresolved_AWs_path = "data/unresolved_AW.json"
-        self.save_json(unresolved_AWs_path, self.unresolved_AWs_log)
+        save_json(unresolved_AWs_path, self.unresolved_AWs_log)
 
-    def process_file(self, file_path, pattern):
+    def process_file(self, file_path):
         with open(file_path, "r", encoding="utf-8") as file:
             lines = file.readlines()
             for line_number, line in enumerate(lines, start=1):
@@ -140,7 +141,7 @@ class DynamicWordNormalization1:
 
     def process_file_wrapper(self, args):
         file_path, pattern = args
-        self.process_file(file_path, pattern)
+        self.process_file(file_path)
 
     def preprocess_directory(self, directory_path):
         logging.getLogger().setLevel(logging.CRITICAL)
