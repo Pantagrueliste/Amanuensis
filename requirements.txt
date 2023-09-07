@@ -21,3 +21,4 @@ toml==0.10.2
 tqdm==4.66.1
 atomicwrites==1.4.0
 openai==0.10.0
+orjson
