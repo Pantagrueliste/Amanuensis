@@ -17,10 +17,8 @@ Third-party Libraries:
 - rich: For rich text and formatting in the console.
 
 """
-
-
-import orjson
 import re
+import orjson
 
 import Levenshtein
 from Levenshtein import distance as lev_distance
@@ -32,8 +30,7 @@ from rich.progress import BarColumn, Progress
 from rich.theme import Theme
 from json import JSONDecodeError
 
-
-from atomic_update import atomic_write_json
+from atomic_update import atomic_append_json
 
 
 class UserQuitException(Exception):
@@ -68,14 +65,14 @@ class DynamicWordNormalization2:
         # Load existing user solutions
         try:
             with open('user_solution_path', 'rb') as f:
-                data = orjson.loads(f.read())
+                self.existing_user_solutions = orjson.loads(f.read())
         except FileNotFoundError:
             self.existing_user_solutions = {}
 
         # Load existing machine solutions
         try:
-            with open('machine_solution_path', 'rb') as f:
-                data = orjson.loads(f.read())
+            with open('data/machine_solution.json', 'rb') as f:
+                self.existing_machine_solutions = orjson.loads(f.read())
         except FileNotFoundError:
             self.existing_machine_solutions = {}
 
@@ -87,7 +84,7 @@ class DynamicWordNormalization2:
         except FileNotFoundError:
             self.console.print(f"[red]Error:[/red] Unresolved AWs file '{file_path}' not found.")
             return []
-        except JSONDecodeError as e:
+        except JSONDecodeError:
             self.console.print(f"[red]Error:[/red] Malformed JSON in file '{file_path}'.")
             return []
 
@@ -95,7 +92,6 @@ class DynamicWordNormalization2:
         """Print the current status of the DWN1.2 phase."""
         total_AWs = len(self.unresolved_AWs)
         solved_AWs = self.solved_AWs_count
-        remaining_AWs = self.remaining_AWs_count
 
         self.console.rule("[green]Progress[/green]", style="green")
         with Progress(
@@ -120,16 +116,16 @@ class DynamicWordNormalization2:
 
         # Load existing user solutions
         try:
-            with open('user_solution_path', 'rb') as f:
-                data = orjson.loads(f.read())
+            with open('data/user_solution.json', 'rb') as f:
+                self.existing_user_solutions = orjson.loads(f.read())
         except FileNotFoundError:
-            user_solutions = {}
+            self.existing_user_solutions = {}
 
         # Update the user solutions with the new solution
         self.existing_user_solutions[unresolved_AW] = correct_word
 
         # Write the updated user solutions back to the file
-        atomic_write_json(self.existing_user_solutions, user_solution_path)
+        atomic_append_json(self.existing_user_solutions, user_solution_path)
 
     def process_unresolved_AWs(self):
         """Process unresolved AWs by prompting the user for solutions."""
@@ -137,7 +133,7 @@ class DynamicWordNormalization2:
 
         try:
             with open('unresolved_AWs_path', 'rb') as f:
-                data = orjson.loads(f.read())
+                self.unresolved_AWs = orjson.loads(f.read())
         except FileNotFoundError:
             self.existing_user_solutions = {}
 
@@ -151,13 +147,12 @@ class DynamicWordNormalization2:
 
             full_update_needed = True
 
-            if word in self.existing_user_solutions:
+            if word in self.existing_user_solutions or word in self.existing_machine_solutions:
                 self.console.print(
                     f"[dim red]{word}[/dim red] [bright_black]solved.[/bright_black]"
                 )
                 self.solved_AWs_count += 1
                 self.remaining_AWs_count -= 1
-                full_update_needed = False
                 continue
 
             if word in self.ambiguous_AWs:
@@ -205,7 +200,7 @@ class DynamicWordNormalization2:
     @staticmethod
     def remove_trailing_punctuation(word):
         # return re.sub(r'(\$?)[\.,;:!?(){}]$', r'\1', word)
-        return re.sub(r"^[\.,;:!?(){}]|[\.,;:!?(){}]$", "", word)
+        return re.sub(r"^[,;:!?(){}]|[,;:!?(){}]$", "", word)
 
     def generate_suggestions(self, unresolved_AW, threshold=3):
         best_suggestion = None
@@ -232,8 +227,8 @@ class DynamicWordNormalization2:
 
         # Load existing difficult passages
         try:
-            with open('difficult_passages_path', 'rb') as f:
-                data = orjson.loads(f.read())
+            with open(difficult_passages_path, 'rb') as f:
+                difficult_passages = orjson.loads(f.read())
         except FileNotFoundError:
             difficult_passages = []
 
@@ -249,7 +244,7 @@ class DynamicWordNormalization2:
         )
 
         # Write the updated difficult passages back to the file
-        with open('difficult_passages_path', 'wb') as f:
+        with open(difficult_passages_path, 'wb') as f:
             f.write(orjson.dumps(difficult_passages))
 
     def handle_user_input(self, word, context, file_name, line_number, column):
@@ -287,9 +282,8 @@ class DynamicWordNormalization2:
             # Handle special commands
             if correct_word.lower() == "quit":
                 raise UserQuitException()
-                break
             elif correct_word == "`":
-                self.log_difficult_passage(file_name, line_number, column, context)
+                self.log_difficult_passage(file_name, line_number, column, context, word)
                 self.console.print(
                     "[green]Difficult passage logged. Please continue with the next word.[/green]"
                 )
@@ -302,8 +296,8 @@ class DynamicWordNormalization2:
                 correct_word = word.replace("$", "")
 
             # Validate user's input
-            lev_distance = Levenshtein.distance(word.replace("$", ""), correct_word)
-            if lev_distance > word.count("$") + 1:
+            distance = Levenshtein.distance(word.replace("$", ""), correct_word)
+            if distance > word.count("$") + 1:
                 self.console.print(
                     "[yellow]Your input seems significantly different from the original word. Please confirm if this "
                     "is correct.[/yellow]"

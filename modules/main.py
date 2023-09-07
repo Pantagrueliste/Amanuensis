@@ -43,7 +43,7 @@ class MainApp:
         self.ongoing_processes = []
         self.pending_json_data = {}
         self.config = Config()
-        logging_level = self.config.get("settings", "logging_level")
+        self.config.get("settings", "logging_level")
         difficult_passages_json_path = self.config.get("data", "difficult_passages_path", "Amanuensis/data")
 
     def save_json_data(self):
@@ -62,7 +62,7 @@ class MainApp:
             process.terminate()
         logging.info("Terminated all ongoing processes.")
 
-    def signal_handler(self, signal, frame):
+    def signal_handler(self):
         """
         Handle Ctrl+C signal.
         """
@@ -205,7 +205,7 @@ class Amanuensis:
 
 if __name__ == "__main__":
     main_app_instance = MainApp()
-    signal.signal(signal.SIGINT, lambda s, f: main_app_instance.signal_handler(s, f))
+    signal.signal(signal.SIGINT, lambda s, f: main_app_instance.signal_handler())
     try:
         amanuensis = Amanuensis(main_app_instance, main_app_instance.config)
         amanuensis.run()
