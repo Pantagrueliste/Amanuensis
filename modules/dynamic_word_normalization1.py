@@ -1,7 +1,6 @@
 import os
 import json
 import re
-import logging
 
 from nltk.stem import WordNetLemmatizer
 from rich.progress import Progress
@@ -9,6 +8,9 @@ from atomic_update import atomic_write_json
 from functools import lru_cache
 from concurrent.futures import ThreadPoolExecutor
 from threading import Lock
+from logging_config import get_logger
+
+logger = get_logger(__name__)
 
 
 def save_json_data(self):
@@ -17,11 +19,11 @@ def save_json_data(self):
     """
     for filename, data in self.pending_json_data.items():
         atomic_write_json(data, filename)
-    logging.info("Saved pending json data to disk.")
+    logger.info("Saved pending json data to disk.")
 
 
 def save_json(file_path, data):
-    logging.info(f"Saving {len(data)} machine solutions to {file_path}")
+    logger.info(f"Saving {len(data)} machine solutions to {file_path}")
     atomic_write_json(data, file_path)
 
 
@@ -30,14 +32,19 @@ class DynamicWordNormalization1:
         self.config = config
         self.pattern = r"\w*\$\w*"
         self.lemmatizer = WordNetLemmatizer()
-        self.machine_solutions_path = "data/machine_solution.json"
+        self.machine_solutions_path = self.config.machine_solution_path
+        self.unresolved_AWs_path = self.config.unresolved_AW_path
         self.unresolved_AWs_log = []
+
+        data_directory = os.path.dirname(self.machine_solutions_path)
+        if not os.path.exists(data_directory):
+            os.makedirs(data_directory)
+
         self.load_machine_solutions()
+
         self.context_size = self.config.get("settings", "context_size")
         self.progress = Progress()
         self.task_id = self.progress.add_task("[cyan]Processing...", total=100)
-        self._machine_solutions = None
-        self.load_machine_solutions()
         self.compiled_pattern = re.compile(self.pattern)
         self.wordnet_lock = Lock()
 
@@ -60,7 +67,7 @@ class DynamicWordNormalization1:
                 contents = file.read().strip()
                 self.machine_solutions = json.loads(contents) if contents else {}
         except FileNotFoundError:
-            logging.error("Machine solutions file not found.")
+            logger.error("Machine solutions file not found.")
             self.machine_solutions = {}
 
     def extract_AWs(self, text):
@@ -71,21 +78,30 @@ class DynamicWordNormalization1:
         AWs = {word: True for word in words if "$" in word}
         context_size = self.context_size
         for AW in AWs:
-            AW_index = words.index(AW)
-            start_index = max(0, AW_index - context_size)
-            end_index = min(len(words), AW_index + context_size + 1)
-            context_words = words[start_index:end_index]
+            try:
+                clean_AW = re.sub(r"[,;:!?(){}]", "", AW)
+                AW_index = words.index(AW)
+                start_index = max(0, AW_index - context_size)
+                end_index = min(len(words), AW_index + context_size + 1)
+                context_words = words[start_index:end_index]
 
-            solution = self.machine_solutions.get(AW)
-            if not solution:
-                solution = self.consult_wordnet(AW)
-                if solution:
-                    self.machine_solutions[AW] = solution
-                    save_json(self.machine_solutions_path, self.machine_solutions)
-                else:
-                    self.log_unresolved_AW(
-                        AW, filename, line_number, context_words
-                    )
+                solution = self.machine_solutions.get(AW)
+                if not solution:
+                    try:
+                        solution = self.consult_wordnet(AW)
+                    except Exception as e:
+                        logger.error(f"Error consulting WordNet for AW '{AW}': {e}")
+                        solution = None
+
+                    if solution:
+                        self.machine_solutions[AW] = solution
+                        save_json(self.machine_solutions_path, self.machine_solutions)
+                    else:
+                        self.log_unresolved_AW(
+                            AW, filename, line_number, context_words
+                        )
+            except Exception as e:
+                logger.error(f"Error processing AWs in file {filename} on line {line_number}: {e}")
 
     @lru_cache(maxsize=40960)
     def consult_wordnet(self, AW):
@@ -107,23 +123,25 @@ class DynamicWordNormalization1:
         """
         Logs the unresolved AWs to a file.
         """
-        AW_index = context_words.index(AW)
+        AW_index = context_words.index(AW)  # Use the original AW
         start_index = max(0, AW_index - self.context_size)
         end_index = min(len(context_words), AW_index + self.context_size + 1)
         context = " ".join(context_words[start_index:end_index])
+        sanitized_AW = re.sub(r"[,;:!?(){}]", "", AW)
+
         self.unresolved_AWs_log.append(
             {
                 "filename": filename,
                 "line": line_number,
                 "column": AW_index,
-                "unresolved_AW": AW,
+                "unresolved_AW": sanitized_AW,
                 "context": context,
             }
         )
 
     def save_unresolved_AWs(self):
-        logging.info(f"Saving {len(self.unresolved_AWs_log)} unresolved AWs.")
-        unresolved_AWs_path = "data/unresolved_AW.json"
+        logger.info(f"Saving {len(self.unresolved_AWs_log)} unresolved AWs.")
+        unresolved_AWs_path = self.config.get("data", "unresolved_AWs_path")
         save_json(unresolved_AWs_path, self.unresolved_AWs_log)
 
     def process_file(self, file_path):
@@ -144,7 +162,7 @@ class DynamicWordNormalization1:
         self.process_file(file_path)
 
     def preprocess_directory(self, directory_path):
-        logging.getLogger().setLevel(logging.CRITICAL)
+        logger.setLevel(50)
         total_files = self.total_files(directory_path)
 
         with ThreadPoolExecutor() as executor, Progress() as progress:
