@@ -31,10 +31,12 @@ from config import Config
 from dynamic_word_normalization2 import DynamicWordNormalization2
 from gpt_suggestions import GPTSuggestions
 from json import JSONDecodeError
+from logging_config import get_logger
 
 
 class DynamicWordNormalization3:
     def __init__(self, config, difficult_passages_file='data/difficult_passages.json', user_solution_file='user_solution.json'):
+        self.logger = get_logger(__name__)
         self.console = None
         self.config = Config()
         use_gpt = self.config.get_openai_integration('gpt_suggestions')
@@ -66,6 +68,10 @@ class DynamicWordNormalization3:
             return len(f.read().split())
 
     def print_ascii_bar_chart(self, data, title):
+        if not data:
+            self.logger.warning("No data available for bar chart.")
+            return  # Exit the function if no data is provided
+
         counter = Counter(data)
         longest_label_length = max(map(len, data.keys()))
         increment = max(counter.values()) // 25 + 1
@@ -117,7 +123,7 @@ class DynamicWordNormalization3:
             if choice == 'D':
                 self.discard_file(file)
             elif choice == 'F':
-                self.fix_file(file)
+                self.fix_file(file) # fix fix_file
             else:
                 print("Invalid choice. Skipping this file.")
 
@@ -125,12 +131,18 @@ class DynamicWordNormalization3:
         # Remove the file from self.difficult_passages to discard it from further processing
         if file in self.difficult_passages:
             del self.difficult_passages[file]
+        self.logger.warning(f"Discarded file: {file}")
         print(f"Discarded file: {file}")
 
-    def get_initial_solutions(self, word):
-        # Reuse the logic from DynamicWordNormalization2 to get initial solutions
-        initial_solution = self.dwn2.get_solution_for_word(word)
-        return initial_solution
+    def handle_word_with_user_input(self, word, context, file_name, line_number, column):
+        # Call the handle_user_input method of DynamicWordNormalization2
+        correct_word = self.dwn2.handle_user_input(word, context, file_name, line_number, column)
+
+        # Update the user solution with the correct word
+        self.update_user_solution(word, correct_word)
+
+        return correct_word
+
 
     def accept_gpt4_suggestion(self, word, suggestion):
         # Update the user_solution.json with the accepted GPT-4 suggestion
