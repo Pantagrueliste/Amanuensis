@@ -70,14 +70,14 @@ class UnicodeReplacement:
             "line_number": line_num,
             "original": original,
             "replacement": replacement,
-        }    
+        }
         local_log.append(log_entry)
 
     def save_log(self):
         """
         Save the log list to a JSON file in the logs directory.
         """
-        with open('file.json', 'wb') as f:
+        with open('logs/unicode_replacement_log.json', 'wb') as f:
             f.write(orjson.dumps(self.log))
 
     def print_summary(self):
