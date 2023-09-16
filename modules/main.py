@@ -10,13 +10,13 @@ and on the optional suggestions of GPT-4, to solve all the
 remaining edge cases.
 """
 
-import logging
 import os
 import signal
 import sys
 
 from art import text2art
 
+from logging_config import get_logger
 from atomic_update import atomic_write_json
 from config import Config
 from conflict_resolver import ConflictResolver
@@ -27,24 +27,14 @@ from dynamic_word_normalization3 import DynamicWordNormalization3
 from file_processor import FastFileProcessor
 from unicode_replacement import UnicodeReplacement
 
-# Set up logging.
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s [%(levelname)s] %(module)s - %(message)s",
-    handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler("amanuensis.log", mode="a")
-    ]
-)
-
 
 class MainApp:
     def __init__(self):
+        self.logger = get_logger(__name__)
         self.ongoing_processes = []
         self.pending_json_data = {}
         self.config = Config()
-        logging_level = self.config.get("settings", "logging_level")
-        difficult_passages_json_path = self.config.get("data", "difficult_passages_path", "Amanuensis/data")
+        self.config.get("settings", "logging_level")
 
     def save_json_data(self):
         """
@@ -52,7 +42,7 @@ class MainApp:
         """
         for filename, data in self.pending_json_data.items():
             atomic_write_json(filename, data)
-        logging.info("Saved pending json data to disk.")
+        self.logger.info("Saved pending json data to disk.")
 
     def terminate_ongoing_processes(self):
         """
@@ -60,17 +50,17 @@ class MainApp:
         """
         for process in self.ongoing_processes:
             process.terminate()
-        logging.info("Terminated all ongoing processes.")
+        self.logger.info("Terminated all ongoing processes.")
 
-    def signal_handler(self, signal, frame):
+    def signal_handler(self):
         """
         Handle Ctrl+C signal.
         """
-        logging.info("Ctrl+C pressed.")
+        self.logger.info("Ctrl+C pressed.")
         self.save_json_data()
         print("\n\nYou pressed Ctrl+C. Initiating shutdown...")
         self.terminate_ongoing_processes()
-        logging.info("Cleanup complete. Exiting.")
+        self.logger.info("Cleanup complete. Exiting.")
         print("Au revoir!")
         sys.exit(0)
 
@@ -80,6 +70,7 @@ class Amanuensis:
         """
         Initialize Amanuensis.
         """
+        self.logger = get_logger(__name__)
         print(text2art("Amanuensis"))
         self.main_app = main_app_instance
         self.config = config
@@ -100,34 +91,31 @@ class Amanuensis:
             self._word_normalization = DynamicWordNormalization1(self.config)
         return self._word_normalization
 
-
-
     def run(self):
         """
         Execution sequence of Amanuenis.
         """
         if self.config.get("unicode_replacements", "replacements_on"):
-            #print("Starting Unicode Replacement...")
             self.run_unicode_replacement()
             proceed = input(
                 "Unicode Replacement is complete. Do you want to proceed to Dynamic Word Normalization? (y/n): "
             )
             if proceed.lower() != "y":
                 print("Exiting.")
-                logging.info("User exited after Unicode Replacement was complete.")
+                self.logger.info("User exited after Unicode Replacement was complete.")
                 self.main_app.save_json_data()
                 self.main_app.terminate_ongoing_processes()
                 sys.exit(0)
 
         # DWN1.1
-        print("Starting DWN1.1...")
+        self.logger.info("Starting DWN1.1...")
         self.run_word_normalization()
         # DWN1.2
-        print("Starting DWN1.2...")
-        self.word_normalization2.process_unresolved_AWs()
+        self.logger.info("Starting DWN1.2...")
+        unresolved_path = self.config.get("data", "unresolved_AWs_path")
+        self.word_normalization2.process_unresolved_AWs(unresolved_path)
         # DWN2
-        print("Starting DWN2...")
-        #logging.info("Starting DWN2...")
+        self.logger.info("Starting DWN2...")
         self.word_normalization3.analyze_difficult_passages()
 
         # Conflict Resolution
@@ -136,43 +124,42 @@ class Amanuensis:
         )
         if proceed.lower() != "y":
             print("Exiting.")
-            logging.info("User exited after Dynamic Word Normalization was complete.")
+            self.logger.info("User exited after Dynamic Word Normalization was complete.")
             self.main_app.save_json_data()
             self.main_app.terminate_ongoing_processes()
             sys.exit(0)
 
-        logging.info("Resolving conflicts between Machine and User Solutions...")
+        self.logger.info("Resolving conflicts between Machine and User Solutions...")
         self.conflict_resolver.detect_and_resolve_conflicts()
         print("Conflict Resolution Complete.")
-        logging.info("Conflict Resolution Complete.")
+        self.logger.info("Conflict Resolution Complete.")
 
         if proceed.lower() != "y":
             print("Exiting.")
-            logging.info("User exited after Conflict Resolution was complete.")
+            self.logger.info("User exited after Conflict Resolution was complete.")
             self.main_app.save_json_data()
             self.main_app.terminate_ongoing_processes()
             sys.exit(0)
 
-        difficult_passages_json_path = self.config.get("data", "difficult_passages")
+        difficult_passages_json_path = self.config.get("data", "difficult_passages_path")
         user_solution_json_path = self.config.get("data", "user_solution_path")
         input_path = self.config.get("paths", "input_path")
         output_path = self.config.get("paths", "output_path")
 
-        logging.info("Starting file processing...")
+        self.logger.info("Starting file processing...")
         processor = FastFileProcessor(config_file='config.toml',
-                                        user_solution_file='user_solution.json',
-                                        machine_solution_file='machine_solution.json')
+                                      user_solution_file=os.path.join(self.config.get('paths', 'output_path'),
+                                                                      'data/user_solution.json'),
+                                      machine_solution_file=os.path.join(self.config.get('paths', 'output_path'),
+                                                                         'data/machine_solution.json'))
         processor.run()
-        print("File processing complete.")
-        logging.info("File processing complete.")
-
+        self.logger.info("File processing complete.")
 
     def run_unicode_replacement(self):
         """
         Perform Unicode replacements on all text files in the input directory.
         """
-        print("Starting Unicode Replacement...")
-        logging.info("Starting Unicode Replacement...")
+        self.logger.info("Starting Unicode Replacement...")
         input_path = self.config.get("paths", "input_path")
         file_paths = self.get_all_text_files(input_path)
 
@@ -185,8 +172,7 @@ class Amanuensis:
         """
         Perform Dynamic Word Normalization on all text files in the input directory.
         """
-        print("Starting Dynamic Word Normalization...")
-        logging.info("Starting Dynamic Word Normalization...")
+        self.logger.info("Starting Dynamic Word Normalization...")
         input_directory = self.config.get("paths", "input_path")
 
         self.word_normalization.preprocess_directory(input_directory)
@@ -204,13 +190,14 @@ class Amanuensis:
 
 
 if __name__ == "__main__":
+    logger = get_logger(__name__)
     main_app_instance = MainApp()
-    signal.signal(signal.SIGINT, lambda s, f: main_app_instance.signal_handler(s, f))
+    signal.signal(signal.SIGINT, lambda s, f: main_app_instance.signal_handler())
     try:
         amanuensis = Amanuensis(main_app_instance, main_app_instance.config)
         amanuensis.run()
     except UserQuitException:
-        logging.info("User quit the application.")
+        logger.info("User quit the application.")
         print("Exiting the application.")
         main_app_instance.save_json_data()
         main_app_instance.terminate_ongoing_processes()

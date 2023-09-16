@@ -1,5 +1,4 @@
 import os
-
 import toml
 from rich.console import Console
 from toml.decoder import TomlDecodeError
@@ -17,6 +16,11 @@ class Config:
         self.file_path = file_path
         self.settings = self._read_config()
         self.debug_level = self.settings["settings"]["logging_level"]
+
+        base_path = self.get("paths", "output_path")
+
+        self.machine_solution_path = os.path.join(base_path, self.get("data", "machine_solution_path",                                                              "data/machine_solution.json"))
+        self.unresolved_AW_path = os.path.join(base_path, self.get("data", "unresolved_AW_path", "data/unresolved_AW.json"))
 
     def _read_config(self):
         """Read the configuration file"""
