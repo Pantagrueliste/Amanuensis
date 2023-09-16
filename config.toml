@@ -1,19 +1,21 @@
 [paths] # define the paths for working directories
-input_path = "/Users/clem/Desktop/EEBOTest4/eng"
-output_path = "/Users/clem/Desktop/AmanuensisTestSample"
+input_path = "/Users/clem/Desktop/EEBOTest4/Test1"
+output_path = "/Users/clem/Desktop/Test1_output"
 
 [data] # paths of the dictionaries. To be transferred to [paths].
 machine_solution_path = "data/machine_solution.json"
 user_solution_path = "data/user_solution.json"
-difficult_passages = "data/difficult_passages.json"
+difficult_passages_path = "data/difficult_passages.json"
+unresolved_AWs_path = "data/unresolved_AW.json"
 
 [settings] # settings related to the Dynamic Word Normalization process
+batch_size = 1000
 context_size = 20
 logging_level = "DEBUG" # DEBUG, INFO, WARNING, ERROR, CRITICAL
 language = "eng"
 
 [unicode_replacements] # settings related to the Unicode Replacement process
-replacements_on = false
+replacements_on = true
 characters_to_delete = ["\u00B6", "\u261E", "\u2740", "\u2767"]
 characters_to_replace = {"Ʋ" = "U", "&c." = "etc.", "ꝑ" = "per", "ꝭ" = "s", "ȝ" = "g", "ꝓ" = "pr"}
 

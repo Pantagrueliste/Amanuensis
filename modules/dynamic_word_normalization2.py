@@ -19,8 +19,9 @@ Third-party Libraries:
 """
 import re
 import orjson
-
 import Levenshtein
+import ijson
+
 from Levenshtein import distance as lev_distance
 from colorama import Fore
 from prompt_toolkit import prompt
@@ -29,7 +30,7 @@ from rich.panel import Panel
 from rich.progress import BarColumn, Progress
 from rich.theme import Theme
 from json import JSONDecodeError
-
+from logging_config import get_logger
 from atomic_update import atomic_append_json
 
 
@@ -39,9 +40,15 @@ class UserQuitException(Exception):
 
 class DynamicWordNormalization2:
     def __init__(self, config, unresolved_AWs_path="data/unresolved_AW.json", ambiguous_AWs=None):
+        self.logger = get_logger(__name__)
+        self.config = config
         if ambiguous_AWs is None:
             ambiguous_AWs = []
-        self.config = config
+
+        if not unresolved_AWs_path:
+            unresolved_AWs_path = self.config.unresolved_AW_path
+        self.batch_size = config.get("settings", "batch_size", 1000)
+        self.unresolved_AWs_path = unresolved_AWs_path
         self.unresolved_AWs = self.load_unresolved_AWs(unresolved_AWs_path)
         self.ambiguous_AWs = ambiguous_AWs
         self.solved_AWs_count = 0
@@ -60,11 +67,11 @@ class DynamicWordNormalization2:
             }
         )
         self.console = Console(theme=custom_theme)
-        self.difficult_passages_path = "data/difficult_passages.json"
 
         # Load existing user solutions
         try:
-            with open('user_solution_path', 'rb') as f:
+            user_solution_path = self.config.get("data", "user_solution_path")
+            with open(user_solution_path, 'rb') as f:
                 self.existing_user_solutions = orjson.loads(f.read())
         except FileNotFoundError:
             self.existing_user_solutions = {}
@@ -82,7 +89,7 @@ class DynamicWordNormalization2:
             with open(file_path, 'rb') as f:
                 return orjson.loads(f.read())
         except FileNotFoundError:
-            self.console.print(f"[red]Error:[/red] Unresolved AWs file '{file_path}' not found.")
+            self.logger.error(f"Unresolved AWs file '{file_path}' not found.")
             return []
         except JSONDecodeError:
             self.console.print(f"[red]Error:[/red] Malformed JSON in file '{file_path}'.")
@@ -127,69 +134,57 @@ class DynamicWordNormalization2:
         # Write the updated user solutions back to the file
         atomic_append_json(self.existing_user_solutions, user_solution_path)
 
-    def process_unresolved_AWs(self):
+    def process_unresolved_AWs(self, unresolved_AWs_path):
         """Process unresolved AWs by prompting the user for solutions."""
+        # current_file = None
+        batch = []
+
+        # Stream-parse the unresolved_AWs.json file
+        with open(self.unresolved_AWs_path, 'r') as file:
+            unresolved_AWs = ijson.items(file, 'item')
+            for unresolved_AW in unresolved_AWs:
+                batch.append(unresolved_AW)
+
+                # If batch size is reached, process the AWs and reset the batch
+                if len(batch) == self.batch_size:
+                    self._process_batch(batch)
+                    batch = []
+
+        # Process any remaining AWs in the last batch
+        if batch:
+            self._process_batch(batch)
+
+    def _process_batch(self, batch):
+        """Private method to handle processing of AWs in the batch."""
+        expected_keys = {"unresolved_AW", "context", "filename", "line", "column"}
         current_file = None
 
-        try:
-            with open('unresolved_AWs_path', 'rb') as f:
-                self.unresolved_AWs = orjson.loads(f.read())
-        except FileNotFoundError:
-            self.existing_user_solutions = {}
-
-        for unresolved_AW in self.unresolved_AWs:
-            # Extracting words with "$" using regular expression
-            pattern = r"\w*\$+\w*"
-            AWs = re.findall(pattern, unresolved_AW["context"])
-            word = DynamicWordNormalization2.remove_trailing_punctuation(
-                unresolved_AW["unresolved_AW"]
-            )
-
-            full_update_needed = True
-
-            if word in self.existing_user_solutions or word in self.existing_machine_solutions:
-                self.console.print(
-                    f"[dim red]{word}[/dim red] [bright_black]solved.[/bright_black]"
-                )
-                self.solved_AWs_count += 1
-                self.remaining_AWs_count -= 1
+        for unresolved_AW in batch:
+            if not isinstance(unresolved_AW, dict) or not expected_keys.issubset(unresolved_AW.keys()):
+                self.logger.error(f"Unexpected item structure: {unresolved_AW}")
                 continue
 
-            if word in self.ambiguous_AWs:
-                self.console.print(
-                    f"[dim red]{word}[/dim red] [bright_black]solved.[/bright_black]"
-                )
-                continue
-
+            word = self.remove_trailing_punctuation(unresolved_AW["unresolved_AW"])
             context = unresolved_AW["context"]
             file_name = unresolved_AW["filename"]
             line_number = unresolved_AW["line"]
             column = unresolved_AW["column"]
 
-            # Check if the word is ambiguous and should be logged as a difficult passage
+            if word in self.existing_user_solutions or word in self.existing_machine_solutions:
+                self.console.print(f"[dim red]{word}[/dim red] [bright_black]solved.[/bright_black]")
+                self.solved_AWs_count += 1
+                self.remaining_AWs_count -= 1
+                continue
+
             if word in self.ambiguous_AWs:
-                file_name = unresolved_AW["filename"]
+                self.console.print(f"[dim red]{word}[/dim red] [bright_black]is ambiguous.[/bright_black]")
                 self.log_difficult_passage(file_name, line_number, column, context, word)
                 continue
 
-            # Skip the word if it already has a user-defined solution
-            if word in self.existing_user_solutions:
-                continue
-
-            # Handle user input for unresolved_AW
-            correct_word = self.handle_user_input(
-                word, context, file_name, line_number, column
-            )
-
-            # Update user solutions
+            correct_word = self.handle_user_input(word, context, file_name, line_number, column)
             self.update_user_solution(word, correct_word)
-
-            # Update counters and print status
             self.solved_AWs_count += 1
             self.remaining_AWs_count -= 1
-
-            # Update counters for files, if we have moved on to a new file
-            file_name = unresolved_AW["filename"]
 
             if current_file != file_name:
                 self.processed_files_count += 1
@@ -223,7 +218,7 @@ class DynamicWordNormalization2:
 
     def log_difficult_passage(self, file_name, line_number, column, context, abbreviated_word):
         """Log a difficult passage."""
-        difficult_passages_path = "data/difficult_passages.json"
+        difficult_passages_path = self.config.get("data", "difficult_passages_path")
 
         # Load existing difficult passages
         try:
