@@ -5,24 +5,32 @@ from multiprocessing import Pool
 
 from atomic_update import atomic_write_text
 from config import Config
+from logging import getLogger
+
+def load_solutions(file_path: str) -> dict:
+    """Load solutions from a JSON file."""
+    try:
+        with open(file_path, 'rb') as f:
+            return orjson.loads(f.read())
+    except FileNotFoundError:
+        return {}
+
+
+def process_files_in_parallel(file_list: list, num_workers: int):
+    """Process multiple files in parallel."""
+    with Pool(num_workers) as p:
+        p.map(FastFileProcessor().process_file, file_list)
 
 
 class FastFileProcessor:
     def __init__(self, config_file='config.toml', user_solution_file='user_solution.json', machine_solution_file='machine_solution.json'):
+        self.logger = getLogger(__name__)
         self.config = Config(config_file)
         self.output_path = self.config.get("paths", "output_path")
         self.user_solution_file = user_solution_file
         self.machine_solution_file = machine_solution_file
-        self.user_solutions = self.load_solutions(file_path=self.user_solution_file)
-        self.machine_solutions = self.load_solutions(file_path=self.machine_solution_file)
-
-    def load_solutions(self, file_path: str) -> dict:
-        """Load solutions from a JSON file."""
-        try:
-            with open(file_path, 'rb') as f:
-                return orjson.loads(f.read())
-        except FileNotFoundError:
-            return {}
+        self.user_solutions = load_solutions(file_path=self.user_solution_file)
+        self.machine_solutions = load_solutions(file_path=self.machine_solution_file)
 
     def apply_abbreviations(self, text: str) -> str:
         for original, replacement in self.user_solutions.items():
@@ -33,7 +41,7 @@ class FastFileProcessor:
 
     def process_file(self, file_path: str):
         """Implement the logic to process a single file."""
-        logging.debug(f"Processing file: {file_path}")
+        self.logger.debug(f"Processing file: {file_path}")
         try:
             with open(file_path, 'r') as f:
                 content = f.read()
@@ -42,23 +50,17 @@ class FastFileProcessor:
 
             output_file_path = os.path.join(self.output_path, os.path.basename(file_path))
             atomic_write_text(file_path=output_file_path, data=content)
-            logging.debug(f"Output path: {self.output_path}")
+            self.logger.debug(f"Output path: {self.output_path}")
 
         except Exception as e:
-            logging.error(f"Failed to process {file_path}: {e}")
-
-    def process_files_in_parallel(self, file_list: list, num_workers: int):
-        """Process multiple files in parallel."""
-        with Pool(num_workers) as p:
-            p.map(FastFileProcessor().process_file, file_list)
-
+            self.logger.error(f"Failed to process {file_path}: {e}")
 
     def parallel_process_files(self, files):
         with Pool() as pool:
             pool.map(self.process_file, files)
 
     def run(self):
-        logging.debug("FastFileProcessor run method started.")
+        self.logger.debug("FastFileProcessor run method started.")
         # Load your AW mappings from JSON files
         user_solutions = self.user_solutions
         machine_solutions = self.machine_solutions
