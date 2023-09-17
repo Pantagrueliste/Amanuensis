@@ -16,7 +16,6 @@ import sys
 
 from art import text2art
 
-from logging_config import get_logger
 from atomic_update import atomic_write_json
 from config import Config
 from conflict_resolver import ConflictResolver
@@ -24,8 +23,9 @@ from dynamic_word_normalization1 import DynamicWordNormalization1
 from dynamic_word_normalization2 import DynamicWordNormalization2
 from dynamic_word_normalization2 import UserQuitException
 from dynamic_word_normalization3 import DynamicWordNormalization3
-from file_processor import FastFileProcessor
+from logging_config import get_logger
 from unicode_replacement import UnicodeReplacement
+from file_processor import FileProcessor
 
 
 class MainApp:
@@ -147,7 +147,7 @@ class Amanuensis:
         output_path = self.config.get("paths", "output_path")
 
         self.logger.info("Starting file processing...")
-        processor = FastFileProcessor(config_file='config.toml',
+        processor = FileProcessor(config_file='config.toml',
                                       user_solution_file=os.path.join(self.config.get('paths', 'output_path'),
                                                                       'data/user_solution.json'),
                                       machine_solution_file=os.path.join(self.config.get('paths', 'output_path'),
