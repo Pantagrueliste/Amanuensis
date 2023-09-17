@@ -1,11 +1,11 @@
 import orjson
-import logging
 import os
 from multiprocessing import Pool
 
 from atomic_update import atomic_write_text
 from config import Config
 from logging import getLogger
+from ahocorasick import Automaton
 
 def load_solutions(file_path: str) -> dict:
     """Load solutions from a JSON file."""
@@ -15,14 +15,13 @@ def load_solutions(file_path: str) -> dict:
     except FileNotFoundError:
         return {}
 
-
 def process_files_in_parallel(file_list: list, num_workers: int):
     """Process multiple files in parallel."""
     with Pool(num_workers) as p:
-        p.map(FastFileProcessor().process_file, file_list)
+        p.map(FileProcessor().process_file, file_list)
 
 
-class FastFileProcessor:
+class FileProcessor:
     def __init__(self, config_file='config.toml', user_solution_file='user_solution.json', machine_solution_file='machine_solution.json'):
         self.logger = getLogger(__name__)
         self.config = Config(config_file)
@@ -31,13 +30,32 @@ class FastFileProcessor:
         self.machine_solution_file = machine_solution_file
         self.user_solutions = load_solutions(file_path=self.user_solution_file)
         self.machine_solutions = load_solutions(file_path=self.machine_solution_file)
+        self.automaton = self._build_automaton()
+
+    def _build_automaton(self):
+        """Builds the Aho-Corasick automaton from user and machine solutions."""
+        automaton = Automaton()
+        for abbreviation, replacement in self.user_solutions.items():
+            automaton.add_word(abbreviation, replacement)
+        for abbreviation, replacement in self.machine_solutions.items():
+            automaton.add_word(abbreviation, replacement)
+        automaton.make_automaton()
+        return automaton
 
     def apply_abbreviations(self, text: str) -> str:
-        for original, replacement in self.user_solutions.items():
-            text = text.replace(original, replacement)
-        for original, replacement in self.machine_solutions.items():
-            text = text.replace(original, replacement)
-        return text
+        """Applies the abbreviations to the text using Aho-Corasick algorithm."""
+        result_parts = []
+        last_end = 0
+
+        for end, abbreviation in self.automaton.iter(text):
+            replacement = self.user_solutions.get(abbreviation) or self.machine_solutions.get(abbreviation)
+            start = end - len(abbreviation) + 1
+            result_parts.append(text[last_end:start])
+            result_parts.append(replacement)
+            last_end = end + 1
+
+        result_parts.append(text[last_end:])
+        return ''.join(result_parts)
 
     def process_file(self, file_path: str):
         """Implement the logic to process a single file."""
