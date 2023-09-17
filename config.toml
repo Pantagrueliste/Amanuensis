@@ -1,5 +1,5 @@
 [paths] # define the paths for working directories
-input_path = "/Users/clem/Desktop/EEBOTest4/Test1"
+input_path = "/Users/clem/Desktop/EEBOTest4/Test1_input"
 output_path = "/Users/clem/Desktop/Test1_output"
 
 [data] # paths of the dictionaries. To be transferred to [paths].
