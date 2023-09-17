@@ -165,3 +165,31 @@
 2023-09-17 11:50:15,611 - DEBUG - atomic_update: Writing to file: /Users/clem/Desktop/Test1_output/A96888.P5.txt
 2023-09-17 11:50:17,088 - DEBUG - atomic_update: Writing to file: /Users/clem/Desktop/Test1_output/A96884.P5.txt
 2023-09-17 11:50:17,131 - INFO - main: File processing complete.
+2023-09-17 13:32:51,026 - INFO - main: Starting Unicode Replacement...
+2023-09-17 13:32:56,851 - INFO - main: Starting DWN1.1...
+2023-09-17 13:32:56,852 - INFO - main: Starting Dynamic Word Normalization...
+2023-09-17 13:33:00,036 - INFO - main: Starting DWN1.2...
+2023-09-17 13:33:00,042 - INFO - main: Starting DWN2...
+2023-09-17 13:33:00,043 - WARNING - dynamic_word_normalization3: No data available for bar chart.
+2023-09-17 13:33:02,582 - INFO - main: Resolving conflicts between Machine and User Solutions...
+2023-09-17 13:33:02,589 - INFO - main: Conflict Resolution Complete.
+2023-09-17 13:33:02,589 - INFO - main: Starting file processing...
+2023-09-17 13:33:02,594 - DEBUG - file_processor: FastFileProcessor run method started.
+2023-09-17 13:33:05,710 - DEBUG - atomic_update: Writing to file: /Users/clem/Desktop/Test1_output/A96944.P5.txt
+2023-09-17 13:33:08,662 - DEBUG - atomic_update: Writing to file: /Users/clem/Desktop/Test1_output/A96891.P5.txt
+2023-09-17 13:33:08,763 - DEBUG - atomic_update: Writing to file: /Users/clem/Desktop/Test1_output/A96883.P5.txt
+2023-09-17 13:33:13,754 - DEBUG - atomic_update: Writing to file: /Users/clem/Desktop/Test1_output/A96909.P5.txt
+2023-09-17 13:33:14,747 - DEBUG - atomic_update: Writing to file: /Users/clem/Desktop/Test1_output/A96999.P5.txt
+2023-09-17 13:33:16,599 - DEBUG - atomic_update: Writing to file: /Users/clem/Desktop/Test1_output/A96995.P5.txt
+2023-09-17 13:33:17,085 - DEBUG - atomic_update: Writing to file: /Users/clem/Desktop/Test1_output/A97002.P5.txt
+2023-09-17 13:33:18,724 - DEBUG - atomic_update: Writing to file: /Users/clem/Desktop/Test1_output/A96897.P5.txt
+2023-09-17 13:33:20,794 - DEBUG - atomic_update: Writing to file: /Users/clem/Desktop/Test1_output/A96976.P5.txt
+2023-09-17 13:33:21,491 - DEBUG - atomic_update: Writing to file: /Users/clem/Desktop/Test1_output/A96907.P5.txt
+2023-09-17 13:33:24,801 - DEBUG - atomic_update: Writing to file: /Users/clem/Desktop/Test1_output/A96992.P5.txt
+2023-09-17 13:33:25,208 - DEBUG - atomic_update: Writing to file: /Users/clem/Desktop/Test1_output/A97005.P5.txt
+2023-09-17 13:33:33,573 - DEBUG - atomic_update: Writing to file: /Users/clem/Desktop/Test1_output/A96879.P5.txt
+2023-09-17 13:33:36,023 - DEBUG - atomic_update: Writing to file: /Users/clem/Desktop/Test1_output/A96877.P5.txt
+2023-09-17 13:33:36,565 - DEBUG - atomic_update: Writing to file: /Users/clem/Desktop/Test1_output/A96996.P5.txt
+2023-09-17 13:33:37,359 - DEBUG - atomic_update: Writing to file: /Users/clem/Desktop/Test1_output/A96888.P5.txt
+2023-09-17 13:33:38,555 - DEBUG - atomic_update: Writing to file: /Users/clem/Desktop/Test1_output/A96884.P5.txt
+2023-09-17 13:33:38,598 - INFO - main: File processing complete.
