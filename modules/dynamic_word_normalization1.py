@@ -13,12 +13,22 @@ from logging_config import get_logger
 logger = get_logger(__name__)
 
 
+# def save_json_data(self):
+#     """
+#     Save pending json data to json disk.
+#     """
+#     for filename, data in self.pending_json_data.items():
+#         atomic_write_json(data, filename)
+#     logger.info("Saved pending json data to disk.")
+
 def save_json_data(self):
     """
     Save pending json data to json disk.
     """
     for filename, data in self.pending_json_data.items():
-        atomic_write_json(data, filename)
+        # Ensure filename has the correct directory structure
+        correct_path = os.path.join('data/', filename)
+        atomic_write_json(data, correct_path)
     logger.info("Saved pending json data to disk.")
 
 
