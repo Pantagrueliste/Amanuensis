@@ -64,7 +64,8 @@ class DynamicWordNormalization3:
                 self.console.print(f"[red]Error:[/red] Malformed JSON in file '{self.difficult_passages_file}'.")
             return []
 
-    def word_count_in_file(self, file_path):
+    @staticmethod
+    def word_count_in_file(file_path):
         with open(file_path, 'r') as f:
             return len(f.read().split())
 
@@ -99,7 +100,7 @@ class DynamicWordNormalization3:
                 raise ValueError("input_path is not set.")
             file_path = os.path.join(self.input_path, file)
             if os.path.exists(file_path):
-                total_words = self.word_count_in_file(file_path)
+                total_words = DynamicWordNormalization3.word_count_in_file(file_path)
 
                 difficulties_per_file[file] = difficulties_count
                 ratios_per_file[file] = difficulties_count / total_words if total_words else 0.0

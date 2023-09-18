@@ -2,7 +2,7 @@
 Dynamic Word Normalization - Phase 1.2 (dynamic_word_normalization2.py)
 
 This module handles phase 1.2 of Dynamic Word Normalization. It focuses on unresolved
-abbreviated words (AWs) and provides a series of utilities to resolve them either via user
+abbreviated words (aws) and provides a series of utilities to resolve them either via user
 input or predefined solutions. It also maintains counters for tracking the resolution process
 and logs difficult passages for further review.
 
@@ -39,23 +39,23 @@ class UserQuitException(Exception):
 
 
 class DynamicWordNormalization2:
-    def __init__(self, config, unresolved_AWs_path="data/unresolved_AW.json", ambiguous_AWs=None):
+    def __init__(self, config, unresolved_aws_path="data/unresolved_aw.json", ambiguous_aws=None):
         self.logger = get_logger(__name__)
         self.config = config
-        if ambiguous_AWs is None:
-            ambiguous_AWs = []
+        if ambiguous_aws is None:
+            ambiguous_aws = []
 
-        if not unresolved_AWs_path:
-            unresolved_AWs_path = self.config.unresolved_AW_path
+        if not unresolved_aws_path:
+            unresolved_aws_path = self.config.unresolved_aw_path
         self.batch_size = config.get("settings", "batch_size", 1000)
-        self.unresolved_AWs_path = unresolved_AWs_path
-        self.unresolved_AWs = self.load_unresolved_AWs(unresolved_AWs_path)
-        self.ambiguous_AWs = ambiguous_AWs
-        self.solved_AWs_count = 0
+        self.unresolved_aws_path = unresolved_aws_path
+        self.unresolved_aws = self.load_unresolved_aws(unresolved_aws_path)
+        self.ambiguous_aws = ambiguous_aws
+        self.solved_aws_count = 0
         self.processed_files_count = 0
-        self.remaining_AWs_count = len(self.unresolved_AWs)
+        self.remaining_aws_count = len(self.unresolved_aws)
         self.remaining_files_count = len(
-            set([aw["filename"] for aw in self.unresolved_AWs])
+            set([aw["filename"] for aw in self.unresolved_aws])
         )
 
         custom_theme = Theme(
@@ -83,13 +83,13 @@ class DynamicWordNormalization2:
         except FileNotFoundError:
             self.existing_machine_solutions = {}
 
-    def load_unresolved_AWs(self, file_path):
-        """Load unresolved alternative words (AWs) from the JSON file."""
+    def load_unresolved_aws(self, file_path):
+        """Load unresolved alternative words (aws) from the JSON file."""
         try:
             with open(file_path, 'rb') as f:
                 return orjson.loads(f.read())
         except FileNotFoundError:
-            self.logger.error(f"Unresolved AWs file '{file_path}' not found.")
+            self.logger.error(f"Unresolved aws file '{file_path}' not found.")
             return []
         except JSONDecodeError:
             self.console.print(f"[red]Error:[/red] Malformed JSON in file '{file_path}'.")
@@ -97,8 +97,8 @@ class DynamicWordNormalization2:
 
     def print_status(self):
         """Print the current status of the DWN1.2 phase."""
-        total_AWs = len(self.unresolved_AWs)
-        solved_AWs = self.solved_AWs_count
+        total_aws = len(self.unresolved_aws)
+        solved_aws = self.solved_aws_count
 
         self.console.rule("[green]Progress[/green]", style="green")
         with Progress(
@@ -106,10 +106,10 @@ class DynamicWordNormalization2:
             BarColumn(bar_width=None),
             "[progress.percentage]{task.percentage:>3.0f}%",
         ) as progress:
-            task1 = progress.add_task("", total=total_AWs)
-            progress.update(task1, completed=solved_AWs)
-        self.console.print(f"[info]Solved words:[/info] {self.solved_AWs_count}")
-        self.console.print(f"[info]Remaining words:[/info] {self.remaining_AWs_count}")
+            task1 = progress.add_task("", total=total_aws)
+            progress.update(task1, completed=solved_aws)
+        self.console.print(f"[info]Solved words:[/info] {self.solved_aws_count}")
+        self.console.print(f"[info]Remaining words:[/info] {self.remaining_aws_count}")
         self.console.print(
             f"[info]Processed files:[/info] {self.processed_files_count}"
         )
@@ -118,7 +118,7 @@ class DynamicWordNormalization2:
         )
         self.console.rule(style="green")
 
-    def update_user_solution(self, unresolved_AW, correct_word):
+    def update_user_solution(self, unresolved_aw, correct_word):
         user_solution_path = "data/user_solution.json"
 
         # Load existing user solutions
@@ -129,62 +129,62 @@ class DynamicWordNormalization2:
             self.existing_user_solutions = {}
 
         # Update the user solutions with the new solution
-        self.existing_user_solutions[unresolved_AW] = correct_word
+        self.existing_user_solutions[unresolved_aw] = correct_word
 
         # Write the updated user solutions back to the file
         atomic_append_json(self.existing_user_solutions, user_solution_path)
 
-    def process_unresolved_AWs(self, unresolved_AWs_path):
-        """Process unresolved AWs by prompting the user for solutions."""
+    def process_unresolved_aws(self, unresolved_aws_path):
+        """Process unresolved aws by prompting the user for solutions."""
         # current_file = None
         batch = []
 
-        # Stream-parse the unresolved_AWs.json file
-        with open(self.unresolved_AWs_path, 'r') as file:
-            unresolved_AWs = ijson.items(file, 'item')
-            for unresolved_AW in unresolved_AWs:
-                batch.append(unresolved_AW)
+        # Stream-parse the unresolved_aws.json file
+        with open(self.unresolved_aws_path, 'r') as file:
+            unresolved_aws = ijson.items(file, 'item')
+            for unresolved_aw in unresolved_aws:
+                batch.append(unresolved_aw)
 
-                # If batch size is reached, process the AWs and reset the batch
+                # If batch size is reached, process the aws and reset the batch
                 if len(batch) == self.batch_size:
                     self._process_batch(batch)
                     batch = []
 
-        # Process any remaining AWs in the last batch
+        # Process any remaining aws in the last batch
         if batch:
             self._process_batch(batch)
 
     def _process_batch(self, batch):
-        """Private method to handle processing of AWs in the batch."""
-        expected_keys = {"unresolved_AW", "context", "filename", "line", "column"}
+        """Private method to handle processing of aws in the batch."""
+        expected_keys = {"unresolved_aw", "context", "filename", "line", "column"}
         current_file = None
 
-        for unresolved_AW in batch:
-            if not isinstance(unresolved_AW, dict) or not expected_keys.issubset(unresolved_AW.keys()):
-                self.logger.error(f"Unexpected item structure: {unresolved_AW}")
+        for unresolved_aw in batch:
+            if not isinstance(unresolved_aw, dict) or not expected_keys.issubset(unresolved_aw.keys()):
+                self.logger.error(f"Unexpected item structure: {unresolved_aw}")
                 continue
 
-            word = self.remove_trailing_punctuation(unresolved_AW["unresolved_AW"])
-            context = unresolved_AW["context"]
-            file_name = unresolved_AW["filename"]
-            line_number = unresolved_AW["line"]
-            column = unresolved_AW["column"]
+            word = self.remove_trailing_punctuation(unresolved_aw["unresolved_aw"])
+            context = unresolved_aw["context"]
+            file_name = unresolved_aw["filename"]
+            line_number = unresolved_aw["line"]
+            column = unresolved_aw["column"]
 
             if word in self.existing_user_solutions or word in self.existing_machine_solutions:
                 self.console.print(f"[dim red]{word}[/dim red] [bright_black]solved.[/bright_black]")
-                self.solved_AWs_count += 1
-                self.remaining_AWs_count -= 1
+                self.solved_aws_count += 1
+                self.remaining_aws_count -= 1
                 continue
 
-            if word in self.ambiguous_AWs:
+            if word in self.ambiguous_aws:
                 self.console.print(f"[dim red]{word}[/dim red] [bright_black]is ambiguous.[/bright_black]")
                 self.log_difficult_passage(file_name, line_number, column, context, word)
                 continue
 
             correct_word = self.handle_user_input(word, context, file_name, line_number, column)
             self.update_user_solution(word, correct_word)
-            self.solved_AWs_count += 1
-            self.remaining_AWs_count -= 1
+            self.solved_aws_count += 1
+            self.remaining_aws_count -= 1
 
             if current_file != file_name:
                 self.processed_files_count += 1
@@ -197,7 +197,7 @@ class DynamicWordNormalization2:
         # return re.sub(r'(\$?)[\.,;:!?(){}]$', r'\1', word)
         return re.sub(r"^[,;:!?(){}]|[,;:!?(){}]$", "", word)
 
-    def generate_suggestions(self, unresolved_AW, threshold=3):
+    def generate_suggestions(self, unresolved_aw, threshold=3):
         best_suggestion = None
         min_distance = float("inf")
 
@@ -207,8 +207,8 @@ class DynamicWordNormalization2:
             **self.existing_machine_solutions,
         }
 
-        for existing_AW, solution in all_solutions.items():
-            curr_distance = lev_distance(unresolved_AW, existing_AW)
+        for existing_aw, solution in all_solutions.items():
+            curr_distance = lev_distance(unresolved_aw, existing_aw)
 
             if curr_distance < min_distance and curr_distance <= threshold:
                 min_distance = curr_distance

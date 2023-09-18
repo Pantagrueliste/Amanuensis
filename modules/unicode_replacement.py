@@ -44,14 +44,14 @@ class UnicodeReplacement:
     def _delete_chars(self, line: str, line_num: int, input_file_path: str, local_log: list) -> str:
         for char in self.characters_to_delete:
             if char in line:
-                self.log_change(input_file_path, line_num, char, "deleted", local_log)
+                UnicodeReplacement.log_change(input_file_path, line_num, char, "deleted", local_log)
                 line = line.replace(char, "")
         return line
 
     def _replace_chars(self, line: str, line_num: int, input_file_path: str, local_log: list) -> str:
         for original, replacement in self.characters_to_replace.items():
             if original in line:
-                self.log_change(input_file_path, line_num, original, replacement, local_log)
+                UnicodeReplacement.log_change(input_file_path, line_num, original, replacement, local_log)
                 line = line.replace(original, replacement)
         return line
 
@@ -60,7 +60,8 @@ class UnicodeReplacement:
         with open(output_file_path, "w", encoding="utf-8") as file:
             file.writelines(modified_lines)
 
-    def log_change(self, input_file_path: str, line_num: int, original: str, replacement: str, local_log: list = None):
+    @staticmethod
+    def log_change(input_file_path: str, line_num: int, original: str, replacement: str, local_log: list = None):
         """
         Log a replacement or deletion to the log list.
         """
