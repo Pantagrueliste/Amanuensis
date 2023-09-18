@@ -78,7 +78,7 @@ class DynamicWordNormalization2:
 
         # Load existing machine solutions
         try:
-            with open('data/machine_solution.json', 'rb') as f:
+            with open(self.config.machine_solution_path, 'rb') as f:
                 self.existing_machine_solutions = orjson.loads(f.read())
         except FileNotFoundError:
             self.existing_machine_solutions = {}
