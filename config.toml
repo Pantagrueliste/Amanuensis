@@ -1,12 +1,12 @@
 [paths] # define the paths for working directories
-input_path = "/Users/clem/Desktop/EEBOTest4/Test1_input"
+input_path = "/Users/clem/Desktop/EEBOTest4/Test2_input"
 output_path = "/Users/clem/Desktop/Test1_output"
 
 [data] # paths of the dictionaries. To be transferred to [paths].
 machine_solution_path = "data/machine_solution.json"
 user_solution_path = "data/user_solution.json"
 difficult_passages_path = "data/difficult_passages.json"
-unresolved_AWs_path = "data/unresolved_AW.json"
+unresolved_aws_path = "data/unresolved_aw.json"
 
 [settings] # settings related to the Dynamic Word Normalization process
 batch_size = 1000
@@ -20,7 +20,7 @@ characters_to_delete = ["\u00B6", "\u261E", "\u2740", "\u2767"]
 characters_to_replace = {"Ʋ" = "U", "&c." = "etc.", "ꝑ" = "per", "ꝭ" = "s", "ȝ" = "g", "ꝓ" = "pr"}
 
 [ambiguity] # define Abbreviated Words that are ambiguous and that will be skipped from the Dynamic Word Normalization process 1.2
-ambiguous_AWs = ["the$", "ope$", "Roma$"] # in this example the$ is ambiguous since it can either be "the" or "them", "ope$" could be "open" in English or "opem" in Latin...
+ambiguous_aws = ["the$", "ope$", "Roma$"] # in this example the$ is ambiguous since it can either be "the" or "them", "ope$" could be "open" in English or "opem" in Latin...
 
 [OpenAI_integration] # settings related to GPT integration
 gpt_suggestions=false

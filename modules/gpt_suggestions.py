@@ -19,6 +19,7 @@ class GPTSuggestions:
         suggestion = self.gpt.get_top_reply(context)
         return suggestion
 
+    @staticmethod
     def print_suggestion(self, context, suggestion):
         """
         Print the suggestion to the user.
