@@ -97,12 +97,12 @@ class FileProcessor:
 
     def run(self):
         self.logger.debug("FastFileProcessor run method started.")
-        # Load your AW mappings from JSON files
+        # Load your aw mappings from JSON files
         user_solutions = self.user_solutions
         machine_solutions = self.machine_solutions
 
-        # Create a set of all AWs to speed up lookup
-        all_AWs = set(user_solutions.keys()).union(set(machine_solutions.keys()))
+        # Create a set of all aws to speed up lookup
+        all_aws = set(user_solutions.keys()).union(set(machine_solutions.keys()))
 
         # Get the list of all files in the directory specified in config.toml
         input_path = self.config.get("paths", "input_path")
@@ -112,8 +112,8 @@ class FileProcessor:
             with open(file_path, 'r') as f:
                 content = f.read()
 
-            # Check if this file contains any AWs
-            if any(aw in content for aw in all_AWs):
+            # Check if this file contains any aws
+            if any(aw in content for aw in all_aws):
                 # Apply replacements
                 for original, replacement in user_solutions.items():
                     content = content.replace(original, replacement)

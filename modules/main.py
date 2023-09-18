@@ -81,9 +81,9 @@ class Amanuensis:
         self.config.validate_paths()
         self.unicode_replacement = UnicodeReplacement(self.config)
         self._word_normalization = DynamicWordNormalization1(self.config)
-        self.ambiguous_AWs = self.config.get_ambiguous_AWs()
+        self.ambiguous_aws = self.config.get_ambiguous_aws()
         self.word_normalization2 = DynamicWordNormalization2(
-                    self.config, ambiguous_AWs=self.ambiguous_AWs
+                    self.config, ambiguous_aws=self.ambiguous_aws
                 )
         self.conflict_resolver = ConflictResolver(self.config)
         self.word_normalization3 = DynamicWordNormalization3(self.config)
@@ -115,8 +115,8 @@ class Amanuensis:
         self.run_word_normalization()
         # DWN1.2
         self.logger.info("Starting DWN1.2...")
-        unresolved_path = self.config.get("data", "unresolved_AWs_path")
-        self.word_normalization2.process_unresolved_AWs(unresolved_path)
+        unresolved_path = self.config.get("data", "unresolved_aws_path")
+        self.word_normalization2.process_unresolved_aws(unresolved_path)
         # DWN2
         self.logger.info("Starting DWN2...")
         self.word_normalization3.analyze_difficult_passages()
@@ -164,7 +164,7 @@ class Amanuensis:
         """
         self.logger.info("Starting Unicode Replacement...")
         input_path = self.config.get("paths", "input_path")
-        file_paths = self.get_all_text_files(input_path)
+        file_paths = Amanuensis.get_all_text_files(input_path)
 
         # print("Launch process_files.")
         self.unicode_replacement.process_files(file_paths)
@@ -180,7 +180,8 @@ class Amanuensis:
 
         self.word_normalization.preprocess_directory(input_directory)
 
-    def get_all_text_files(self, dir_path):
+    @staticmethod
+    def get_all_text_files(dir_path):
         """
         Get all text files in the specified directory and its subdirectories.
         """
