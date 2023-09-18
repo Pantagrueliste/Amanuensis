@@ -1,5 +1,5 @@
 [paths] # define the paths for working directories
-input_path = "/Users/clem/Desktop/EEBOTest4/Test1_input"
+input_path = "/Users/clem/Desktop/EEBOTest4/Test2_input"
 output_path = "/Users/clem/Desktop/Test1_output"
 
 [settings] # settings related to the Dynamic Word Normalization process
