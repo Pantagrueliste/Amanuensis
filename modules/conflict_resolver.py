@@ -1,9 +1,12 @@
 import orjson
+from config import Config
 
 
 class ConflictResolver:
     def __init__(self, config):
         self.config = config
+        self.machine_solutions = {}
+        self.user_solutions = {}
         self.load_machine_solutions()
         self.load_user_solutions()
 
@@ -13,7 +16,7 @@ class ConflictResolver:
         """
         machine_solution_path = "data/machine_solution.json"
         try:
-            with open(machine_solution_path, "rb") as file:
+            with open(Config().machine_solution_path, "rb") as file:
                 contents = file.read().strip()
                 self.machine_solutions = orjson.loads(contents) if contents else {}
         except FileNotFoundError:
@@ -25,7 +28,7 @@ class ConflictResolver:
         Load user solutions from a JSON file.
         """
         try:
-            with open('user_solutions.json', 'rb') as f:
+            with open(Config().get('data', 'user_solution_path'), 'rb') as f:
                 self.user_solutions = orjson.loads(f.read())
         except FileNotFoundError:
             self.user_solutions = {}
@@ -35,14 +38,14 @@ class ConflictResolver:
         """
         Save machine solutions to a JSON file.
         """
-        with open('machine_solutions.json', 'wb') as f:
+        with open(Config().get('data', 'machine_solution_path'), 'wb') as f:
             f.write(orjson.dumps(self.machine_solutions))
 
     def save_user_solutions(self):
         """
         Save user solutions to a JSON file.
         """
-        with open('user_solutions.json', 'wb') as f:
+        with open(Config().get('data', 'user_solution_path'), 'wb') as f:
             f.write(orjson.dumps(self.user_solutions))
 
     def detect_and_resolve_conflicts(self):
