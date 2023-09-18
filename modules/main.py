@@ -13,6 +13,7 @@ remaining edge cases.
 import os
 import signal
 import sys
+from typing import Dict, Any
 
 from art import text2art
 
@@ -29,6 +30,8 @@ from file_processor import FileProcessor
 
 
 class MainApp:
+    pending_json_data: dict[Any, Any]
+
     def __init__(self):
         self.logger = get_logger(__name__)
         self.ongoing_processes = []

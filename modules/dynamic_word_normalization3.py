@@ -35,8 +35,9 @@ from logging_config import get_logger
 
 
 class DynamicWordNormalization3:
-    def __init__(self, config, difficult_passages_file='data/difficult_passages.json', user_solution_file='user_solution.json'):
+    def __init__(self, config, difficult_passages_file='data/difficult_passages.json', user_solution_file='data/user_solution.json'):
         self.logger = get_logger(__name__)
+        self.logger.debug("Initializing DynamicWordNormalization3 with user_solution_file: " + user_solution_file)
         self.console = None
         self.config = Config()
         use_gpt = self.config.get_openai_integration('gpt_suggestions')
@@ -146,6 +147,7 @@ class DynamicWordNormalization3:
 
     def accept_gpt4_suggestion(self, word, suggestion):
         # Update the user_solution.json with the accepted GPT-4 suggestion
+        self.logger.debug("Accessing dynamic_word_normalization3.py at line 148: # Update the user_solution.json with the accepted GPT-4 suggestion")
         self.update_user_solution(word, suggestion)
 
     def reject_gpt4_suggestion(self):
@@ -161,7 +163,10 @@ class DynamicWordNormalization3:
         data_to_write = {word: solution}
 
         # Atomic update to user_solution.json
-        atomic_write_json(data_to_write, 'user_solution.json')
+        self.logger.debug("Accessing dynamic_word_normalization3.py at line 163: # Atomic update to user_solution.json")
+        self.logger.debug("Accessing dynamic_word_normalization3.py at line 164: atomic_write_json(data_to_write, 'user_solution.json')")
+
+        atomic_write_json(data_to_write, self.user_solution_file)
 
     def get_gpt4_suggestions(self, passage):
         if self.gpt4:
