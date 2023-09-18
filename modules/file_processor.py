@@ -7,6 +7,10 @@ from config import Config
 from logging import getLogger
 from ahocorasick import Automaton
 
+# Global variable for the FileProcessor instance
+file_processor_instance = None
+
+
 def load_solutions(file_path: str) -> dict:
     """Load solutions from a JSON file."""
     try:
@@ -15,10 +19,24 @@ def load_solutions(file_path: str) -> dict:
     except FileNotFoundError:
         return {}
 
+
 def process_files_in_parallel(file_list: list, num_workers: int):
     """Process multiple files in parallel."""
+    global file_processor_instance
+    if not file_processor_instance:
+        file_processor_instance = FileProcessor()
+
+    # Utilize multiprocessing for parallel processing
     with Pool(num_workers) as p:
-        p.map(FileProcessor().process_file, file_list)
+        p.map(process_file_wrapper, file_list)
+
+
+# Wrapper function for parallel processing with an explicit initialization
+def process_file_wrapper(file_path):
+    global file_processor_instance
+    if file_processor_instance is None:
+        file_processor_instance = FileProcessor()
+    return file_processor_instance.process_file(file_path)
 
 
 class FileProcessor:
