@@ -20,7 +20,7 @@ class Config:
         base_path = self.get("paths", "output_path")
 
         self.machine_solution_path = os.path.join(self.get("data", "machine_solution_path", "data/machine_solution.json"))
-        self.unresolved_AW_path = os.path.join(self.get("data", "unresolved_AW_path", "data/unresolved_AW.json"))
+        self.unresolved_aw_path = os.path.join(self.get("data", "unresolved_aw_path", "data/unresolved_aw.json"))
 
     def _read_config(self):
         """Read the configuration file"""
@@ -92,9 +92,9 @@ class Config:
         if not os.path.exists(output_path):
             raise FileNotFoundError(f"Output path '{output_path}' not found.")
 
-    def get_ambiguous_AWs(self):
+    def get_ambiguous_aws(self):
         try:
-            return self.settings["ambiguity"]["ambiguous_AWs"]
+            return self.settings["ambiguity"]["ambiguous_aws"]
         except KeyError:
             return []  # Return an empty list if not found
 
