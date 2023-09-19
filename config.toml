@@ -25,9 +25,9 @@ logging_level = "INFO" # DEBUG, INFO, WARNING, ERROR, CRITICAL
 language = "eng"
 
 [unicode_replacements] # settings related to the Unicode Replacement process
-replacements_on = true
+replacements_on = false
 characters_to_delete = ["\u00B6", "\u261E", "\u2740", "\u2767"]
-characters_to_replace = {"Ʋ" = "U", "&c." = "etc.", "ꝑ" = "per", "ꝭ" = "s", "ȝ" = "g", "ꝓ" = "pr"}
+characters_to_replace = {"Ʋ" = "U", "&c." = "etc.", "ꝑ" = "per", "ꝭ" = "s", "ȝ" = "g", "ꝓ" = "pr"} # "ꝓꝑme$t" examine this edge case
 
 [ambiguity] # define Abbreviated Words that are ambiguous and that will be skipped from the Dynamic Word Normalization process 1.2
 ambiguous_aws = ["the$", "ope$", "Roma$"] # in this example the$ is ambiguous since it can either be "the" or "them", "ope$" could be "open" in English or "opem" in Latin...
