@@ -25,7 +25,7 @@ streamlining an otherwise long and rebarbative task.
 
 - **Multilingual Support**: Addition of French, Italian, Latin, and Spanish.
 - **Beyond OpenAI**: Compatibility with competing APIs.
-- **Migraton to Mojo**: Migration to a faster programming language (as soon as Classes will be supported).
+- **Migraton to Mojo**: Amanuēnsis will ported to Mojo (as soon as Classes will be supported).
 - **Documentation**: Basic documentation in English, French, and Spanish.
 
 Feel free to suggest new features in the Issues section.
