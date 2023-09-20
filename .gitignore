@@ -6,3 +6,4 @@ replacements_log.json
 tmp/*
 !tmp/.gitkeep
 amanuensis.log
+data/unresolved_aw.json
