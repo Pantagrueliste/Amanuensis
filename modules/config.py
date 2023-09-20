@@ -18,7 +18,7 @@ class Config:
         self.settings = self._read_config()
         self.debug_level = self.settings["settings"]["logging_level"]
 
-        base_path = self.get("paths", "output_path")
+        # base_path = self.get("paths", "output_path")
 
         self.machine_solution_path = os.path.join(self.get("data", "machine_solution_path", "data/machine_solution.json"))
         self.unresolved_aw_path = os.path.join(self.get("data", "unresolved_aw_path", "data/unresolved_aw.json"))
@@ -86,12 +86,28 @@ class Config:
         console.print(f" - Context Size: [blue]{context_size}[/blue] words\n")
 
     def validate_paths(self):
+        """
+        Validates paths in the config and raises an error if any are missing.
+        """
+        # Check input path
         input_path = self.get("paths", "input_path")
-        output_path = self.get("paths", "output_path")
         if not os.path.exists(input_path):
             raise FileNotFoundError(f"Input path '{input_path}' not found.")
+
+        # Check machine solutions path
+        machine_solution_path = self.get("data", "machine_solution_path")
+        if not os.path.exists(machine_solution_path):
+            raise FileNotFoundError(f"Machine solution path '{machine_solution_path}' not found.")
+
+        # Check user solutions path
+        user_solution_path = self.get("data", "user_solution_path")
+        if not os.path.exists(user_solution_path):
+            raise FileNotFoundError(f"User solution path '{user_solution_path}' not found.")
+
+        # Ensure output path exists or create it if it doesn't
+        output_path = self.get("paths", "output_path")
         if not os.path.exists(output_path):
-            raise FileNotFoundError(f"Output path '{output_path}' not found.")
+            os.makedirs(output_path)
 
     def get_ambiguous_aws(self):
         try:
