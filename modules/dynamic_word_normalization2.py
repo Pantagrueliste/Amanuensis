@@ -42,6 +42,7 @@ class UserQuitException(Exception):
 class DynamicWordNormalization2:
     def __init__(self, config, unresolved_aws_path="data/unresolved_aw.json", ambiguous_aws=None):
         self.logger = get_logger(__name__)
+        self.validate_config(config)
         self.config = config
         if ambiguous_aws is None:
             ambiguous_aws = []
@@ -77,13 +78,9 @@ class DynamicWordNormalization2:
         )
         self.console = Console(theme=custom_theme)
 
-        # Load existing user solutions
-        try:
-            user_solution_path = self.config.get("data", "user_solution_path")
-            with open(user_solution_path, 'rb') as f:
-                self.existing_user_solutions = orjson.loads(f.read())
-        except FileNotFoundError:
-            self.existing_user_solutions = {}
+        # Load existing user solutions from config
+        user_solution_path = self.config.get("data", "user_solution_path")
+        self.existing_user_solutions = self.load_existing_solutions(user_solution_path)
 
         # Load existing machine solutions
         try:
@@ -91,6 +88,36 @@ class DynamicWordNormalization2:
                 self.existing_machine_solutions = orjson.loads(f.read())
         except FileNotFoundError:
             self.existing_machine_solutions = {}
+
+    def validate_config(self, config):
+        """ Validate the configuration parameters.
+        Raises a ValueError if a required configuration is missing or invalid."""
+
+        # Validate that required keys exist
+        required_keys = [("settings", "batch_size"), ("data", "user_solution_path"), ("data", "machine_solution_path")]
+        for section, key in required_keys:
+            if not config.get(section, key):
+                raise ValueError(f"Missing required config parameter: {section}.{key}")
+
+        # Validate that the batch_size is a positive integer
+        batch_size = config.get("settings", "batch_size")
+        if not isinstance(batch_size, int) or batch_size <= 0:
+            raise ValueError("batch_size must be a positive integer.")
+
+        # Validate that the file paths are strings
+        user_solution_path = config.get("data", "user_solution_path")
+        machine_solution_path = config.get("data", "machine_solution_path")
+        if not isinstance(user_solution_path, str) or not isinstance(machine_solution_path, str):
+            raise ValueError("File paths must be strings.")
+
+    def load_existing_solutions(self, file_path):
+        """Load existing solutions from a JSON file."""
+        file_path = self.config.get("data", "user_solution_path")
+        try:
+            with open(file_path, 'rb') as f:
+                return orjson.loads(f.read())
+        except FileNotFoundError:
+            return {}
 
     def load_unresolved_aws(self, file_path):
         """Load unresolved alternative words (aws) from the JSON file."""
@@ -128,16 +155,10 @@ class DynamicWordNormalization2:
         self.console.rule(style="green")
 
     def update_user_solution(self, unresolved_aw, correct_word):
-        user_solution_path = "data/user_solution.json"
+        print(f"Updating user_solution.json with key: {unresolved_aw}, value: {correct_word}")
+        user_solution_path = self.config.get("data", "user_solution_path")
 
-        # Load existing user solutions
-        try:
-            with open('data/user_solution.json', 'rb') as f:
-                self.existing_user_solutions = orjson.loads(f.read())
-        except FileNotFoundError:
-            self.existing_user_solutions = {}
-
-        # Update the user solutions with the new solution
+        self.existing_user_solutions = self.load_existing_solutions(user_solution_path)
         self.existing_user_solutions[unresolved_aw] = correct_word
 
         # Write the updated user solutions back to the file
@@ -172,26 +193,31 @@ class DynamicWordNormalization2:
             if not isinstance(unresolved_aw, dict) or not expected_keys.issubset(unresolved_aw.keys()):
                 self.logger.error(f"Unexpected item structure: {unresolved_aw}")
                 continue
-
-            word = self.remove_trailing_punctuation(unresolved_aw["unresolved_aw"])
+            print(f"Word before sanitization: {unresolved_aw['unresolved_aw']}")  # Debug print
+            sanitized_unresolved_aw = self.remove_trailing_punctuation(unresolved_aw["unresolved_aw"])
+            print(f"Sanitized word being passed: {sanitized_unresolved_aw}")  # Debug print
             context = unresolved_aw["context"]
             file_name = unresolved_aw["filename"]
             line_number = unresolved_aw["line"]
             column = unresolved_aw["column"]
 
-            if word in self.existing_user_solutions or word in self.existing_machine_solutions:
-                self.console.print(f"[dim red]{word}[/dim red] [bright_black]solved.[/bright_black]")
+            if sanitized_unresolved_aw in self.existing_user_solutions or sanitized_unresolved_aw in self.existing_machine_solutions:
+                self.console.print(f"[dim red]{sanitized_unresolved_aw}[/dim red] [bright_black]solved.[/bright_black]")
                 self.solved_aws_count += 1
                 self.remaining_aws_count -= 1
                 continue
 
-            if word in self.ambiguous_aws:
-                self.console.print(f"[dim red]{word}[/dim red] [bright_black]is ambiguous.[/bright_black]")
-                self.log_difficult_passage(file_name, line_number, column, context, word)
+            if sanitized_unresolved_aw in self.ambiguous_aws:
+                self.console.print(f"[dim red]{sanitized_unresolved_aw}[/dim red] [bright_black]is ambiguous.[/bright_black]")
+                self.log_difficult_passage(file_name, line_number, column, context, sanitized_unresolved_aw)
                 continue
 
-            correct_word = self.handle_user_input(word, context, file_name, line_number, column)
-            self.update_user_solution(word, correct_word)
+            print(f"Word before sanitization in user input: {sanitized_unresolved_aw}")  # Debug print
+            correct_word = self.remove_trailing_punctuation(
+                self.handle_user_input(sanitized_unresolved_aw, context, file_name, line_number, column)
+            )
+            print(f"Word after sanitization in user input: {correct_word}")  # Debug print
+            self.update_user_solution(sanitized_unresolved_aw, correct_word)
             self.solved_aws_count += 1
             self.remaining_aws_count -= 1
 
@@ -204,7 +230,8 @@ class DynamicWordNormalization2:
     @staticmethod
     def remove_trailing_punctuation(word):
         # return re.sub(r'(\$?)[\.,;:!?(){}]$', r'\1', word)
-        return re.sub(r"^[,;:!?(){}]|[,;:!?(){}]$", "", word)
+        # return re.sub(r"^[,;:!?(){}]|[,;:!?(){}]$", "", word)
+        return re.sub(r"^[,;:!?(){}.]|[,;:!?(){}.]$", "", word)
 
     def generate_suggestions(self, unresolved_aw, threshold=3):
         best_suggestion = None

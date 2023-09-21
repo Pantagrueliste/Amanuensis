@@ -69,13 +69,13 @@ class MainApp:
 
 
 class Amanuensis:
-    def __init__(self, main_app, config):
+    def __init__(self, main_app_instance, config):
         """
         Initialize Amanuensis.
         """
         self.logger = get_logger(__name__)
         print(text2art("Amanuensis"))
-        self.main_app = main_app
+        self.main_app = main_app_instance
         self.config = config
         config.print_config_recap()
         self.config.validate_paths()
@@ -175,7 +175,7 @@ class Amanuensis:
         """
         Perform Dynamic Word Normalization on all text files in the input directory.
         """
-        self.logger.info("run_word_normalization...")
+        # self.logger.info("run_word_normalization...")
         input_directory = self.config.get("paths", "input_path")
 
         self.word_normalization.preprocess_directory(input_directory)
