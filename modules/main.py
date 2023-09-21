@@ -69,13 +69,13 @@ class MainApp:
 
 
 class Amanuensis:
-    def __init__(self, main_app_instance, config):
+    def __init__(self, main_app, config):
         """
         Initialize Amanuensis.
         """
         self.logger = get_logger(__name__)
         print(text2art("Amanuensis"))
-        self.main_app = main_app_instance
+        self.main_app = main_app
         self.config = config
         config.print_config_recap()
         self.config.validate_paths()
@@ -144,10 +144,10 @@ class Amanuensis:
             self.main_app.terminate_ongoing_processes()
             sys.exit(0)
 
-        difficult_passages_json_path = self.config.get("data", "difficult_passages_path")
-        user_solution_json_path = self.config.get("data", "user_solution_path")
-        input_path = self.config.get("paths", "input_path")
-        output_path = self.config.get("paths", "output_path")
+        # difficult_passages_json_path = self.config.get("data", "difficult_passages_path")
+        # user_solution_json_path = self.config.get("data", "user_solution_path")
+        # input_path = self.config.get("paths", "input_path")
+        # output_path = self.config.get("paths", "output_path")
 
         self.logger.info("Starting file processing...")
         processor = FileProcessor(config_file='config.toml',

@@ -83,8 +83,6 @@ def process_aws(token, filename, token_idx, text, tokens, machine_solutions, use
                 machine_solutions[token] = solution
                 save_json(machine_solutions_path, machine_solutions)
             else:
-                #logger.debug(
-                #    f"Processing token: {token} from file: {filename} at line number: {text.count('n', 0, text.find(token)) + 1}")
                 log_unresolved_aw(token, filename, line_number, context_tokens, context_size, local_unresolved_aws)
     except Exception as e:
         logger.error(f"Error processing aws in file {filename} on line {line_number}: {e}")
@@ -109,7 +107,6 @@ def log_unresolved_aw(aw, filename, line_number, context_words, context_size, lo
             "context": context,
         }
     )
-    # logger.debug(f"Logging unresolved word: {sanitized_aw} from file: {filename} at line number: {line_number}")
 
 
 def process_file(file_path, machine_solutions, user_solutions, context_size, machine_solutions_path):
@@ -183,8 +180,6 @@ class DynamicWordNormalization1:
         logger.info(f"Saving {len(self.unresolved_aws_log)} unresolved aws.")
         unresolved_aws_path = self.config.get("data", "unresolved_aws_path")
         save_json(unresolved_aws_path, self.unresolved_aws_log)
-        # logger.debug(
-        #     f"Attempting to save {len(self.unresolved_aws_log)} unresolved words to {self.config.get('data', 'unresolved_aws_path')}")
 
     def preprocess_directory(self, directory_path):
         logger.setLevel(50)
