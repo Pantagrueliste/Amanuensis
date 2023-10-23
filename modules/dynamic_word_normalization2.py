@@ -155,7 +155,7 @@ class DynamicWordNormalization2:
         self.console.rule(style="green")
 
     def update_user_solution(self, unresolved_aw, correct_word):
-        print(f"Updating user_solution.json with key: {unresolved_aw}, value: {correct_word}")
+        # print(f"Updating user_solution.json with key: {unresolved_aw}, value: {correct_word}")
         user_solution_path = self.config.get("data", "user_solution_path")
 
         self.existing_user_solutions = self.load_existing_solutions(user_solution_path)
@@ -193,9 +193,9 @@ class DynamicWordNormalization2:
             if not isinstance(unresolved_aw, dict) or not expected_keys.issubset(unresolved_aw.keys()):
                 self.logger.error(f"Unexpected item structure: {unresolved_aw}")
                 continue
-            print(f"Word before sanitization: {unresolved_aw['unresolved_aw']}")  # Debug print
+            # print(f"Word before sanitization: {unresolved_aw['unresolved_aw']}")  # Debug print
             sanitized_unresolved_aw = self.remove_trailing_punctuation(unresolved_aw["unresolved_aw"])
-            print(f"Sanitized word being passed: {sanitized_unresolved_aw}")  # Debug print
+            # print(f"Sanitized word being passed: {sanitized_unresolved_aw}")  # Debug print
             context = unresolved_aw["context"]
             file_name = unresolved_aw["filename"]
             line_number = unresolved_aw["line"]
@@ -212,11 +212,11 @@ class DynamicWordNormalization2:
                 self.log_difficult_passage(file_name, line_number, column, context, sanitized_unresolved_aw)
                 continue
 
-            print(f"Word before sanitization in user input: {sanitized_unresolved_aw}")  # Debug print
+            # print(f"Word before sanitization in user input: {sanitized_unresolved_aw}")  # Debug print
             correct_word = self.remove_trailing_punctuation(
                 self.handle_user_input(sanitized_unresolved_aw, context, file_name, line_number, column)
             )
-            print(f"Word after sanitization in user input: {correct_word}")  # Debug print
+            # print(f"Word after sanitization in user input: {correct_word}")  # Debug print
             self.update_user_solution(sanitized_unresolved_aw, correct_word)
             self.solved_aws_count += 1
             self.remaining_aws_count -= 1
