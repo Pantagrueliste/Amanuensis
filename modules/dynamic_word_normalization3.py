@@ -5,7 +5,8 @@ This module serves as a higher-level handler for Dynamic Word Normalization,
 incorporating GPT-based suggestions as an optional feature.
 It orchestrates the activities of the lower-level DynamicWordNormalization2 class
 and provides additional functionalities like managing difficult passages
-and handling problematic files (i.e.: files that contain a high proportion of )
+and handling problematic files (i.e.: files that contain a high proportion of 
+unresolved Abbreviated Words)
 
 Modules:
 - json: For parsing and dumping JSON files.
