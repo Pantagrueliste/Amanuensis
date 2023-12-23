@@ -1,0 +1,24 @@
+liste de fautes courantes dans le text creation partnership:
+
+Alonso de $Word$, another Merchant: Don Martin de Vergunzo: Peter Gonzalez: Anthony de La Cruz: Luis de mesones, a brother of
+
+diatesseron as a ouitesssence
+
+shew him self disobedic$t,  (c is e)
+
+albeit a co$sused multitude (s --> f)
+
+ And although my insufficic$cy to write any 
+
+ a gētle herte --> gentle herte  
+
+ Nemo ignorat, nullí prorsus natura
+ 
+ the voice of praise y e voice of exultation, & contession. --> confession
+
+ auneiēt Fathers in Egipt --> auncient fathers in Egipt (c et e)
+---
+
+don't forget to apply quality control checks on user_solutions.json: check for double and triple n and m.
+
+create a function that determines which user_solutions are the most frequent.
