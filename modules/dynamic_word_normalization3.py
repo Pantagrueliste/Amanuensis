@@ -5,7 +5,7 @@ This module serves as a higher-level handler for Dynamic Word Normalization,
 incorporating GPT-based suggestions as an optional feature.
 It orchestrates the activities of the lower-level DynamicWordNormalization2 class
 and provides additional functionalities like managing difficult passages
-and handling problematic files (i.e.: files that contain a high proportion of 
+and handling problematic files (i.e.: files that contain a high proportion of
 unresolved Abbreviated Words)
 
 Modules:
@@ -21,7 +21,6 @@ Third-party Libraries:
 - atomic_write_json: Function for atomic JSON writes.
 
 """
-
 
 import orjson
 import os
@@ -41,7 +40,7 @@ class DynamicWordNormalization3:
         self.console = None
         self.config = Config()
         use_gpt = self.config.get_openai_integration('gpt_suggestions')
-        if use_gpt == True:
+        if use_gpt:
             self.gpt4 = GPTSuggestions(config)
         else:
             self.gpt4 = None
@@ -53,7 +52,7 @@ class DynamicWordNormalization3:
 
     def load_difficult_passages(self):
         try:
-            with open(self.difficult_passages_file, 'rb') as f:  # Assuming you've set this variable
+            with open(self.difficult_passages_file, 'rb') as f:
                 return orjson.loads(f.read())
         except FileNotFoundError:
             if self.console:
@@ -66,13 +65,61 @@ class DynamicWordNormalization3:
 
     @staticmethod
     def word_count_in_file(file_path):
-        with open(file_path, 'r') as f:
-            return len(f.read().split())
+        try:
+            with open(file_path, 'r') as f:
+                return len(f.read().split())
+        except IOError as e:
+            print(f"Error reading file {file_path}: {e}")
+            return 0
+
+    def analyze_difficult_passages(self):
+       # Load difficult passages
+       self.difficult_passages = self.load_difficult_passages()
+
+       # Normalize the input path for consistent comparison
+       normalized_input_path = os.path.normpath(self.input_path) + os.sep
+
+       # Filter the difficult passages based on the input folder path
+       filtered_difficult_passages = [
+           entry for entry in self.difficult_passages
+           if os.path.normpath(entry['file_name']).startswith(normalized_input_path)
+       ]
+
+       # Check if filtered data is available
+       if not filtered_difficult_passages:
+           self.logger.warning("No matching difficult passages found for the specified input path.")
+           print("Warning: No data found in the specified directory for analysis.")
+           return {}, {}
+
+       # Initialize structures for analysis
+       difficulties_per_file = {}
+       ratios_per_file = {}
+
+       # Count the frequency of each filename in the filtered difficult passages
+       filenames = [entry['file_name'] for entry in filtered_difficult_passages]
+       filename_counts = Counter(filenames)
+
+       # Analyze each file
+       for file, difficulties_count in filename_counts.items():
+           file_path = os.path.join(normalized_input_path, os.path.basename(file))
+           if os.path.exists(file_path):
+               total_words = DynamicWordNormalization3.word_count_in_file(file_path)
+               difficulties_per_file[file] = difficulties_count
+               ratios_per_file[file] = difficulties_count / total_words if total_words else 0.0
+
+       # Sort files by the ratio of difficult passages to total words
+       sorted_ratios = {k: v for k, v in sorted(ratios_per_file.items(), key=lambda item: item[1], reverse=True)}
+
+       # Print results (or process them as needed)
+       self.print_ascii_bar_chart(sorted_ratios, "Files by Ratio of Difficult Passages to Total Words:")
+
+       # Return or further process the analysis results
+       return difficulties_per_file, sorted_ratios
 
     def print_ascii_bar_chart(self, data, title):
         if not data:
-            self.logger.warning("No data available for bar chart.")
-            return  # Exit the function if no data is provided
+            self.logger.warning("No enough data available for bar chart.")
+            return
 
         counter = Counter(data)
         longest_label_length = max(map(len, data.keys()))
@@ -86,36 +133,6 @@ class DynamicWordNormalization3:
                 bar += chr(ord('█') + (8 - remainder))
             bar = bar or '▏'
             print(f'{label.rjust(longest_label_length)} ▏ {int(count * 100):#4d} {bar}')
-
-    def analyze_difficult_passages(self):
-        difficulties_per_file = {}
-        ratios_per_file = {}
-
-        # Count the frequency of each filename in difficult_passages
-        filenames = [entry['file_name'] for entry in self.difficult_passages]
-        filename_counts = Counter(filenames)
-
-        for file, difficulties_count in filename_counts.items():
-            if self.input_path is None:
-                raise ValueError("input_path is not set.")
-            file_path = os.path.join(self.input_path, file)
-            if os.path.exists(file_path):
-                total_words = DynamicWordNormalization3.word_count_in_file(file_path)
-
-                difficulties_per_file[file] = difficulties_count
-                ratios_per_file[file] = difficulties_count / total_words if total_words else 0.0
-
-        # Sorting files by the ratio of difficult passages to total words
-        sorted_ratios = {k: v for k, v in sorted(ratios_per_file.items(), key=lambda item: item[1], reverse=True)}
-
-        # Filtering files by ratio and limiting to the top 10
-        filtered_ratios = {k: v for k, v in sorted_ratios.items() if v >= 0.0002}  # 0.02% as a decimal
-        top_10_ratios = dict(list(filtered_ratios.items())[:10])
-
-        # Print ASCII bar charts for the top 10
-        self.print_ascii_bar_chart(top_10_ratios, "Top 10 Files by Ratio of Difficult Passages to Total Words:")
-
-        return difficulties_per_file, top_10_ratios
 
     def handle_problematic_files(self, top_10_ratios):
         for file, ratio in top_10_ratios.items():

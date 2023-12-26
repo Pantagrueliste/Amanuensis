@@ -17,6 +17,10 @@ albeit a co$sused multitude (s --> f)
  the voice of praise y e voice of exultation, & contession. --> confession
 
  auneiēt Fathers in Egipt --> auncient fathers in Egipt (c et e)
+
+ S. Augustine, in his confessic$s, --> confessions
+
+  who viole$cly plunged themselues, --> c = t 
 ---
 
 don't forget to apply quality control checks on user_solutions.json: check for double and triple n and m.
