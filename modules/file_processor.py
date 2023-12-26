@@ -96,30 +96,40 @@ class FileProcessor:
             pool.map(self.process_file, files)
 
     def run(self):
-        #self.logger.debug("FastFileProcessor run method started.")
-        # Load your aw mappings from JSON files
+        """Run the file processing."""
+        self.logger.info("FileProcessor run method started.")
+
+        # Load abbreviation mappings from JSON files
         user_solutions = self.user_solutions
         machine_solutions = self.machine_solutions
 
-        # Create a set of all aws to speed up lookup
+        # Create a set of all abbreviated words to speed up lookup
         all_aws = set(user_solutions.keys()).union(set(machine_solutions.keys()))
 
         # Get the list of all files in the directory specified in config.toml
         input_path = self.config.get("paths", "input_path")
         files_to_process = [os.path.join(input_path, f) for f in os.listdir(input_path) if os.path.isfile(os.path.join(input_path, f))]
+        self.logger.info(f"Files to process: {files_to_process}")
 
         for file_path in files_to_process:
-            with open(file_path, 'r') as f:
-                content = f.read()
+            self.logger.info(f"Processing file: {file_path}")
+            try:
+                with open(file_path, 'r') as f:
+                    content = f.read()
 
-            # Check if this file contains any aws
-            if any(aw in content for aw in all_aws):
-                # Apply replacements
-                for original, replacement in user_solutions.items():
-                    content = content.replace(original, replacement)
-                for original, replacement in machine_solutions.items():
-                    content = content.replace(original, replacement)
+                # Check if this file contains any abbreviated words
+                if any(aw in content for aw in all_aws):
+                    self.logger.info(f"Applying replacements in file: {file_path}")
 
-                # Save the modified content
-                output_file_path = os.path.join(self.output_path, os.path.basename(file_path))
-                atomic_write_text(file_path=output_file_path, data=content)
+                    # Apply replacements
+                    for original, replacement in user_solutions.items():
+                        content = content.replace(original, replacement)
+                    for original, replacement in machine_solutions.items():
+                        content = content.replace(original, replacement)
+
+                    # Save the modified content
+                    output_file_path = os.path.join(self.output_path, os.path.basename(file_path))
+                    atomic_write_text(file_path=output_file_path, data=content)
+
+            except Exception as e:
+                self.logger.error(f"Failed to process {file_path}: {e}")

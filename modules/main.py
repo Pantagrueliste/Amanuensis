@@ -111,14 +111,14 @@ class Amanuensis:
                 sys.exit(0)
 
         # DWN1.1
-        self.logger.info("Starting DWN1.1...")
+        self.logger.info("Starting Dynamic Word Normalization Phase 1.1...")
         self.run_word_normalization()
         # DWN1.2
-        self.logger.info("Starting DWN1.2...")
+        self.logger.info("Starting Dynamic Word Normalization Phase 1.2...")
         unresolved_path = self.config.get("data", "unresolved_aws_path")
         self.word_normalization2.process_unresolved_aws(unresolved_path)
         # DWN2
-        self.logger.info("Starting DWN2...")
+        self.logger.info("Starting Dynamic Word Normalization Phase 2...")
         self.word_normalization3.analyze_difficult_passages()
 
         # Conflict Resolution
@@ -134,7 +134,6 @@ class Amanuensis:
 
         self.logger.info("Resolving conflicts between Machine and User Solutions...")
         self.conflict_resolver.detect_and_resolve_conflicts()
-        print("Conflict Resolution Complete.")
         self.logger.info("Conflict Resolution Complete.")
 
         if proceed.lower() != "y":
@@ -143,11 +142,6 @@ class Amanuensis:
             self.main_app.save_json_data()
             self.main_app.terminate_ongoing_processes()
             sys.exit(0)
-
-        # difficult_passages_json_path = self.config.get("data", "difficult_passages_path")
-        # user_solution_json_path = self.config.get("data", "user_solution_path")
-        # input_path = self.config.get("paths", "input_path")
-        # output_path = self.config.get("paths", "output_path")
 
         self.logger.info("Starting file processing...")
         processor = FileProcessor(config_file='config.toml',
