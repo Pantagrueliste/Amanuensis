@@ -86,7 +86,7 @@ class Amanuensis:
                     self.config, ambiguous_aws=self.ambiguous_aws
                 )
         self.conflict_resolver = ConflictResolver(self.config)
-        self.word_normalization3 = DynamicWordNormalization3(self.config)
+
 
     @property
     def word_normalization(self):
@@ -119,6 +119,7 @@ class Amanuensis:
         self.word_normalization2.process_unresolved_aws(unresolved_path)
         # DWN2
         self.logger.info("Starting Dynamic Word Normalization Phase 2...")
+        self.word_normalization3 = DynamicWordNormalization3(self.config)
         self.word_normalization3.analyze_difficult_passages()
 
         # Conflict Resolution

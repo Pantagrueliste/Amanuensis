@@ -1,6 +1,6 @@
 [paths] # define the paths for working directories
-input_path = "/Users/clem/Desktop/EEBOTest4/Test3_input"
-output_path = "/Users/clem/Desktop/Test3_output"
+input_path = "/Users/clem/Desktop/EEBOTest4/Test4_input"
+output_path = "/Users/clem/Desktop/Test4_output"
 
 [data] # paths of the dictionaries. To be transferred to [paths].
 machine_solution_path = "data/machine_solution.json"
