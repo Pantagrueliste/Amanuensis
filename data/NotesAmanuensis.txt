@@ -20,7 +20,12 @@ albeit a co$sused multitude (s --> f)
 
  S. Augustine, in his confessic$s, --> confessions
 
-  who viole$cly plunged themselues, --> c = t 
+ who viole$cly plunged themselues, --> c = t 
+
+ reader in the reading were viole$ly caried in this verteuouse --> violently
+
+
+ he fought with them with yt, and ouerthrew rhe$ by thethe woorde --> them by the woorde
 ---
 
 don't forget to apply quality control checks on user_solutions.json: check for double and triple n and m.

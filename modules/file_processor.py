@@ -109,7 +109,7 @@ class FileProcessor:
         # Get the list of all files in the directory specified in config.toml
         input_path = self.config.get("paths", "input_path")
         files_to_process = [os.path.join(input_path, f) for f in os.listdir(input_path) if os.path.isfile(os.path.join(input_path, f))]
-        self.logger.info(f"Files to process: {files_to_process}")
+        # self.logger.info(f"Files to process: {files_to_process}")
 
         for file_path in files_to_process:
             self.logger.info(f"Processing file: {file_path}")

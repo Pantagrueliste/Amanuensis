@@ -9,7 +9,7 @@ and handling problematic files (i.e.: files that contain a high proportion of
 unresolved Abbreviated Words)
 
 Modules:
-- json: For parsing and dumping JSON files.
+- orjson: For parsing and dumping JSON files.
 - os: For interacting with the operating system.
 - logging: For logging activities and errors.
 - Counter: For counting occurrences of items in collections.
@@ -24,15 +24,15 @@ Third-party Libraries:
 
 import orjson
 import os
-from collections import Counter
+import math
 
+from collections import Counter
 from atomic_update import atomic_write_json
 from config import Config
 from dynamic_word_normalization2 import DynamicWordNormalization2
 from gpt_suggestions import GPTSuggestions
 from json import JSONDecodeError
 from logging_config import get_logger
-
 
 class DynamicWordNormalization3:
     def __init__(self, config, difficult_passages_file='data/difficult_passages.json', user_solution_file='data/user_solution.json'):
@@ -51,107 +51,138 @@ class DynamicWordNormalization3:
         self.difficult_passages = self.load_difficult_passages()
 
     def load_difficult_passages(self):
+        self.logger.info(f"Attempting to load difficult passages from {self.difficult_passages_file}")
         try:
             with open(self.difficult_passages_file, 'rb') as f:
-                return orjson.loads(f.read())
+                data = orjson.loads(f.read())
+                self.logger.info("Successfully loaded difficult passages.")
+                return data
         except FileNotFoundError:
+            error_msg = f"File '{self.difficult_passages_file}' not found."
+            self.logger.error(error_msg)
             if self.console:
-                self.console.print(f"[red]Error:[/red] File '{self.difficult_passages_file}' not found.")
+                self.console.print(f"[red]Error:[/red] {error_msg}")
             return []
-        except JSONDecodeError:
+        except JSONDecodeError as e:
+            error_msg = f"Malformed JSON in file '{self.difficult_passages_file}': {e}"
+            self.logger.error(error_msg)
             if self.console:
-                self.console.print(f"[red]Error:[/red] Malformed JSON in file '{self.difficult_passages_file}'.")
+                self.console.print(f"[red]Error:[/red] {error_msg}")
             return []
 
-    @staticmethod
-    def word_count_in_file(file_path):
+    def word_count_in_file(self, file_path):
         try:
             with open(file_path, 'r') as f:
                 return len(f.read().split())
         except IOError as e:
-            print(f"Error reading file {file_path}: {e}")
+            self.logger.error(f"Error reading file {file_path}: {e}")
             return 0
 
+
     def analyze_difficult_passages(self):
-       # Load difficult passages
-       self.difficult_passages = self.load_difficult_passages()
+        self.logger.info("Starting analysis of difficult passages.")
+        self.logger.info(f"Total difficult passages loaded: {len(self.difficult_passages)}")
 
-       # Normalize the input path for consistent comparison
-       normalized_input_path = os.path.normpath(self.input_path) + os.sep
+        normalized_input_path = os.path.normpath(self.input_path) + os.sep
+        filtered_difficult_passages = [
+            entry for entry in self.difficult_passages
+            if os.path.normpath(entry['file_name']).startswith(normalized_input_path)
+        ]
+        self.logger.info(f"Difficult passages after filtering: {len(filtered_difficult_passages)}")
 
-       # Filter the difficult passages based on the input folder path
-       filtered_difficult_passages = [
-           entry for entry in self.difficult_passages
-           if os.path.normpath(entry['file_name']).startswith(normalized_input_path)
-       ]
+        if not filtered_difficult_passages:
+            self.logger.warning("No matching difficult passages found for the specified input path.")
+            print("Warning: No data found in the specified directory for analysis.")
+            return {}, {}
 
-       # Check if filtered data is available
-       if not filtered_difficult_passages:
-           self.logger.warning("No matching difficult passages found for the specified input path.")
-           print("Warning: No data found in the specified directory for analysis.")
-           return {}, {}
+        difficulties_per_file = {}
+        ratios_per_file = {}
+        filenames = [entry['file_name'] for entry in filtered_difficult_passages]
+        filename_counts = Counter(filenames)
 
-       # Initialize structures for analysis
-       difficulties_per_file = {}
-       ratios_per_file = {}
+        self.logger.info("Calculating ratios of difficult passages to total words for each file.")
+        self.logger.info("Entering the file analysis loop.")
+        for file, difficulties_count in filename_counts.items():
+            file_path = os.path.join(normalized_input_path, os.path.basename(file))
+            self.logger.info(f"Checking file: {file_path}, exists: {os.path.exists(file_path)}")
+            if os.path.exists(file_path):
+                total_words = self.word_count_in_file(file_path)
+                raw_ratio = difficulties_count / total_words if total_words else 0.0
+                sqrt_ratio = math.sqrt(raw_ratio)
 
-       # Count the frequency of each filename in the filtered difficult passages
-       filenames = [entry['file_name'] for entry in filtered_difficult_passages]
-       filename_counts = Counter(filenames)
+                difficulties_per_file[file] = difficulties_count
+                ratios_per_file[file] = sqrt_ratio
+                self.logger.info(f"File: {file}, Total Words: {total_words}, Difficulties Count: {difficulties_count}, Log Ratio: {sqrt_ratio:.4f}")
 
-       # Analyze each file
-       for file, difficulties_count in filename_counts.items():
-           file_path = os.path.join(normalized_input_path, os.path.basename(file))
-           if os.path.exists(file_path):
-               total_words = DynamicWordNormalization3.word_count_in_file(file_path)
-               difficulties_per_file[file] = difficulties_count
-               ratios_per_file[file] = difficulties_count / total_words if total_words else 0.0
+        self.logger.info("Ratios calculated. Sorting ratios for presentation.")
+        sorted_ratios = {k: v for k, v in sorted(ratios_per_file.items(), key=lambda item: item[1], reverse=True)}
 
-       # Sort files by the ratio of difficult passages to total words
-       sorted_ratios = {k: v for k, v in sorted(ratios_per_file.items(), key=lambda item: item[1], reverse=True)}
+        self.print_ascii_bar_chart(sorted_ratios, "Files by Ratio of Difficult Passages to Total Words:")
+        self.logger.info("Difficult passages ratios sorted and presented.")
 
-       # Print results (or process them as needed)
-       self.print_ascii_bar_chart(sorted_ratios, "Files by Ratio of Difficult Passages to Total Words:")
+        # Handle problematic files based on sorted ratios
+        self.handle_problematic_files(sorted_ratios)
 
-       # Return or further process the analysis results
-       return difficulties_per_file, sorted_ratios
+        return difficulties_per_file, sorted_ratios
 
-    def print_ascii_bar_chart(self, data, title):
+
+    def handle_problematic_files(self, sorted_ratios):
+        self.logger.info("Handling problematic files based on sorted ratios.")
+        for file, ratio in sorted_ratios.items():
+            self.logger.info(f"Presenting file '{file}' with difficulty ratio {ratio:.4f} to the user.")
+            choice = input(f"File: {file}, Ratio: {ratio:.4f}. Choose [D]iscard or [F]ix: ").strip().upper()
+            if choice == 'D':
+                self.discard_file(file)
+            elif choice == 'F':
+                self.fix_file(file)
+            else:
+                print("Invalid choice. Skipping this file.")
+
+    def print_ascii_bar_chart(self, data, title, scale_factor=1000):
         if not data:
             self.logger.warning("No enough data available for bar chart.")
             return
 
         counter = Counter(data)
         longest_label_length = max(map(len, data.keys()))
-        increment = max(counter.values()) // 25 + 1
 
         print(title)
-        for label, count in counter.items():
-            bar_chunks, remainder = divmod(int(count * 8 / increment), 8)
-            bar = '█' * bar_chunks
-            if remainder > 0:
-                bar += chr(ord('█') + (8 - remainder))
-            bar = bar or '▏'
-            print(f'{label.rjust(longest_label_length)} ▏ {int(count * 100):#4d} {bar}')
+        for label, ratio in data.items():
+            scaled_ratio = ratio * scale_factor
+            formatted_ratio = f"{scaled_ratio:.2f}".rjust(6)  # Ensure ratio string has a consistent length
+            bar = '█' * int(scaled_ratio)
+            print(f'{label.rjust(longest_label_length)} ▏ {formatted_ratio} {bar}')
 
-    def handle_problematic_files(self, top_10_ratios):
-        for file, ratio in top_10_ratios.items():
-            print(f"File: {file}, Ratio: {ratio:.4f}")
-            choice = input("Choose an option: [D]iscard or [F]ix: ").strip().upper()
+    def discard_file(self, file_path):
+        try:
+            discarded_dir = self.config.get("paths", "discarded_directory")  # Ensure this is in your config
+            os.makedirs(discarded_dir, exist_ok=True)
+            discarded_file_path = os.path.join(discarded_dir, os.path.basename(file_path))
+            os.rename(file_path, discarded_file_path)
+            self.logger.info(f"File {file_path} moved to {discarded_file_path}")
+        except Exception as e:
+            self.logger.error(f"Error discarding file {file_path}: {e}")
 
-            if choice == 'D':
-                self.discard_file(file)
-            elif choice == 'F':
-                self.fix_file(file) # fix fix_file
-            else:
-                print("Invalid choice. Skipping this file.")
 
-    def discard_file(self, file):
-        # Remove the file from self.difficult_passages to discard it from further processing
-        if file in self.difficult_passages:
-            del self.difficult_passages[file]
-        self.logger.warning(f"Discarded file: {file}")
-        print(f"Discarded file: {file}")
+    def fix_file(self, file_path):
+        self.logger.info(f"Fixing file: {file_path}")
+        # Filter difficult passages for this file
+        passages_to_fix = [p for p in self.difficult_passages if p['file_name'] == file_path]
+
+        for passage in passages_to_fix:
+            word = passage['abbreviated_word']
+            context = passage['context']
+            line_number = passage['line_number']
+            column = passage['column']
+
+            # Use DWN2's interface for user interaction
+            corrected_word = self.dwn2.handle_user_input(word, context, file_path, line_number, column)
+
+            # Update user_solution.json
+            self.update_user_solution(word, corrected_word)
+
+        self.logger.info(f"File {file_path} has been fixed.")
+
 
     def handle_word_with_user_input(self, word, context, file_name, line_number, column):
         # Call the handle_user_input method of DynamicWordNormalization2
