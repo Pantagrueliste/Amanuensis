@@ -33,6 +33,7 @@ from dynamic_word_normalization2 import DynamicWordNormalization2
 from gpt_suggestions import GPTSuggestions
 from json import JSONDecodeError
 from logging_config import get_logger
+from atomic_update import atomic_append_json
 
 class DynamicWordNormalization3:
     def __init__(self, config, difficult_passages_file='data/difficult_passages.json', user_solution_file='data/user_solution.json'):
@@ -206,12 +207,11 @@ class DynamicWordNormalization3:
         self.update_user_solution(word, user_input)
 
     def update_user_solution(self, word, solution):
-        # Prepare the data
-        data_to_write = {word: solution}
+        # Prepare the new data
+        new_data = {word: solution}
 
-        # Atomic update to user_solution.json
-
-        atomic_write_json(data_to_write, self.user_solution_file)
+        # Atomic append to user_solution.json
+        atomic_append_json(new_data, self.user_solution_file)
 
     def get_gpt4_suggestions(self, passage):
         if self.gpt4:
