@@ -18,7 +18,6 @@ Third-party Libraries:
 - Config: Custom class for managing configurations.
 - DynamicWordNormalization2: Lower-level class for handling Dynamic Word Normalization.
 - GPTSuggestions: Class for generating GPT-based suggestions.
-- atomic_write_json: Function for atomic JSON writes.
 
 """
 
@@ -27,7 +26,6 @@ import os
 import math
 
 from collections import Counter
-from atomic_update import atomic_write_json
 from config import Config
 from dynamic_word_normalization2 import DynamicWordNormalization2
 from gpt_suggestions import GPTSuggestions
@@ -128,16 +126,34 @@ class DynamicWordNormalization3:
 
 
     def handle_problematic_files(self, sorted_ratios):
-        self.logger.info("Handling problematic files based on sorted ratios.")
-        for file, ratio in sorted_ratios.items():
-            self.logger.info(f"Presenting file '{file}' with difficulty ratio {ratio:.4f} to the user.")
-            choice = input(f"File: {file}, Ratio: {ratio:.4f}. Choose [D]iscard or [F]ix: ").strip().upper()
-            if choice == 'D':
-                self.discard_file(file)
-            elif choice == 'F':
-                self.fix_file(file)
-            else:
-                print("Invalid choice. Skipping this file.")
+            self.logger.info("Handling problematic files based on sorted ratios.")
+            for file, ratio in sorted_ratios.items():
+                self.logger.info(f"Presenting file '{file}' with difficulty ratio {ratio:.4f} to the user.")
+                print(f"File: {file}, Ratio: {ratio:.4f}")
+                choice = input("Choose [D]iscard, [F]ix or [G]PT Suggestion: ").strip().upper()
+
+                if choice == 'D':
+                    self.discard_file(file)
+                elif choice == 'F':
+                    self.fix_file(file)
+                elif choice == 'G' and self.gpt4:
+                    for passage in self.difficult_passages:
+                        if passage['file_name'] == file:
+                            suggestion = self.get_gpt_suggestion_for_passage(passage)
+                            print(f"GPT Suggestion for {passage['abbreviated_word']}: {suggestion}")
+                            user_decision = input("Do you want to accept this suggestion? (Y/N): ").strip().upper()
+                            if user_decision == 'Y':
+                                self.accept_gpt4_suggestion(passage['abbreviated_word'], suggestion)
+                else:
+                    print("Invalid choice. Skipping this file.")
+
+
+    def get_gpt_suggestion_for_passage(self, passage):
+        context = passage['context']  # Adjust this based on how your context is structured
+        suggestion = self.gpt4.get_and_print_suggestion(context)
+        return suggestion
+
+
 
     def print_ascii_bar_chart(self, data, title, scale_factor=1000):
         if not data:

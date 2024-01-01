@@ -4,13 +4,22 @@ This class is only instantiated if the user has enabled the GPT-4 suggestions in
 It sends the context to the GPT-4 API and retrieves the suggestions as to what should replace the $ symbol.
 The suggestion is then displayed to the user.
 """
+import os
 import openai
 
 
 class GPTSuggestions:
-    def __init__(self, config):
-        self.config = config
+    def __init__(self):
+        # Get API key from environment variable
+        self.api_key = os.getenv('OPENAI_API_KEY')
+
+        if self.api_key is None:
+            raise ValueError("No OpenAI API key found in environment variables")
+
+        # Use the API key
+        openai.api_key = self.api_key
         self.gpt = openai.Completion()
+
 
     def get_suggestion(self, context):
         """
