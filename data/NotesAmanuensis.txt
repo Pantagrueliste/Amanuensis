@@ -26,6 +26,10 @@ albeit a co$sused multitude (s --> f)
 
 
  he fought with them with yt, and ouerthrew rhe$ by thethe woorde --> them by the woorde
+
+ LIngua serpe$tis minor is an herbe called 
+
+  was in the mou$re of Olyuete
 ---
 
 don't forget to apply quality control checks on user_solutions.json: check for double and triple n and m.
