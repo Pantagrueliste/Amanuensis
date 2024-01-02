@@ -9,16 +9,23 @@ import openai
 
 
 class GPTSuggestions:
-    def __init__(self):
-        # Get API key from environment variable
+    def __init__(self, config):
+        self.config = config
         self.api_key = os.getenv('OPENAI_API_KEY')
-
         if self.api_key is None:
             raise ValueError("No OpenAI API key found in environment variables")
 
-        # Use the API key
         openai.api_key = self.api_key
-        self.gpt = openai.Completion()
+
+        # Get the language model type from config
+        self.model_type = config.get('OpenAI_integration', 'language_model')
+
+        if self.model_type == "GPT4":
+            self.model = "text-davinci-004"  # Replace with the actual model identifier for GPT-4
+        elif self.model_type == "Mistral7b":
+            self.model = "text-mistral-7b"  # Replace with the actual model identifier for Mistral 7b
+        else:
+            raise ValueError("Invalid language model type specified")
 
 
     def get_suggestion(self, context):

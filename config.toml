@@ -24,6 +24,5 @@ characters_to_replace = {"Ʋ" = "U", "&c." = "etc.", "ꝑ" = "per", "ꝭ" = "s",
 ambiguous_aws = ["the$", "ope$", "Roma$"] # in this example the$ is ambiguous since it can either be "the" or "them", "ope$" could be "open" in English or "opem" in Latin...
 
 [OpenAI_integration] # settings related to GPT integration
-gpt_suggestions=false
-gpt_4=false
-API_Key=""
+gpt_suggestions=true
+gpt_4=true
