@@ -32,11 +32,19 @@ from gpt_suggestions import GPTSuggestions
 from json import JSONDecodeError
 from logging_config import get_logger
 from atomic_update import atomic_append_json
+from rich.console import Console
+from rich.panel import Panel
+from Levenshtein import distance as lev_distance
+from colorama import Fore
+
+
+class UserQuitException(Exception):
+    pass
 
 class DynamicWordNormalization3:
     def __init__(self, config, difficult_passages_file='data/difficult_passages.json', user_solution_file='data/user_solution.json'):
         self.logger = get_logger(__name__)
-        self.console = None
+        self.console = Console()
         self.config = Config()
         use_gpt = self.config.get_openai_integration('gpt_suggestions')
         if use_gpt:
@@ -48,6 +56,34 @@ class DynamicWordNormalization3:
         self.difficult_passages_file = difficult_passages_file
         self.user_solution_file = user_solution_file
         self.difficult_passages = self.load_difficult_passages()
+        self.model_type = config.get('OpenAI_integration', 'language_model')
+
+        # Load existing user solutions from config
+        user_solution_path = self.config.get("data", "user_solution_path")
+        self.existing_user_solutions = self.load_existing_solutions(user_solution_path)
+
+        # Load existing machine solutions
+        try:
+            with open(self.config.machine_solution_path, 'rb') as f:
+                self.existing_machine_solutions = orjson.loads(f.read())
+        except FileNotFoundError:
+            self.existing_machine_solutions = {}
+
+    def update_user_solution(self, word, solution):
+        new_data = {word: solution}
+        atomic_append_json(new_data, self.user_solution_file)
+
+    def load_existing_solutions(self, user_solution_path):
+        try:
+            with open(user_solution_path, 'rb') as f:
+                return orjson.loads(f.read())
+        except FileNotFoundError:
+            self.logger.error(f"User solutions file '{user_solution_path}' not found.")
+            return {}
+        except JSONDecodeError as e:
+            self.logger.error(f"Malformed JSON in user solutions file '{user_solution_path}': {e}")
+            return {}
+
 
     def load_difficult_passages(self):
         self.logger.info(f"Attempting to load difficult passages from {self.difficult_passages_file}")
@@ -76,7 +112,6 @@ class DynamicWordNormalization3:
         except IOError as e:
             self.logger.error(f"Error reading file {file_path}: {e}")
             return 0
-
 
     def analyze_difficult_passages(self):
         self.logger.info("Starting analysis of difficult passages.")
@@ -126,26 +161,19 @@ class DynamicWordNormalization3:
 
 
     def handle_problematic_files(self, sorted_ratios):
-            self.logger.info("Handling problematic files based on sorted ratios.")
-            for file, ratio in sorted_ratios.items():
-                self.logger.info(f"Presenting file '{file}' with difficulty ratio {ratio:.4f} to the user.")
-                print(f"File: {file}, Ratio: {ratio:.4f}")
-                choice = input("Choose [D]iscard, [F]ix or [G]PT Suggestion: ").strip().upper()
+        for file, ratio in sorted_ratios.items():
+            self.console.print(f"File: {file}, Ratio: {ratio:.4f}")
+            while True:
+                choice = self.console.input("Choose [D]iscard or [F]ix: ").strip().upper()
+                if choice in ['D', 'F']:
+                    break
+                self.console.print("Invalid choice. Please choose again.", style="bold red")
 
-                if choice == 'D':
-                    self.discard_file(file)
-                elif choice == 'F':
-                    self.fix_file(file)
-                elif choice == 'G' and self.gpt4:
-                    for passage in self.difficult_passages:
-                        if passage['file_name'] == file:
-                            suggestion = self.get_gpt_suggestion_for_passage(passage)
-                            print(f"GPT Suggestion for {passage['abbreviated_word']}: {suggestion}")
-                            user_decision = input("Do you want to accept this suggestion? (Y/N): ").strip().upper()
-                            if user_decision == 'Y':
-                                self.accept_gpt4_suggestion(passage['abbreviated_word'], suggestion)
-                else:
-                    print("Invalid choice. Skipping this file.")
+            if choice == 'D':
+                self.discard_file(file)
+            elif choice == 'F':
+                self.fix_file(file)
+
 
 
     def get_gpt_suggestion_for_passage(self, passage):
@@ -153,6 +181,19 @@ class DynamicWordNormalization3:
         suggestion = self.gpt4.get_and_print_suggestion(context)
         return suggestion
 
+
+    def generate_suggestions(self, unresolved_aw, threshold=3):
+        best_suggestion = None
+        min_distance = float("inf")
+
+        all_solutions = {**self.existing_user_solutions, **self.existing_machine_solutions}
+        for existing_aw, solution in all_solutions.items():
+            curr_distance = lev_distance(unresolved_aw, existing_aw)
+            if curr_distance < min_distance and curr_distance <= threshold:
+                min_distance = curr_distance
+                best_suggestion = solution
+
+        return best_suggestion
 
 
     def print_ascii_bar_chart(self, data, title, scale_factor=1000):
@@ -183,7 +224,6 @@ class DynamicWordNormalization3:
 
     def fix_file(self, file_path):
         self.logger.info(f"Fixing file: {file_path}")
-        # Filter difficult passages for this file
         passages_to_fix = [p for p in self.difficult_passages if p['file_name'] == file_path]
 
         for passage in passages_to_fix:
@@ -192,42 +232,54 @@ class DynamicWordNormalization3:
             line_number = passage['line_number']
             column = passage['column']
 
-            # Use DWN2's interface for user interaction
-            corrected_word = self.dwn2.handle_user_input(word, context, file_path, line_number, column)
+            # Display context and problematic word using Rich
+            panel = Panel(f"[bold]Context:[/bold] {context}\n[bold red]Problematic Word:[/bold red] {word}",
+                        title=f"File: {file_path}, Line: {line_number}", border_style="bright_black")
+            self.console.print(panel)
 
-            # Update user_solution.json
-            self.update_user_solution(word, corrected_word)
+            # Fetch and display closest known word
+            best_suggestion = self.generate_suggestions(word)
+            self.console.print(f"[bold]Closest known word:[/bold] {best_suggestion}", style="bold blue")
 
-        self.logger.info(f"File {file_path} has been fixed.")
+            # Fetch GPT-4 suggestion
+            if self.gpt4:
+                gpt_suggestion = self.gpt4.get_suggestion(word, context)
+                self.console.print(f"[bold]GPT-4 suggestion:[/bold] {gpt_suggestion}", style="bold blue")
+            else:
+                self.console.print("[bold]GPT-4 suggestion:[/bold] Not available", style="bold blue")
+
+            # User decision for handling the word
+            try:
+                while True:
+                    user_input = self.console.input("[bold green]Enter 'n' or 'm' to replace $, 'd' to discard, or the full replacement:[/bold green] ").strip()
+                    if user_input.lower() in ['n', 'm', 'd']:
+                        corrected_word = word.replace("$", user_input) if user_input in ['n', 'm'] else ""
+                        break
+                    else:
+                        corrected_word = user_input  # Treat it as full replacement
+                        break
+
+                    if corrected_word:
+                        self.update_user_solution(word, corrected_word)
+            except KeyboardInterrupt:
+                self.logger.warning("User interrupted the input process")
+                raise UserQuitException()
+
+        self.logger.info(f"File {file_path} has been processed.")
 
 
     def handle_word_with_user_input(self, word, context, file_name, line_number, column):
         # Call the handle_user_input method of DynamicWordNormalization2
         correct_word = self.dwn2.handle_user_input(word, context, file_name, line_number, column)
 
-        # Update the user solution with the correct word
-        self.update_user_solution(word, correct_word)
-
-        return correct_word
-
-    def accept_gpt4_suggestion(self, word, suggestion):
-        # Update the user_solution.json with the accepted GPT-4 suggestion
-        self.update_user_solution(word, suggestion)
-
-    def reject_gpt4_suggestion(self):
-        # Do nothing and move on
-        pass
-
     def manual_fix(self, word, user_input):
         # Update the user_solution.json with the user's manual input
         self.update_user_solution(word, user_input)
 
     def update_user_solution(self, word, solution):
-        # Prepare the new data
-        new_data = {word: solution}
+       new_data = {word: solution}
+       atomic_append_json(new_data, self.user_solution_file)
 
-        # Atomic append to user_solution.json
-        atomic_append_json(new_data, self.user_solution_file)
 
     def get_gpt4_suggestions(self, passage):
         if self.gpt4:

@@ -1,53 +1,52 @@
-"""
-This file contains the GPTSuggestions class, which is responsible for retrieving suggestions from GPT-4.
-This class is only instantiated if the user has enabled the GPT-4 suggestions in the config.toml file.
-It sends the context to the GPT-4 API and retrieves the suggestions as to what should replace the $ symbol.
-The suggestion is then displayed to the user.
-"""
 import os
-import openai
+import logging
+from openai import OpenAI
 
+class MissingAPIKeyError(Exception):
+    def __init__(self):
+        message = "OpenAI API key not found in environment variables. Please set the OPENAI_API_KEY environment variable."
+        super().__init__(message)
 
 class GPTSuggestions:
     def __init__(self, config):
+        self.logger = logging.getLogger(__name__)
         self.config = config
         self.api_key = os.getenv('OPENAI_API_KEY')
         if self.api_key is None:
-            raise ValueError("No OpenAI API key found in environment variables")
+            raise MissingAPIKeyError()
 
-        openai.api_key = self.api_key
+        # Instantiate the OpenAI client
+        self.client = OpenAI(api_key=self.api_key)
 
         # Get the language model type from config
         self.model_type = config.get('OpenAI_integration', 'language_model')
+        self.model = "gpt-4" if self.model_type == "GPT-4" else "gpt-3.5-turbo"
 
-        if self.model_type == "GPT4":
-            self.model = "text-davinci-004"  # Replace with the actual model identifier for GPT-4
-        elif self.model_type == "Mistral7b":
-            self.model = "text-mistral-7b"  # Replace with the actual model identifier for Mistral 7b
-        else:
-            raise ValueError("Invalid language model type specified")
+    def get_suggestion(self, word, context):
+        try:
+            system_message = {"role": "system", "content": "You are a seasoned scholar in the humanities specialized in early modern languages. Your role is to help deciphering abbreviations from Renaissance and early modern printed books."}
+            user_message = {"role": "user", "content": f"Problematic Word: {word}\nContext: {context}"}
 
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[system_message, user_message],
+                max_tokens=50
+            )
 
-    def get_suggestion(self, context):
-        """
-        Get a suggestion from GPT-4.
-        """
-        suggestion = self.gpt.get_top_reply(context)
-        return suggestion
+            if response and 'choices' in response and len(response['choices']) > 0 and 'message' in response['choices'][0]:
+                return response['choices'][0]['message']['content'].strip()
+            else:
+                return "No response generated"
+        except Exception as e:
+            self.logger.exception("Error in generating GPT suggestion")
+            return f"Error in generating suggestion: {e}"
 
-    @staticmethod
     def print_suggestion(self, context, suggestion):
-        """
-        Print the suggestion to the user.
-        """
         print("\n\n")
         print(f"[bold]GPT Suggestion:[/bold] {suggestion}")
         print("\n\n")
 
     def get_and_print_suggestion(self, context):
-        """
-        Get and print a suggestion from GPT-4.
-        """
         suggestion = self.get_suggestion(context)
         self.print_suggestion(context, suggestion)
         return suggestion

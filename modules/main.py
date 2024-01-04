@@ -79,6 +79,12 @@ class Amanuensis:
         self.config = config
         config.print_config_recap()
         self.config.validate_paths()
+
+        if self.config.get_openai_integration('gpt_suggestions'):
+                    if os.getenv('OPENAI_API_KEY') is None:
+                        self.logger.error("OpenAI API key not set. Exiting application.")
+                        sys.exit("Error: OpenAI API key not found in environment variables.")
+
         self.unicode_replacement = UnicodeReplacement(self.config)
         self._word_normalization = DynamicWordNormalization1(self.config)
         self.ambiguous_aws = self.config.get_ambiguous_aws()
@@ -100,15 +106,6 @@ class Amanuensis:
         """
         if self.config.get("unicode_replacements", "replacements_on"):
             self.run_unicode_replacement()
-            proceed = input(
-                "Unicode Replacement is complete. Do you want to proceed to Dynamic Word Normalization? (y/n): "
-            )
-            if proceed.lower() != "y":
-                print("Exiting.")
-                self.logger.info("User exited after Unicode Replacement was complete.")
-                self.main_app.save_json_data()
-                self.main_app.terminate_ongoing_processes()
-                sys.exit(0)
 
         # DWN1.1
         self.logger.info("Starting Dynamic Word Normalization Phase 1.1...")
