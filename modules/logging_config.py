@@ -1,16 +1,23 @@
 import logging
 import os
+from config import Config
+
+# Instantiate the Config class
+config = Config()
+
+# Define the logging format
+log_format = "%(asctime)s - %(levelname)s - %(module)s: %(message)s"
+
+# Get the logging level from the config
+logging_level = getattr(logging, config.debug_level, logging.WARNING)
 
 # Ensure the logs directory exists
 if not os.path.exists("logs"):
     os.makedirs("logs")
 
-# Define the logging format
-log_format = "%(asctime)s - %(levelname)s - %(module)s: %(message)s"
-
 # Set up the root logger
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging_level,
     format=log_format,
     handlers=[
         logging.StreamHandler(),
@@ -18,6 +25,7 @@ logging.basicConfig(
     ]
 )
 
-# Expose a method to get the logger
 def get_logger(module_name):
-    return logging.getLogger(module_name)
+    logger = logging.getLogger(module_name)
+    # Configure your logger here (if needed)
+    return logger

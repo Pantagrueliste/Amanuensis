@@ -24,6 +24,7 @@ Third-party Libraries:
 import orjson
 import os
 import math
+import logging
 
 from collections import Counter
 from config import Config
@@ -44,6 +45,8 @@ class UserQuitException(Exception):
 class DynamicWordNormalization3:
     def __init__(self, config, difficult_passages_file='data/difficult_passages.json', user_solution_file='data/user_solution.json'):
         self.logger = get_logger(__name__)
+        logging_level = getattr(logging, config.debug_level, logging.WARNING)
+        self.logger.setLevel(logging_level)
         self.console = Console()
         self.config = Config()
         use_gpt = self.config.get_openai_integration('gpt_suggestions')
