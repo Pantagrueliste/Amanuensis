@@ -38,7 +38,6 @@ from atomic_update import atomic_append_json
 class UserQuitException(Exception):
     pass
 
-
 class DynamicWordNormalization2:
     def __init__(self, config, unresolved_aws_path="data/unresolved_aw.json", ambiguous_aws=None):
         self.logger = get_logger(__name__)
@@ -229,8 +228,6 @@ class DynamicWordNormalization2:
 
     @staticmethod
     def remove_trailing_punctuation(word):
-        # return re.sub(r'(\$?)[\.,;:!?(){}]$', r'\1', word)
-        # return re.sub(r"^[,;:!?(){}]|[,;:!?(){}]$", "", word)
         return re.sub(r"^[,;:!?(){}.]|[,;:!?(){}.]$", "", word)
 
     def generate_suggestions(self, unresolved_aw, threshold=3):

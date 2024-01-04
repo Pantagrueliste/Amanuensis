@@ -1,7 +1,7 @@
 [paths] # define the paths for working directories
 input_path = "/Users/clem/Desktop/EEBOTest4/Test4_input"
 output_path = "/Users/clem/Desktop/Test4_output"
-discarded_directory = "/Users/clem/Desktop/Test4_output/Discarded_files" 
+discarded_directory = "/Users/clem/Desktop/Test4_output/Discarded_files"
 
 [data] # paths of the dictionaries. To be transferred to [paths].
 machine_solution_path = "data/machine_solution.json"
@@ -25,4 +25,4 @@ ambiguous_aws = ["the$", "ope$", "Roma$"] # in this example the$ is ambiguous si
 
 [OpenAI_integration] # settings related to GPT integration
 gpt_suggestions=true
-gpt_4=true
+language_model = "GPT-4"  # or 'GPT-4", "Mistral7b"
