@@ -72,10 +72,6 @@ class DynamicWordNormalization3:
         except FileNotFoundError:
             self.existing_machine_solutions = {}
 
-    def update_user_solution(self, word, solution):
-        new_data = {word: solution}
-        atomic_append_json(new_data, self.user_solution_file)
-
     def load_existing_solutions(self, user_solution_path):
         try:
             with open(user_solution_path, 'rb') as f:
@@ -240,33 +236,28 @@ class DynamicWordNormalization3:
                         title=f"File: {file_path}, Line: {line_number}", border_style="bright_black")
             self.console.print(panel)
 
-            # Fetch and display closest known word
-            best_suggestion = self.generate_suggestions(word)
-            self.console.print(f"[bold]Closest known word:[/bold] {best_suggestion}", style="bold blue")
-
             # Fetch GPT-4 suggestion
             if self.gpt4:
                 gpt_suggestion = self.gpt4.get_suggestion(word, context)
-                self.console.print(f"[bold]GPT-4 suggestion:[/bold] {gpt_suggestion}", style="bold blue")
+                self.console.print(f"[bold]LLM suggestion:[/bold] {gpt_suggestion}", style="bold blue")
             else:
-                self.console.print("[bold]GPT-4 suggestion:[/bold] Not available", style="bold blue")
+                self.console.print("[bold]LLM suggestion:[/bold] Not available", style="bold blue")
 
-            # User decision for handling the word
             try:
                 while True:
                     user_input = self.console.input("[bold green]Enter 'n' or 'm' to replace $, 'd' to discard, or the full replacement:[/bold green] ").strip()
                     if user_input.lower() in ['n', 'm', 'd']:
                         corrected_word = word.replace("$", user_input) if user_input in ['n', 'm'] else ""
-                        break
                     else:
-                        corrected_word = user_input  # Treat it as full replacement
-                        break
+                        corrected_word = user_input
 
                     if corrected_word:
                         self.update_user_solution(word, corrected_word)
+                    break
             except KeyboardInterrupt:
                 self.logger.warning("User interrupted the input process")
                 raise UserQuitException()
+
 
         self.logger.info(f"File {file_path} has been processed.")
 
@@ -280,9 +271,20 @@ class DynamicWordNormalization3:
         self.update_user_solution(word, user_input)
 
     def update_user_solution(self, word, solution):
-       new_data = {word: solution}
-       atomic_append_json(new_data, self.user_solution_file)
+        self.logger.info(f"Updating user solution for '{word}' with '{solution}'")
 
+        # Reload the existing solutions to ensure we have the latest data
+        self.existing_user_solutions = self.load_existing_solutions(self.user_solution_file)
+
+        # Update the specific word's solution
+        self.existing_user_solutions[word] = solution
+
+        # Write the updated solutions back to the file
+        try:
+            atomic_append_json(self.existing_user_solutions, self.user_solution_file)
+            self.logger.info(f"Successfully updated user solution for '{word}'")
+        except Exception as e:
+            self.logger.error(f"Error updating user solution for '{word}': {e}")
 
     def get_gpt4_suggestions(self, passage):
         if self.gpt4:
