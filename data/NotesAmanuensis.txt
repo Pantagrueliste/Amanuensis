@@ -30,6 +30,10 @@ albeit a co$sused multitude (s --> f)
  LIngua serpe$tis minor is an herbe called 
 
   was in the mou$re of Olyuete
+
+  Thus he saieth: Offerimus panc$ perfectu$ viuum,  --> pane$ 
+
+  Laudabtle$ --> laudabile
 ---
 
 don't forget to apply quality control checks on user_solutions.json: check for double and triple n and m.
