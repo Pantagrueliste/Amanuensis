@@ -276,12 +276,12 @@ class DynamicWordNormalization3:
         # Reload the existing solutions to ensure we have the latest data
         self.existing_user_solutions = self.load_existing_solutions(self.user_solution_file)
 
-        # Update the specific word's solution
-        self.existing_user_solutions[word] = solution
+        # Create a new entry with the updated solution
+        updated_entry = {word: solution}
 
-        # Write the updated solutions back to the file
+        # Write the updated entry to the file using atomic_append_json
         try:
-            atomic_append_json(self.existing_user_solutions, self.user_solution_file)
+            atomic_append_json(updated_entry, self.user_solution_file)
             self.logger.info(f"Successfully updated user solution for '{word}'")
         except Exception as e:
             self.logger.error(f"Error updating user solution for '{word}': {e}")
