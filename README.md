@@ -11,18 +11,15 @@ Early 17th cent.: Latin, from _a manu_ (short for secretary) and -ensis ‘belon
 
 ---
 
-Amanuēsis is a Python application, tailored specifically for researchers in the Digital Humanities. Leveraging natural
-language processing and large language models, it is designed to accelerate normalization tasks for large-scale text
-data, transforming old and complex texts into a more legible format. This preparation is crucial for further digital analysis and manipulation. With Amanuēsis, you can make your text data more legible and accessible,
-streamlining an otherwise long and rebarbative task.
-
+Amanuēsis is an application tailored specifically for researchers in the Digital Humanities. It is designed to accelerate normalization tasks for large-scale text
+data, making old and complex texts more legible. This preparation is crucial for further digital analysis and manipulation. 
 
 ## Features
 
 - **Unicode Character Replacement**: A powerful conversion tool to clean up text by removing and/or replacing
   undesirable characters.
-- **Dynamic Word Normalization**: Expanding abbreviated words leveraging natural language processing, human inputs, and
-  large language models to enhance legibility.
+- **Dynamic Word Normalization**: Expanding abbreviated words using Natural Language Processing, human inputs, and
+  Large Language Models.
 - **Parallel Processing**: Built with efficiency in mind, Amanuēsis is optimized to use the full potential of your multicore CPU,
   making large normalization tasks more manageable.
 - **Comprehensive Logging**: Every single modification is meticulously tracked and stored in accessible json files,
@@ -32,7 +29,6 @@ streamlining an otherwise long and rebarbative task.
 
 - **Multilingual Support**: Addition of French, Italian, Latin, and Spanish.
 - **Beyond OpenAI**: Compatibility with competing APIs.
-- **Migraton to Mojo**: Amanuēnsis will eventually be ported to Mojo (as soon as Classes will be supported).
 - **Documentation**: Basic documentation in English, French, and Spanish.
 
 Feel free to suggest new features in the Issues section.
