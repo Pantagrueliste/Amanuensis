@@ -6,7 +6,7 @@ import orjson
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import wordnet
 from rich.progress import Progress
-from atomic_update import atomic_write_json
+from atomic_update import atomic_append_dict, atomic_write_json
 from concurrent.futures import ProcessPoolExecutor
 from threading import Lock
 from logging_config import get_logger
@@ -37,7 +37,7 @@ def save_json_data(pending_json_data):
 
 
 def save_json(file_path, data):
-    atomic_write_json(data, file_path)
+    atomic_append_dict(data, file_path)
 
 
 def consult_wordnet(aw):
