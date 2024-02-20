@@ -34,12 +34,44 @@ def atomic_append_json(new_data, file_path, temp_dir='tmp/'):
     except JSONDecodeError as e:
         logger.exception(f"JSON decode error in file {file_path}: {e}")
         existing_data = {}
-
     merged_data = {**existing_data, **new_data}
-
     try:
         with atomic_write(file_path, overwrite=True, mode='wb', dir=temp_dir) as f:
             f.write(orjson.dumps(merged_data))
         logger.info(f"Successfully appended JSON data to file: {file_path}")
     except Exception as e:
         logger.exception(f"Error appending JSON data to file {file_path}: {e}")
+
+def atomic_append_dict(new_data, file_path, temp_dir='tmp/'):
+    try:
+        # Attempt to load existing data from the file
+        with open(file_path, 'r') as f:
+            existing_data = orjson.loads(f.read())
+            logger.info(f"Existing data loaded from {file_path}.")
+    except FileNotFoundError:
+        # If the file doesn't exist, start with an empty dictionary
+        existing_data = {}
+        logger.info(f"File {file_path} not found. Creating new file.")
+    except orjson.JSONDecodeError as e:
+        # Handle JSON decoding errors
+        logger.exception(f"JSON decode error in file {file_path}: {e}")
+        existing_data = {}
+
+    # Ensure both existing_data and new_data are dictionaries
+    if not isinstance(existing_data, dict):
+        logger.error(f"Existing data in {file_path} is not a dictionary.")
+        return
+    if not isinstance(new_data, dict):
+        logger.error("New data provided is not a dictionary.")
+        return
+
+    # Merge new_data into existing_data
+    existing_data.update(new_data)
+
+    try:
+        # Write the merged data back to the file atomically
+        with atomic_write(file_path, overwrite=True, mode='wb', dir=temp_dir) as f:
+            f.write(orjson.dumps(existing_data))
+        logger.info(f"Successfully updated JSON data in file: {file_path}")
+    except Exception as e:
+        logger.exception(f"Error updating JSON data in file {file_path}: {e}")
