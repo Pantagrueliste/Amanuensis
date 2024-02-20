@@ -1,8 +1,15 @@
 # Amanuēsis: a normalization tool for early modern abbreviated texts
-
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8224585.svg)](https://doi.org/10.5281/zenodo.8224585)
 <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
 <!-- [![Qodana](https://github.com/Pantagrueliste/Amanuensis/actions/workflows/qodana_code_quality.yml/badge.svg)](https://github.com/Pantagrueliste/Amanuensis/actions/workflows/qodana_code_quality.yml)-->
+
+Amanuensis, *noun*. /əˌmænjuˈensɪs/.
+Early 17th cent.: Latin, from _a manu_ (short for secretary) and -ensis ‘belonging to’.
+
+1. a person who writes down your words when you cannot write.
+2. a literary assistant, especially one who writes, types for somebody or copies text.
+
+---
 
 Amanuēsis is a Python application, tailored specifically for researchers in the Digital Humanities. Leveraging natural
 language processing and large language models, it is designed to accelerate normalization tasks for large-scale text
@@ -49,11 +56,3 @@ Contributions are welcome! Please feel free to submit a pull request.
 ## License
 
 This project is licensed under the terms of the MIT license. For more details, see the [LICENSE](LICENSE.md) file.
-
----
-
-Amanuensis, *noun*. /əˌmænjuˈensɪs/.
-Early 17th cent.: Latin, from _a manu_ (short for secretary) and -ensis ‘belonging to’.
-
-1. a person who writes down your words when you cannot write.
-2. a literary assistant, especially one who writes, types for somebody or copies text.
