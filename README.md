@@ -12,7 +12,7 @@ Early 17th cent.: Latin, from _a manu_ (short for secretary) and -ensis ‘belon
 
 ---
 
-Amanuēsis is an application designed to accelerate normalization tasks in large historical corpora. It makes text-data more legible by expanding abbreviations and replacing unicode characters in a systematic and context-sensitve way. This type of pre-processing is instrumental to subsequent digital analyses and manipulations. Amanuēsis is conceived to swiflty handle very large corpora and, as such, is optimized to use the full potential of your multicore CPU. 
+Amanuēsis is an application designed to accelerate normalization tasks in large historical corpora. It increases legibility by expanding abbreviations and replacing unicode characters in a systematic and context-sensitve way. This type of pre-processing is instrumental to subsequent digital analyses and manipulations. Amanuēsis is conceived to swiflty handle very large corpora and, as such, is optimized to use the full potential of your multicore CPU. 
 
 ## Features
 
