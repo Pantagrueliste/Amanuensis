@@ -39,6 +39,8 @@ Righteousness of Chrifr --> of Christgiantes
 
 innoce$t Chriflia$s
 
+ A. de B. querir$ versus C. de D. --> or this effect. A de B. querit versus C de D (why r$ and not t?)
+
 ---
 
 don't forget to apply quality control checks on user_solutions.json: check for double and triple n and m.
