@@ -1,6 +1,7 @@
 # Amanuēsis: a normalization tool for early modern abbreviated texts
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8224585.svg)](https://doi.org/10.5281/zenodo.8224585)
 <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
+[![Qodana](https://github.com/Pantagrueliste/Amanuensis/actions/workflows/qodana_code_quality.yml/badge.svg)](https://github.com/Pantagrueliste/Amanuensis/actions/workflows/qodana_code_quality.yml)
 <!-- [![Qodana](https://github.com/Pantagrueliste/Amanuensis/actions/workflows/qodana_code_quality.yml/badge.svg)](https://github.com/Pantagrueliste/Amanuensis/actions/workflows/qodana_code_quality.yml)-->
 
 Amanuensis, *noun*. /əˌmænjuˈensɪs/.
