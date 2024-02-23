@@ -11,8 +11,7 @@ Early 17th cent.: Latin, from _a manu_ (short for secretary) and -ensis ‘belon
 
 ---
 
-Amanuēsis is an application tailored specifically for researchers in the Digital Humanities. It is designed to accelerate normalization tasks for large-scale text
-data, making old and complex texts more legible. This preparation is crucial for further digital analysis and manipulation. 
+Amanuēsis is an application designed to accelerate normalization tasks in large historical corpora. It makes text-data more legible by expanding abbreviations and replacing unicode characters in a systematic and context-sensitve way. This type of pre-processing is instrumental to the digital analysis and manipulation of historical documents. Amanuēsis is conceived to handle very large corpora rapidly, and is optimized to use the full potential of your multicore CPU. 
 
 ## Features
 
@@ -20,8 +19,7 @@ data, making old and complex texts more legible. This preparation is crucial for
   undesirable characters.
 - **Dynamic Word Normalization**: Expanding abbreviated words using Natural Language Processing, human inputs, and
   Large Language Models.
-- **Parallel Processing**: Built with efficiency in mind, Amanuēsis is optimized to use the full potential of your multicore CPU,
-  making large normalization tasks more manageable.
+- **Parallel Processing**: Built with efficiency in mind, Amanuēsis uses parallel processing to make large normalization tasks more manageable.
 - **Comprehensive Logging**: Every single modification is meticulously tracked and stored in accessible json files,
   enabling further statistical analysis.
 
