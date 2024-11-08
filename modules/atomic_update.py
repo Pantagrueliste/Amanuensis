@@ -2,6 +2,7 @@ import orjson
 from atomicwrites import atomic_write
 from logging_config import get_logger
 from json import JSONDecodeError
+import json
 
 logger = get_logger(__name__)
 
@@ -9,7 +10,7 @@ def atomic_write_json(data, file_path, temp_dir='tmp/'):
     try:
         logger.info(f"Attempting to write JSON data to file: {file_path}")
         with atomic_write(file_path, overwrite=True, mode='wb', dir=temp_dir) as f:
-            f.write(orjson.dumps(data))
+            f.write(json.dumps(data, indent=4).encode('utf-8'))
         logger.info(f"Successfully wrote JSON data to file: {file_path}")
     except Exception as e:
         logger.exception(f"Error writing JSON data to file {file_path}: {e}")
@@ -37,7 +38,7 @@ def atomic_append_json(new_data, file_path, temp_dir='tmp/'):
     merged_data = {**existing_data, **new_data}
     try:
         with atomic_write(file_path, overwrite=True, mode='wb', dir=temp_dir) as f:
-            f.write(orjson.dumps(merged_data))
+            f.write(json.dumps(merged_data, indent=4).encode('utf-8'))
         logger.info(f"Successfully appended JSON data to file: {file_path}")
     except Exception as e:
         logger.exception(f"Error appending JSON data to file {file_path}: {e}")
@@ -71,7 +72,7 @@ def atomic_append_dict(new_data, file_path, temp_dir='tmp/'):
     try:
         # Write the merged data back to the file atomically
         with atomic_write(file_path, overwrite=True, mode='wb', dir=temp_dir) as f:
-            f.write(orjson.dumps(existing_data))
+            f.write(json.dumps(existing_data, indent=4).encode('utf-8'))
         logger.info(f"Successfully updated JSON data in file: {file_path}")
     except Exception as e:
         logger.exception(f"Error updating JSON data in file {file_path}: {e}")
