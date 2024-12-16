@@ -9,3 +9,4 @@ amanuensis.log
 data/unresolved_aw.json
 *.pyc
 logs/unicode_replacement_log.json
+.env
