@@ -47,3 +47,63 @@ don't forget to apply quality control checks on user_solutions.json: check for d
 
 create a function that determines which user_solutions are the most frequent.
 
+We need statistics to count the number of times specific abbreviations are used in the text. 
+---
+
+convertir ꝑ dans les unicode transformations. 
+ 
+il y a des espaces causés parune erreur de XSLT. 
+vnware$ ted
+
+
+
+--- Examples with added spaces after $ (probably an XSLT error)
+'/Users/clementgodbarge/text-data/eng/A11297.P5.txt' at line 391
+haue seq$ stred their myndꝭ 
+
+
+'/Users/clementgodbarge/text-data/eng/A68723.P5.txt' at line 5
+with one of the lieuetenau$ tes or wardens of the Marchies or 
+
+'/Users/clementgodbarge/text-data/eng/A08448.P5.txt' at line 2038
+masse it shall be a thing most pes ile$t. Moreouer
+
+
+Found in file '/Users/clementgodbarge/text-data/eng/A18571.P5.txt' at line 1460
+behynde sathan Such cou$s ylours many of these
+
+
+as the breeders of many Vanities, or rather of much phra$ ticke madnesse.
+
+---
+
+Peut-etre faudrait-il creer une option additionelle qui classife le text en Latin. Mais le probleme c'est que la pluspart de ces textes sont de facto multilingues.
+
+---
+Parfois le $ est apres une syllabe mais modifie la consonne précédente.
+
+Found in file '/Users/clementgodbarge/text-data/eng/A17513.P5.txt' at line 5707
+"The Westerne Churches vsed in their Baptisme that short form of confession, como$nlly called the Apostles Creed"
+
+
+---
+Si nous devions faire une typologie de l'abbreviation, celle en contexte Latin est beaucup plus previsible.
+
+La meilleure approche serait de creer sur cette base un dataset pour finetuner un modèle. Pour qu'il fonctionne selon les regles de l'art ce modele devrait changer le texte existant dans un format XML-TEI.
+
+---
+Le cas suivant illustre le problème.
+
+Les fichiers telechargés ne contiennent que des abbréviations non-expanded. Hors, la version web n'est pas abbréviée, elle est expanded, comme s'il existait plusieurs versions... Ou alors seulement une selection de textes contiennent des expansions. Si c'est le cas notre stratégie devrait se baser en premier la dessus.
+
+"And euer in one without encrease I clepeth lollers and lo$dlese Who toteth on"
+
+dans mon fichier, c'est "<l>I clepeth lollers and lo<g ref="char:cmbAbbrStroke">̄</g >dlese</l>"
+
+Found in file '/Users/clementgodbarge/text-data/eng/A18571.P5.txt' at line 195
+
+"https://quod.lib.umich.edu/e/eebo/A18566.0001.001/1:2?firstpubl1=1470;firstpubl2=1700;rgn=div1;singlegenre=All;sort=occur;subview=detail;type=simple;view=fulltext;q1=I+clepeth+lollers+and" 
+
+And yet in the website it has been expanded.
+
+

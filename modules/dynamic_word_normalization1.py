@@ -130,6 +130,7 @@ class DynamicWordNormalization1:
         self.config = config
         self.pattern = r"\w*\$\w*"
         self.lemmatizer = WordNetLemmatizer()
+        self.logger = get_logger(__name__)
         self.user_solutions_path = self.config.get("data", "user_solution_path")
         self.user_solutions = load_json(self.user_solutions_path) or {}
         self.machine_solutions_path = self.config.machine_solution_path

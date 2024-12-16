@@ -1,0 +1,185 @@
+<HTML>
+<HEAD><TITLE>Ambiguous abbreviations</TITLE></HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1>Ambiguous abbreviations</H1>
+
+<P>Both letters and symbols can have multiple meanings dependent on
+context. Though we have instructed the vendors in a few of these contexts,
+in most cases we will have to deal with contextually governed interpretation
+of symbols at the review stage, if at all.</P>
+<P>Our developing policy on this matter, based on expedience, has not and probably will
+not be consistent. Is a symbol a particular shape or set of shapes? a meaning or set of meanings? etc. Expedience dictates that in
+most cases we regard a symbol as a shape rather than as a significance or equivalence,
+but we may wish to make some exceptions. In particular, if we are sure that a given
+sign is being used to mean something particular, especially something other than it
+usually stands for; and if we can isolate the context; then we may want to capture the
+same shape in different ways.</P>
+<UL>
+<LI><I>Case 1: two or more related meaning attached to same glyph.</I>
+<P><B>Example:</B> planetary symbols, which stand for the planets in astrological books but
+for metals in alchemical books.
+<P><B>Policy:</B> these are in some sense the same symbols, since those who used them in one
+sense were aware of the connections to the other sense. Use the same signs for both meanings; e.g.,
+represent the sun/gold sign
+as "&amp;sun;" regardless of whether it means "sun" or "gold" in context.
+<P><B>Comment:</B> I'll add the chemical meanings to the main table of these in the keying instructions.<P></LI>
+
+<LI><I>Case 2: completely unrelated meanings attached to the same glyph.</I>
+<P><B>Example:</B> a triangle pointing upwards may be a capital Greek letter delta;
+a symbol for the astronomical position called "trine"; an
+alchemical symbol for "fire"; and probably other things as well.
+<P><B>Policy:</B> distinguish these uses if we can.<P></LI>
+
+<LI><I>Case 3: historically distinct (?) symbols of similar appearance come to be represented by the same piece of type.</I>
+<P><B>Example:</B> Middle English yogh (the character shaped roughly like a "3") persists in some early modern (especially Scottish) books as "z".
+<P><B>Policy:</B> Generally, leave these as the characters that they now pretend to be, since it would be both  anachronistic and difficult to undo the merger that has taken place. (But see: the special case of "z", below).<P></LI>
+
+<LI><I>Case 4: symbols of one meaning are used to stand also for words of similar meaning or sound.</I>
+<P><B>Example:</B> the "quod" symbol (&abquod;) is frequently used in English contexts to mean "quod" or "quoth" (= "said").
+<P><B>Example:</B> many symbols of Latin origin are used to stand for vernacular equivalents, e.g. "d." for "pence" or &amp; for "and".
+<P><B>Policy:</B> capture them as they appear.<P></LI>
+
+
+<LI><I>Case 5: symbols of one primary meaning also come to be used either with a quite different
+meaning, or generically as abbreviation markers (perhaps for want of proper characters in
+the font).</I>
+<P><B>Example:</B> the usual symbol for "-is" or "-es" (which we call &amp;abis;) has been found
+following "R" to mean "Recipe," apparently as a generic abbreviation stroke (R~);
+"sz" which can often mean "sed", has been found also in the sense "semis"; the
+symbol that can mean "ser" (our &amp;abser;) can also mean "semis" and (preceded by "ro-")
+"rosae" or some such; and the familiar crossed-R prescription symbol (&amp;rx; for "Recipe")
+can, in the combination "A.&amp;rx;." mean "Aqua Regis".
+. "-r" in the abbreviation "qr" probably derives from one meaning
+of the combination ("quare"), but "qr" also came to mean "quia" in which the case the
+"r" has in effect become an abbreviation stroke. The familiar use of ";" as part of
+of the "-que" abbreviation may also fall into this category. Some of the symbols may in fact <I>always</I> be functioning as
+generic abbreviation strokes; but &amp;abis; and "r" at least do have specific meanings which
+are apparently ignored when they are used generically.
+<P><B>Policy:</B> let the vendors capture the symbols as best they can based on their shape.
+In review, where it is possible to identify generic (or even specific) uses, treat them as generic abbreviation marks, ideally with an EXPAN attribute.  E.g.:
+
+<TABLE BORDER="1">
+<TR>
+<TH>abbrev.</TH>
+<TH>meaning</TH>
+<TH>capture as:</TH>
+<TH>convert to:</TH>
+</TR>
+
+<TR>
+<TD>&amp;Virgo; or &amp;Scorp;</TD>
+<TD>minim ('drop')</TD>
+<TD>&amp;Virgo; or &amp;Scorp;</TD>
+<TD>&lt;ABBR&gt;M&lt;/ABBR&gt; if possible</TD>
+</TR>
+
+<TR>
+<TD>R&amp;abis;</TD>
+<TD>Recipe</TD>
+<TD>R&amp;abis;</TD>
+<TD>&lt;ABBR EXPAN="Recipe"&gt;R&lt;/ABBR&gt; if possible</TD>
+</TR>
+
+<TR>
+<TD>A.&amp;rx;.</TD>
+<TD>Aqua Regis</TD>
+<TD>A.&amp;rx;.</TD>
+<TD>&lt;ABBR EXPAN="aqua regis"&gt;A.R.&lt;/ABBR&gt;</TD>
+</TR>
+
+<TR>
+<TD>sz</TD>
+<TD>sed or semis or ?</TD>
+<TD>&amp;sed;</TD>
+<TD>&lt;ABBR EXPAN="semis"&gt;s&lt;/ABBR&gt;   or &amp;sed; as appropriate, if possible</TD>
+</TR>
+
+<TR>
+<TD>&amp;abser;</TD>
+<TD>ser or semis or s...? </TD>
+<TD>&amp;abser;</TD>
+<TD>&lt;ABBR EXPAN="semis"&gt;s&lt;/ABBR&gt; or &lt;ABBR&gt;ros&lt;/ABBR&gt;  or &amp;sed;, etc., as appropriate, if possible</TD>
+</TR>
+
+<TR>
+<TD>qr</TD>
+<TD>quia (or quare?)</TD>
+<TD>qr</TD>
+<TD>&lt;ABBR&gt;qr&lt;/ABBR&gt; or &lt;ABBR EXPAN="quia"&gt;qr&lt;/ABBR&gt; etc. if possible</TD>
+</TR>
+
+<TR>
+<TD>...q;</TD>
+<TD>...que (except for "esq;" = "esquire")</TD>
+<TD>...&abque;</TD>
+<TD>...&abque; or &lt;ABBR&gt;esq&lt;/ABBR&gt; as appropriate</TD>
+</TR>
+
+
+</TABLE>
+
+<P>For cases in which an 'incorrect' symbol is used based on some superficial similarity of
+form (perhaps because of the printer's lack of the correct piece of type), or where there is no 'base' character to the symbol that will allow use of ABBR tags, see the document on
+<a href="./hijack.html">hijacked symbols</a>.</P>
+
+<P></LI>
+
+
+<LI><I>Case 6: the special case of "z".</I>
+<P><B>Example: </B> "z"-like characters appear in several circumstances:
+"z" follows "q" to form one variant of &abque;; "z" follows "s" to form the symbol
+we call &amp;sed; but which may simply mean &lt;ABBR&gt;s&lt;/ABBR&gt;; as the last
+letter in a word, "z" may be a form of "-m"; "z" can form part of at least two common
+abbreviations, "viz." (videlicet) and "scz." (scilicet). Our policy to date on
+these has been as follows:
+
+<TABLE BORDER="1">
+<TR>
+<TH>abbrev.</TH>
+<TH>meaning</TH>
+<TH>capture as:</TH>
+</TR>
+
+<TR>
+<TD>viz.</TD>
+<TD>videlicet</TD>
+<TD>viz.</TD>
+</TR>
+
+<TR>
+<TD>scz.</TD>
+<TD>scilicet</TD>
+<TD>&lt;ABBR&gt;sc&lt;/ABBR&gt;   or scz</TD>
+</TR>
+
+<TR>
+<TD>-sz</TD>
+<TD>-s or -ss [in Scots texts]</TD>
+<TD>-sz</TD>
+</TR>
+
+<TR>
+<TD>sz</TD>
+<TD>sed or semis (etc.?)</TD>
+<TD>&absed or &lt;ABBR EXPAN="semis"&gt;s&lt;/ABBR&gt as appropriate</TD>
+</TR>
+
+<TR>
+<TD>qz</TD>
+<TD>-que</TD>
+<TD>&abque;</TD>
+</TR>
+</TABLE></LI>
+
+<H2>Some real examples</H2>
+<P>See also some of the examples in <A HREF="./latabbrs.html">the Latin abbreviations examples page</A> and the <a href="./hijack.html">hijacked symbols</a> page.</p>
+<P>
+<P><IMG SRC="../pix/other/s12468.001.gif">
+<P><IMG SRC="../pix/other/s12468.002.gif">
+<P><IMG SRC="../pix/other/s12468.003.gif">
+</BODY>
+</HTML>
+
+
+
+
