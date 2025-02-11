@@ -1,5 +1,6 @@
 import orjson
 from config import Config
+import json
 
 class ConflictResolver:
     def __init__(self, config):
@@ -32,13 +33,13 @@ class ConflictResolver:
 
     def save_machine_solutions(self):
             """Save machine solutions to a JSON file."""
-            with open(self.config.get('data', 'machine_solution_path'), 'wb') as f:
-                f.write(orjson.dumps(self.machine_solutions))
+            with open(self.config.get('data', 'machine_solution_path'), 'w') as f:
+                f.write(json.dumps(self.machine_solutions, indent=4))
 
     def save_user_solutions(self):
         """Save user solutions to a JSON file."""
-        with open(self.config.get('data', 'user_solution_path'), 'wb') as f:
-            f.write(orjson.dumps(self.user_solutions))
+        with open(self.config.get('data', 'user_solution_path'), 'w') as f:
+            f.write(json.dumps(self.user_solutions, indent=4))
 
     def detect_and_resolve_conflicts(self):
         """Detect and resolve conflicts between machine and user solutions."""
