@@ -1,13 +1,12 @@
 """
 Suggestion Generator - Generates expansion suggestions for abbreviations
+focusing exclusively on dictionary-based approaches
 """
 
 import logging
-import re
 import os
 import json
-import importlib.resources
-from typing import List, Dict, Any, Optional, Tuple, Union
+from typing import List, Dict, Any, Optional
 from pathlib import Path
 import random
 
@@ -23,7 +22,8 @@ except ImportError:
 
 class SuggestionGenerator:
     """
-    Generates expansion suggestions for abbreviations using various methods.
+    Generates expansion suggestions for abbreviations using dictionary-based methods,
+    WordNet, and language models. Pattern matching has been removed.
     """
     
     def __init__(self, config):
@@ -48,22 +48,22 @@ class SuggestionGenerator:
         
         # Set up expansion sources
         self.abbreviation_dict = self._load_abbreviation_dictionary()
-        self.common_expansions = self._load_common_expansions()
+        self.user_solutions = self._load_user_solutions()
         
-        # Confidence scores for different sources
+        # Confidence scores for different sources - prioritizing dictionaries
         self.confidence_scores = {
-            'dictionary': 0.9,
-            'pattern': 0.7,
-            'wordnet': 0.6,
-            'language_model': 0.8,
-            'rule_based': 0.5
+            'user_dictionary': 0.98,   # Highest confidence for user-verified solutions
+            'dictionary': 0.95,        # Very high confidence for standard dictionary
+            'language_model': 0.8,     # High confidence for LLM suggestions
+            'wordnet': 0.5,            # Lower confidence for wordnet
+            'rule_based': 0.4          # Lowest confidence
         }
         
         # Statistics
         self.stats = {
             'total_suggestions': 0,
+            'user_dictionary_matches': 0,
             'dictionary_matches': 0,
-            'pattern_matches': 0,
             'wordnet_suggestions': 0,
             'lm_suggestions': 0,
             'failed_abbreviations': 0
@@ -108,32 +108,31 @@ class SuggestionGenerator:
             self.logger.error(f"Error loading abbreviation dictionary: {e}")
             return {}
     
-    def _load_common_expansions(self) -> Dict[str, List[str]]:
+    def _load_user_solutions(self) -> Dict[str, str]:
         """
-        Load common expansion patterns.
+        Load user solutions from user_solution.json.
         
         Returns:
-            Dictionary of pattern regex to expansion templates
+            Dictionary mapping abbreviated forms to verified expansions
         """
-        return {
-            # Dollar sign as medial n/m
-            r'(\w+)\$(\w+)': [r'\1n\2', r'\1m\2'],
+        try:
+            # Try to load from configured path
+            user_solution_path = self.config.get(
+                'data', 
+                'user_solution_path', 
+                'data/user_solution.json'
+            )
             
-            # Tilde as final n/m
-            r'(\w+)õ$': [r'\1on', r'\1om'],
-            r'(\w+)ã$': [r'\1an', r'\1am'],
-            r'(\w+)ẽ$': [r'\1en', r'\1em'],
+            if os.path.exists(user_solution_path):
+                with open(user_solution_path, 'r', encoding='utf-8') as f:
+                    return json.load(f)
             
-            # Superscript abbreviations
-            r'(\w+)r$': [r'\1er', r'\1or'],
-            r'(\w+)d$': [r'\1ed'],
-            r'(\w+)t$': [r'\1th', r'\1et'],
+            # Return empty dict if file doesn't exist
+            return {}
             
-            # Common Latin abbreviations
-            r'(\w+)b;$': [r'\1bus'],
-            r'(\w+)q;$': [r'\1que'],
-            r'(\w+)p;$': [r'\1pre']
-        }
+        except Exception as e:
+            self.logger.error(f"Error loading user solutions: {e}")
+            return {}
     
     def generate_suggestions(self, 
                              abbreviation: str, 
@@ -160,7 +159,20 @@ class SuggestionGenerator:
         # Clean the abbreviation
         clean_abbr = abbreviation.strip()
         
-        # 1. Try dictionary lookup
+        # 1. Try user solution dictionary lookup first (highest priority)
+        if clean_abbr in self.user_solutions:
+            user_solution = self.user_solutions[clean_abbr]
+            suggestions.append({
+                'expansion': user_solution,
+                'confidence': self.confidence_scores['user_dictionary'],
+                'source': 'user_dictionary'
+            })
+            self.stats['user_dictionary_matches'] += 1
+            
+            # If we have a high-confidence user-verified match, return immediately
+            return suggestions
+        
+        # 2. Try standard dictionary lookup
         dict_suggestions = self._lookup_dictionary(clean_abbr)
         for suggestion in dict_suggestions:
             suggestions.append({
@@ -170,16 +182,9 @@ class SuggestionGenerator:
             })
             self.stats['dictionary_matches'] += 1
         
-        # 2. Try pattern-based expansions
-        pattern_suggestions = self._apply_patterns(clean_abbr)
-        for suggestion in pattern_suggestions:
-            if suggestion not in [s['expansion'] for s in suggestions]:
-                suggestions.append({
-                    'expansion': suggestion,
-                    'confidence': self.confidence_scores['pattern'],
-                    'source': 'pattern'
-                })
-                self.stats['pattern_matches'] += 1
+        # If high-confidence dictionary matches were found, skip other methods
+        if suggestions and suggestions[0]['confidence'] >= 0.95:
+            return suggestions[:self.suggestion_count]
         
         # 3. Try WordNet for relevant suggestions
         if self.use_wordnet and len(suggestions) < self.suggestion_count:
@@ -236,31 +241,6 @@ class SuggestionGenerator:
         
         return []
     
-    def _apply_patterns(self, abbreviation: str) -> List[str]:
-        """
-        Apply expansion patterns to an abbreviation.
-        
-        Args:
-            abbreviation: Abbreviated text
-            
-        Returns:
-            List of expansions based on patterns
-        """
-        expansions = []
-        
-        # Apply each pattern
-        for pattern, templates in self.common_expansions.items():
-            match = re.match(pattern, abbreviation)
-            if match:
-                for template in templates:
-                    try:
-                        expansion = re.sub(pattern, template, abbreviation)
-                        expansions.append(expansion)
-                    except Exception as e:
-                        self.logger.warning(f"Error applying pattern {pattern} to {abbreviation}: {e}")
-        
-        return expansions
-    
     def _consult_wordnet(self, abbreviation: str, context_before: str, context_after: str) -> List[str]:
         """
         Use WordNet to suggest possible expansions.
@@ -278,7 +258,7 @@ class SuggestionGenerator:
             
         try:
             # Simple implementation of WordNet suggestion
-            # Replace $ with n as common pattern
+            # Replace $ with n as common pattern for initial search
             cleaned_abbr = abbreviation.replace('$', 'n')
             
             # Get all words that start with the same sequence
@@ -335,8 +315,10 @@ class SuggestionGenerator:
             if abbreviation in mock_responses:
                 return mock_responses[abbreviation]
             
-            # For other abbreviations, make a simple guess
-            return [abbreviation.replace('$', 'n').replace('õ', 'on')]
+            # For other abbreviations, make a simple guess based on common patterns
+            # even though we don't use formal pattern matching anymore
+            simple_guess = abbreviation.replace('$', 'n').replace('õ', 'on')
+            return [simple_guess]
             
         except Exception as e:
             self.logger.error(f"Error querying language model: {e}")
