@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt>
+        <title>Sample Early Modern Text with Abbreviations</title>
+        <author>Anonymous</author>
+      </titleStmt>
+      <publicationStmt>
+        <date when="1650">1650</date>
+        <publisher>Early Modern Press</publisher>
+      </publicationStmt>
+      <sourceDesc>
+        <bibl>
+          <title>Original Source Title</title>
+          <date>Early 17th century</date>
+        </bibl>
+      </sourceDesc>
+    </fileDesc>
+    <profileDesc>
+      <langUsage>
+        <language ident="eng">English</language>
+      </langUsage>
+      <textClass>
+        <keywords>
+          <term>Letter</term>
+          <term>Philosophy</term>
+        </keywords>
+      </textClass>
+    </profileDesc>
+  </teiHeader>
+  <text>
+    <body>
+      <div>
+        <head>A Discourse on Natural Philosophy</head>
+        <p>
+          In these latter days, we have observed the <abbr>motiõ</abbr> of celestial
+          bodies with greater accuracy. The <abbr>co$cerning</abbr> matter of planetary
+          orbits has been much debated among the <abbr>lear$ed</abbr> men of our age.
+        </p>
+        <p>
+          The <abbr>iudgme$t</abbr> of Copernicus, though controversial, has found 
+          <abbr>substa$tial</abbr> support among those who study the heavens.
+        </p>
+        <p>
+          When we <abbr>co$sider</abbr> the evidence before us, the <abbr>argume$ts</abbr>
+          for a heliocentric system become difficult to dismiss.
+        </p>
+      </div>
+      <div>
+        <head>On the <abbr>Natu$</abbr> of Light</head>
+        <p>
+          The properties of light have been <abbr>demo$strated</abbr> through various
+          experiments. We know that light travels in straight lines, and that it can be
+          reflected and refracted.
+        </p>
+        <p>
+          Some have <abbr>mai$tained</abbr> that light consists of tiny particles, while
+          others have argued for a wave-like <abbr>natu$</abbr>.
+        </p>
+        <choice>
+          <abbr>experime$ts</abbr>
+          <expan>experiments</expan>
+        </choice> have shown that both views have merit.
+      </div>
+    </body>
+  </text>
+</TEI>

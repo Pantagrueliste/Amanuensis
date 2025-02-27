@@ -1,28 +1,154 @@
-[paths] # define the paths for working directories
-input_path = "/Users/clementgodbarge/text-data/eng"
-output_path = "/Users/clementgodbarge/text-data/eng_output"
-discarded_directory = "/Users/clementgodbarge/text-data/eng_output/Discarded_files"
+#==============================================================================
+# CORE APPLICATION SETTINGS
+#==============================================================================
 
-[data] # paths of the dictionaries. To be transferred to [paths].
+[paths]
+# File system paths for input and output
+input_path = "/Users/clementgodbarge/Amanuensis/Amanuensis2.0/samples"
+output_path = "/Users/clementgodbarge/Amanuensis/Amanuensis2.0/output"
+discarded_directory = "/Users/clementgodbarge/Amanuensis/Amanuensis2.0/discarded"
+
+[data]
+# Data file locations for various dictionaries and datasets
 machine_solution_path = "data/machine_solution.json"
 user_solution_path = "data/user_solution.json"
 difficult_passages_path = "data/difficult_passages.json"
 unresolved_aws_path = "data/unresolved_aw.json"
+abbreviation_dataset_path = "data/abbreviation_dataset.json"
 
-[settings] # settings related to the Dynamic Word Normalization process
-batch_size = 1000
-context_size = 20
-logging_level = "WARNING" # DEBUG, INFO, WARNING, ERROR, CRITICAL
-language = "eng"
+[settings]
+# General application settings
+batch_size = 100               # Number of abbreviations to process in each batch
+context_size = 20              # Context size for older modules (backward compatibility)
+logging_level = "INFO"         # Options: DEBUG, INFO, WARNING, ERROR, CRITICAL
+language = "eng"               # Target language for abbreviation expansion
+use_wordnet = true             # Enable WordNet-based abbreviation suggestions
+skip_expanded = false          # Skip abbreviations that already have expansions
 
-[unicode_replacements] # settings related to the Unicode Replacement process
-replacements_on = true
-characters_to_delete = ["\u00B6", "\u261E", "\u2740", "\u2767"]
-characters_to_replace = {"Ʋ" = "U", "&c." = "etc.", "ꝑ" = "per", "ꝭ" = "s", "ȝ" = "g", "ꝓ" = "pr"} # "ꝓꝑme$t" examine this edge case
 
-[ambiguity] # define Abbreviated Words that are ambiguous and that will be skipped from the Dynamic Word Normalization process 1.2
-ambiguous_aws = ["the$", "ope$", "Roma$"] # in this example the$ is ambiguous since it can either be "the" or "them", "ope$" could be "open" in English or "opem" in Latin...
+#==============================================================================
+# XML PROCESSING CONFIGURATION
+#==============================================================================
 
-[OpenAI_integration] # settings related to GPT integration
-gpt_suggestions=true
-language_model = "GPT-4"  # or 'GPT-4", "Mistral7b"
+[xml_processing]
+# TEI namespace configuration
+tei_namespace = "http://www.tei-c.org/ns/1.0"
+
+# Element identification
+abbr_xpath = "//tei:abbr"      # XPath to find abbreviation tags
+expan_xpath = "//tei:expan"    # XPath to find expansion tags
+choice_xpath = "//tei:choice"  # For TEI documents using choice+abbr+expan pattern
+
+# Context extraction
+context_window_size = 50       # Characters before and after abbreviation
+include_ancestor_context = true # Include parent element context if needed
+
+# Output structure
+use_choice_tags = false        # Whether to wrap abbr+expan in choice
+add_xml_ids = true             # Add IDs to new elements for reference
+
+
+#==============================================================================
+# DATASET CREATION SETTINGS
+#==============================================================================
+
+[dataset]
+# Output format configuration
+format = "json"                # Default output format (json or jsonl)
+include_metadata = true        # Include document and abbreviation metadata
+context_format = "separate"    # How to format context (separate or combined)
+
+# Train/validation/test splitting
+train_ratio = 0.8              # Proportion for training set (80%)
+validation_ratio = 0.1         # Proportion for validation set (10%)
+test_ratio = 0.1               # Proportion for test set (10%)
+stratify_by = "abbreviated_word_length"  # Field to stratify by when splitting
+
+# LLM training format 
+instruction_template = "Expand the abbreviation: {abbr} in context: {context}"
+include_system_message = true  # Include system message in training data
+
+[validation]
+# Dataset validation settings
+validate_dataset = true        # Perform validation on the dataset
+minimum_context_length = 20    # Minimum context length required
+check_duplicates = true        # Check for duplicate entries
+consistency_check = true       # Check for consistent expansions
+
+
+#==============================================================================
+# LANGUAGE MODEL INTEGRATION
+#==============================================================================
+
+[language_model_integration]
+# General LLM settings
+enabled = true                 # Enable LLM-based suggestions
+provider = "openai"            # Options: "openai", "mistral", "anthropic", "local"
+model_name = "gpt-4"           # Model identifier (varies by provider)
+suggestion_count = 3           # Number of suggestions to request
+suggestion_temperature = 0.3   # Temperature (lower = more deterministic)
+request_timeout = 30           # Timeout in seconds for API requests
+max_tokens = 50                # Maximum tokens in response
+batch_suggestions = false      # Whether to batch abbreviations in requests
+
+# Provider-specific configurations
+[language_model_integration.openai]
+api_base = "https://api.openai.com/v1"
+available_models = ["gpt-4", "gpt-3.5-turbo"]
+system_message = "You are a linguist specializing in early modern texts. Your task is to expand abbreviated words based on context. Provide 1-3 possible expansions, separated by commas, ordered by likelihood."
+
+[language_model_integration.mistral]
+api_base = "https://api.mistral.ai/v1"
+available_models = ["mistral-tiny", "mistral-small", "mistral-medium", "mistral-large"]
+system_message = "You are a linguist specializing in early modern texts. Your task is to expand abbreviated words based on context. Provide 1-3 possible expansions, separated by commas, ordered by likelihood."
+
+[language_model_integration.anthropic]
+api_base = "https://api.anthropic.com/v1"
+available_models = ["claude-3-haiku", "claude-3-sonnet", "claude-3-opus"]
+system_message = "You are a linguist specializing in early modern texts. Your task is to expand abbreviated words based on context. Provide 1-3 possible expansions, separated by commas, ordered by likelihood."
+
+[language_model_integration.local]
+# Local model configuration
+model_path = "/path/to/local/model"
+max_context_length = 2048
+
+# Prompt templates for different request types
+[language_model_integration.prompts]
+# Single abbreviation request format
+single_template = """
+Expand the abbreviated word '{abbr}' in the following context:
+Context before: {context_before}
+Abbreviated word: {abbr}
+Context after: {context_after}
+
+Provide 1-3 possible expansions, separated by commas, ordered by likelihood.
+"""
+
+# Batch request format
+batch_template = """
+Expand the following abbreviated words based on their context:
+{batch_content}
+
+For each abbreviated word, provide 1-3 possible expansions, separated by commas, ordered by likelihood.
+Format your response as a numbered list.
+"""
+
+# Example abbreviations for few-shot learning
+examples = [
+  { abbr = "co$cerning", context = "matters co$cerning the church", expansion = "concerning" },
+  { abbr = "iudgme$t", context = "the day of iudgme$t is approaching", expansion = "iudgment" }
+]
+
+
+#==============================================================================
+# USER INTERFACE SETTINGS
+#==============================================================================
+
+[user_interface]
+# Console UI configuration
+interactive_mode = true        # Enable interactive mode for abbreviation expansion
+use_rich_console = true        # Use the Rich library for console output
+show_confidence_scores = true  # Display confidence scores for suggestions
+color_scheme = "default"       # UI color scheme (default, dark, light)
+keyboard_shortcuts_enabled = true # Enable keyboard shortcuts for faster processing
+recent_history_size = 10       # Number of recent decisions to display

@@ -23,3 +23,10 @@ atomicwrites>=1.4.0
 openai>=0.10.0
 orjson>=3.9.5
 ijson>=3.2.3
+
+# Amanuensis 2.0 additional requirements
+lxml>=4.9.3
+pytest>=7.4.0
+pytest-cov>=4.1.0
+pyahocorasick>=2.0.0
+prompt_toolkit>=3.0.38
