@@ -5,22 +5,17 @@ Logging configuration for Amanuensis 2.0
 import os
 import logging
 import logging.handlers
-import tempfile
 from pathlib import Path
 
 
-def setup_logging(level=logging.INFO, log_dir=None):
+def setup_logging(level=logging.INFO, log_dir="logs"):
     """
     Configure logging for the application.
     
     Args:
         level: Logging level (default: INFO)
-        log_dir: Directory to store log files (default: tempfile.gettempdir())
+        log_dir: Directory to store log files
     """
-    # Use system temp directory if log_dir is not specified
-    if log_dir is None:
-        log_dir = tempfile.gettempdir()
-    
     # Create logs directory if it doesn't exist
     log_path = Path(log_dir)
     log_path.mkdir(exist_ok=True)
@@ -48,9 +43,8 @@ def setup_logging(level=logging.INFO, log_dir=None):
     console_handler.setFormatter(console_formatter)
     
     # File handler for general logs
-    log_file = os.path.join(log_dir, "amanuensis.log")
     file_handler = logging.handlers.RotatingFileHandler(
-        log_file,
+        log_path / "amanuensis.log",
         maxBytes=10485760,  # 10 MB
         backupCount=5
     )
@@ -64,7 +58,7 @@ def setup_logging(level=logging.INFO, log_dir=None):
     # Add separate error log file if level is higher than ERROR
     if level > logging.ERROR:
         error_handler = logging.handlers.RotatingFileHandler(
-            os.path.join(log_dir, "errors.log"),
+            log_path / "errors.log",
             maxBytes=10485760,  # 10 MB
             backupCount=5
         )

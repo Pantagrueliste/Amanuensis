@@ -1,12 +1,13 @@
 """
 Suggestion Generator - Generates expansion suggestions for abbreviations
-focusing exclusively on dictionary-based approaches
 """
 
 import logging
+import re
 import os
 import json
-from typing import List, Dict, Any, Optional
+import importlib.resources
+from typing import List, Dict, Any, Optional, Tuple, Union
 from pathlib import Path
 import random
 
@@ -22,8 +23,7 @@ except ImportError:
 
 class SuggestionGenerator:
     """
-    Generates expansion suggestions for abbreviations using dictionary-based methods,
-    WordNet, and language models. Pattern matching has been removed.
+    Generates expansion suggestions for abbreviations using various methods.
     """
     
     def __init__(self, config):
@@ -56,20 +56,14 @@ class SuggestionGenerator:
         self.lm_provider = config.get('language_model_integration', 'provider', 'openai')
         self.lm_model = config.get('language_model_integration', 'model_name', 'gpt-4')
         self.suggestion_count = config.get('language_model_integration', 'suggestion_count', 3)
-        
-        # Confidence scores for different sources - prioritizing dictionaries
         self.confidence_scores = {
-            'user_dictionary': 0.98,   # Highest confidence for user-verified solutions
-            'dictionary': 0.95,        # Very high confidence for standard dictionary
-            'language_model': 0.8,     # High confidence for LLM suggestions
-            'wordnet': 0.5,            # Lower confidence for wordnet
-            'rule_based': 0.4          # Lowest confidence
+            'dictionary': 0.9,
+            'pattern': 0.7,
+            'wordnet': 0.6,
+            'language_model': 0.8,
+            'rule_based': 0.5
         }
         
-        # Set up expansion sources
-        self.abbreviation_dict = self._load_abbreviation_dictionary()
-        self.user_solutions = self._load_user_solutions()
-    
     def _load_abbreviation_dictionary(self) -> Dict[str, List[str]]:
         """
         Load abbreviation dictionary from data files.
@@ -112,31 +106,32 @@ class SuggestionGenerator:
             self.stats['fallback_dictionary_used'] = True
             return {}
     
-    def _load_user_solutions(self) -> Dict[str, str]:
+    def _load_common_expansions(self) -> Dict[str, List[str]]:
         """
-        Load user solutions from user_solution.json.
+        Load common expansion patterns.
         
         Returns:
-            Dictionary mapping abbreviated forms to verified expansions
+            Dictionary of pattern regex to expansion templates
         """
-        try:
-            # Try to load from configured path
-            user_solution_path = self.config.get(
-                'data', 
-                'user_solution_path', 
-                'data/user_solution.json'
-            )
+        return {
+            # Dollar sign as medial n/m
+            r'(\w+)\$(\w+)': [r'\1n\2', r'\1m\2'],
             
-            if os.path.exists(user_solution_path):
-                with open(user_solution_path, 'r', encoding='utf-8') as f:
-                    return json.load(f)
+            # Tilde as final n/m
+            r'(\w+)õ$': [r'\1on', r'\1om'],
+            r'(\w+)ã$': [r'\1an', r'\1am'],
+            r'(\w+)ẽ$': [r'\1en', r'\1em'],
             
-            # Return empty dict if file doesn't exist
-            return {}
+            # Superscript abbreviations
+            r'(\w+)r$': [r'\1er', r'\1or'],
+            r'(\w+)d$': [r'\1ed'],
+            r'(\w+)t$': [r'\1th', r'\1et'],
             
-        except Exception as e:
-            self.logger.error(f"Error loading user solutions: {e}")
-            return {}
+            # Common Latin abbreviations
+            r'(\w+)b;$': [r'\1bus'],
+            r'(\w+)q;$': [r'\1que'],
+            r'(\w+)p;$': [r'\1pre']
+        }
     
     def generate_suggestions(self, 
                              abbreviation: str, 
@@ -169,30 +164,8 @@ class SuggestionGenerator:
         # Initialize suggestions list
         suggestions = []
         
-        # 1. Check user-verified solutions (highest priority)
-        if lookup_abbr in self.user_solutions:
-            expansion = self.user_solutions[lookup_abbr]
-            suggestions.append({
-                'expansion': expansion,
-                'confidence': self.confidence_scores['user_dictionary'],
-                'source': 'user_dictionary'
-            })
-            self.stats['user_dictionary_matches'] += 1
-        
-        # 2. Check dictionary of standard abbreviations
-        if lookup_abbr in self.abbreviation_dict:
-            expansions = self.abbreviation_dict[lookup_abbr]
-            for expansion in expansions:
-                # Skip duplicates
-                if any(s['expansion'] == expansion for s in suggestions):
-                    continue
-                
-                suggestions.append({
-                    'expansion': expansion,
-                    'confidence': self.confidence_scores['dictionary'],
-                    'source': 'dictionary'
-                })
-            self.stats['dictionary_matches'] += 1
+        # Update dictionary match stats (placeholder; actual lookup logic might be added here)
+        self.stats['dictionary_matches'] += 1
                 
         # 3. Try WordNet for single letter abbreviations (if no matches yet)
         if self.use_wordnet and not suggestions and len(lookup_abbr) == 1:
@@ -208,22 +181,6 @@ class SuggestionGenerator:
             if wordnet_expansions:
                 self.stats['wordnet_suggestions'] += 1
         
-        # 4. Use language model if enabled and no matches yet
-        if self.lm_enabled and not suggestions:
-            lm_expansions = self._get_language_model_expansions(
-                lookup_abbr, context_before, context_after, metadata
-            )
-            
-            for expansion in lm_expansions:
-                suggestions.append({
-                    'expansion': expansion,
-                    'confidence': self.confidence_scores['language_model'],
-                    'source': 'language_model'
-                })
-            
-            if lm_expansions:
-                self.stats['lm_suggestions'] += 1
-        
         # Track failures
         if not suggestions:
             self.stats['failed_abbreviations'] += 1
@@ -232,9 +189,9 @@ class SuggestionGenerator:
         return sorted(suggestions, key=lambda x: x['confidence'], reverse=True)
     
     def _get_wordnet_expansions(self, 
-                               abbr: str, 
-                               context_before: str, 
-                               context_after: str) -> List[str]:
+                                abbr: str, 
+                                context_before: str, 
+                                context_after: str) -> List[str]:
         """
         Use WordNet to suggest expansions for single-letter abbreviations.
         
@@ -246,13 +203,9 @@ class SuggestionGenerator:
         Returns:
             List of possible expansions based on WordNet
         """
-        if not NLTK_AVAILABLE or len(abbr) != 1:
-            return []
-        
         try:
-            # For single letters, try to find words that start with that letter
+            # Use first letter for lookup
             letter = abbr[0].lower()
-            
             # Search for common nouns that start with the letter
             expansions = []
             
@@ -270,10 +223,10 @@ class SuggestionGenerator:
             return []
     
     def _get_language_model_expansions(self, 
-                                      abbr: str, 
-                                      context_before: str, 
-                                      context_after: str,
-                                      metadata: Optional[Dict[str, Any]] = None) -> List[str]:
+                                       abbr: str, 
+                                       context_before: str, 
+                                       context_after: str,
+                                       metadata: Optional[Dict[str, Any]] = None) -> List[str]:
         """
         Use language model to suggest expansions.
         
@@ -288,10 +241,6 @@ class SuggestionGenerator:
         """
         if not self.lm_enabled:
             return []
-        
-        # For now, use a placeholder since this will be implemented
-        # in the language model integration module
-        self.logger.info(f"Language model would be used for: {abbr}")
         
         # Placeholder - later this would call the language model service
         return []
