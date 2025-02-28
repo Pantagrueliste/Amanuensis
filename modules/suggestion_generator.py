@@ -36,6 +36,17 @@ class SuggestionGenerator:
         self.logger = logging.getLogger(__name__)
         self.config = config
         
+        # Statistics
+        self.stats = {
+            'total_suggestions': 0,
+            'user_dictionary_matches': 0,
+            'dictionary_matches': 0,
+            'wordnet_suggestions': 0,
+            'lm_suggestions': 0,
+            'failed_abbreviations': 0,
+            'fallback_dictionary_used': False  # Track if fallback dictionary was used
+        }
+        
         # Load settings
         self.language = config.get('settings', 'language', 'eng')
         self.use_wordnet = config.get('settings', 'use_wordnet', True) and NLTK_AVAILABLE
@@ -46,10 +57,6 @@ class SuggestionGenerator:
         self.lm_model = config.get('language_model_integration', 'model_name', 'gpt-4')
         self.suggestion_count = config.get('language_model_integration', 'suggestion_count', 3)
         
-        # Set up expansion sources
-        self.abbreviation_dict = self._load_abbreviation_dictionary()
-        self.user_solutions = self._load_user_solutions()
-        
         # Confidence scores for different sources - prioritizing dictionaries
         self.confidence_scores = {
             'user_dictionary': 0.98,   # Highest confidence for user-verified solutions
@@ -59,15 +66,9 @@ class SuggestionGenerator:
             'rule_based': 0.4          # Lowest confidence
         }
         
-        # Statistics
-        self.stats = {
-            'total_suggestions': 0,
-            'user_dictionary_matches': 0,
-            'dictionary_matches': 0,
-            'wordnet_suggestions': 0,
-            'lm_suggestions': 0,
-            'failed_abbreviations': 0
-        }
+        # Set up expansion sources
+        self.abbreviation_dict = self._load_abbreviation_dictionary()
+        self.user_solutions = self._load_user_solutions()
     
     def _load_abbreviation_dictionary(self) -> Dict[str, List[str]]:
         """
@@ -89,6 +90,8 @@ class SuggestionGenerator:
                     return json.load(f)
             
             # Fallback to default dictionary
+            self.stats['fallback_dictionary_used'] = True
+            self.logger.warning("Using fallback abbreviation dictionary")
             return {
                 "co$": ["con"],
                 "y$": ["yt"],
@@ -106,6 +109,7 @@ class SuggestionGenerator:
         
         except Exception as e:
             self.logger.error(f"Error loading abbreviation dictionary: {e}")
+            self.stats['fallback_dictionary_used'] = True
             return {}
     
     def _load_user_solutions(self) -> Dict[str, str]:
@@ -138,7 +142,8 @@ class SuggestionGenerator:
                              abbreviation: str, 
                              context_before: str = '', 
                              context_after: str = '',
-                             metadata: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+                             metadata: Optional[Dict[str, Any]] = None,
+                             normalized_abbr: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         Generate expansion suggestions for an abbreviation.
         
@@ -147,6 +152,7 @@ class SuggestionGenerator:
             context_before: Text context before the abbreviation
             context_after: Text context after the abbreviation
             metadata: Optional metadata about the source
+            normalized_abbr: Optional pre-normalized abbreviation text
             
         Returns:
             List of suggestions with confidence scores and source information
@@ -159,9 +165,12 @@ class SuggestionGenerator:
         # Clean the abbreviation
         clean_abbr = abbreviation.strip()
         
+        # Use the normalized form if provided, otherwise use the original
+        lookup_abbr = normalized_abbr or clean_abbr
+        
         # 1. Try user solution dictionary lookup first (highest priority)
-        if clean_abbr in self.user_solutions:
-            user_solution = self.user_solutions[clean_abbr]
+        if lookup_abbr in self.user_solutions:
+            user_solution = self.user_solutions[lookup_abbr]
             suggestions.append({
                 'expansion': user_solution,
                 'confidence': self.confidence_scores['user_dictionary'],
@@ -173,7 +182,7 @@ class SuggestionGenerator:
             return suggestions
         
         # 2. Try standard dictionary lookup
-        dict_suggestions = self._lookup_dictionary(clean_abbr)
+        dict_suggestions = self._lookup_dictionary(lookup_abbr)
         for suggestion in dict_suggestions:
             suggestions.append({
                 'expansion': suggestion,
@@ -294,36 +303,28 @@ class SuggestionGenerator:
         if not self.lm_enabled:
             return []
         
-        # Mock implementation for testing
-        # In a real implementation, this would call an API like OpenAI
         try:
-            # Mock some responses for common abbreviations
-            mock_responses = {
-                "co$cerning": ["concerning"],
-                "lear$ed": ["learned"],
-                "motiõ": ["motion"],
-                "substa$tial": ["substantial"],
-                "iudgme$t": ["iudgment", "judgement"],
-                "argume$ts": ["arguments"],
-                "co$sider": ["consider"],
-                "Natu$": ["Nature"],
-                "demo$strated": ["demonstrated"],
-                "mai$tained": ["maintained"],
-                "natu$": ["nature"]
-            }
+            # Import our custom LLM integration
+            from .gpt_suggestions import GPTSuggestions
             
-            if abbreviation in mock_responses:
-                return mock_responses[abbreviation]
+            # Initialize the suggestion service
+            llm_service = GPTSuggestions(self.config)
             
-            # For other abbreviations, make a simple guess based on common patterns
-            # even though we don't use formal pattern matching anymore
-            simple_guess = abbreviation.replace('$', 'n').replace('õ', 'on')
-            return [simple_guess]
+            # Get suggestions from the service
+            suggestions = llm_service.get_suggestions(
+                abbreviation, 
+                context_before, 
+                context_after, 
+                metadata
+            )
+            
+            # Limit to requested suggestion count
+            return suggestions[:self.suggestion_count]
             
         except Exception as e:
             self.logger.error(f"Error querying language model: {e}")
             return []
-    
+            
     def rank_suggestions(self, suggestions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
         Rank suggestions by confidence score.

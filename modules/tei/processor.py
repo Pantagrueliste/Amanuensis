@@ -5,9 +5,14 @@ Extracts abbreviations and their context for dataset creation.
 
 import os
 import logging
+import sys
+import re
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional, Any, Union
 from dataclasses import dataclass
+
+# Add base modules directory to path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 
 # Try to import lxml, otherwise fallback to ElementTree
 try:
@@ -17,6 +22,12 @@ except ImportError:
     import xml.etree.ElementTree as etree
     LXML_AVAILABLE = False
     logging.warning("lxml not available, falling back to ElementTree. Some XPath features may not work correctly.")
+    
+# Import unicode replacement for abbreviation normalization
+try:
+    from unicode_replacement import UnicodeReplacement
+except ImportError:
+    logging.warning("Unicode replacement module not available. Abbreviation normalization will be limited.")
 
 
 @dataclass
@@ -32,6 +43,7 @@ class AbbreviationInfo:
     line_number: int
     xpath: str
     metadata: Dict[str, Any]
+    normalized_abbr: Optional[str] = None  # Normalized form of the abbreviation for dictionary lookup
 
 
 class TEIProcessor:
@@ -59,6 +71,13 @@ class TEIProcessor:
         self.expan_xpath = config.get('xml_processing', 'expan_xpath', '//tei:expan')
         self.choice_xpath = config.get('xml_processing', 'choice_xpath', '//tei:choice')
         
+        # Additional XPath query for g elements with abbreviation markers
+        self.g_abbr_xpath = config.get('xml_processing', 'g_abbr_xpath', 
+                                     '//tei:g[@ref="char:cmbAbbrStroke" or @ref="char:abque"]')
+        
+        # Exclude g elements that are inside expan elements
+        self.g_not_in_expan_xpath = '//tei:g[@ref="char:cmbAbbrStroke" or @ref="char:abque"][not(ancestor::tei:expan)]'
+        
         # Context extraction settings
         self.context_window = config.get('xml_processing', 'context_window_size', 50)
         self.include_ancestor_context = config.get('xml_processing', 'include_ancestor_context', True)
@@ -67,12 +86,16 @@ class TEIProcessor:
         self.use_choice_tags = config.get('xml_processing', 'use_choice_tags', False)
         self.add_xml_ids = config.get('xml_processing', 'add_xml_ids', True)
         
+        # Unicode normalization settings
+        self.use_normalization = config.get('settings', 'normalize_abbreviations', True)
+        
         # Initialize statistics
         self.stats = {
             'documents_processed': 0,
             'abbreviations_found': 0,
             'already_expanded': 0,
             'malformed_abbr': 0,
+            'normalized_abbr': 0,
         }
 
     def parse_document(self, file_path: Union[str, Path]) -> Tuple[List[AbbreviationInfo], Optional[etree.ElementTree]]:
@@ -102,16 +125,34 @@ class TEIProcessor:
             # Extract metadata from TEI header
             metadata = self._extract_metadata(root)
             
-            # Find all abbreviation elements
+            # Find all abbreviation elements using both the standard abbr tags and g elements
             abbr_elements = root.xpath(self.abbr_xpath, namespaces=self.namespaces)
             
-            # Check if we found any
-            if not abbr_elements:
+            # Check if we should process g elements
+            process_g_elements = self.config.get('settings', 'process_g_elements', True)
+            g_abbr_elements = []
+            if process_g_elements:
+                # Use the more specific XPath that excludes g elements inside expan elements
+                g_abbr_elements = root.xpath(self.g_not_in_expan_xpath, namespaces=self.namespaces)
+                
+            # Check if we found any abbreviation elements
+            if not abbr_elements and not g_abbr_elements:
                 self.logger.info(f"No abbreviation elements found in {file_path}")
                 return [], tree
-                
-            self.logger.info(f"Found {len(abbr_elements)} abbreviation elements in {file_path}")
-            self.stats['abbreviations_found'] += len(abbr_elements)
+            
+            # Process standard abbreviation elements
+            total_abbr_count = len(abbr_elements)
+            if abbr_elements:
+                self.logger.info(f"Found {len(abbr_elements)} standard abbreviation elements in {file_path}")
+            
+            # Process g element abbreviations
+            if process_g_elements and g_abbr_elements:
+                self.logger.info(f"Found {len(g_abbr_elements)} special g element abbreviations in {file_path}")
+                total_abbr_count += len(g_abbr_elements)
+                # Add g elements to the abbr_elements list for processing
+                abbr_elements.extend(g_abbr_elements)
+            
+            self.stats['abbreviations_found'] += total_abbr_count
             self.stats['documents_processed'] += 1
             
             # Process each abbreviation
@@ -228,41 +269,135 @@ class TEIProcessor:
         Process an abbreviation element and extract relevant information.
         
         Args:
-            abbr_element: XML element representing the abbreviation
+            abbr_element: XML element representing the abbreviation (can be <abbr> or <g>)
             file_path: Path to the source document
             metadata: Document metadata
             
         Returns:
             AbbreviationInfo object or None if processing failed
         """
-        # Extract abbr text content
-        abbr_text = self._get_element_text(abbr_element)
-        if not abbr_text or not abbr_text.strip():
-            self.logger.warning(f"Empty abbreviation found in {file_path}")
+        # First check if this element is inside an expansion - if so, skip it
+        if abbr_element.xpath('./ancestor::tei:expan', namespaces=self.namespaces):
+            self.logger.debug(f"Skipping abbreviation inside expansion in {file_path}")
             return None
+
+        # Handle different types of abbreviation elements
+        if abbr_element.tag.endswith("g"):
+            # This is a <g> element with abbreviation marker
+            # Get the parent element to extract context
+            parent_el = abbr_element.getparent()
+            if parent_el is None:
+                self.logger.warning(f"G-abbreviation element without parent found in {file_path}")
+                return None
             
-        abbr_text = abbr_text.strip()
+            # Get the text of the parent element including the g element
+            parent_text = etree.tostring(parent_el, encoding='unicode', method='xml')
+            
+            # For g elements, we want to process just this element and its preceding context
+            # Extract the full context from parent and find the position of the g element
+            parent_context = self._get_element_text(parent_el)
+            abbr_ref = abbr_element.get("ref", "")
+            
+            # Special handling for different types of g elements
+            if abbr_ref == "char:cmbAbbrStroke":
+                # For combining macrons, find the last character before the element
+                # and create an abbreviation with that character + macron
+                if parent_el.text:
+                    # Find the last word before the g element
+                    text_before = parent_el.text.strip()
+                    if text_before:
+                        base_char = text_before[-1]
+                        # Construct the abbreviation text
+                        abbr_text = f"{base_char}\u0304"  # Add combining macron to base character
+                    else:
+                        # If no text before, use the g element representation
+                        g_element_str = etree.tostring(abbr_element, encoding='unicode', method='xml')
+                        abbr_text = g_element_str
+                else:
+                    # If no text, use the g element representation
+                    g_element_str = etree.tostring(abbr_element, encoding='unicode', method='xml')
+                    abbr_text = g_element_str
+            elif abbr_ref == "char:abque":
+                # For abque abbreviations, use a standard representation
+                abbr_text = "q\u0304"  # q with macron as representation for the que abbreviation
+            else:
+                # For other g elements, use the standard approach
+                if parent_el.text:
+                    # Find the last word before the g element
+                    words = parent_el.text.split()
+                    last_word = words[-1] if words else ""
+                    
+                    # Construct the abbreviation text with the g element markup
+                    g_element_str = etree.tostring(abbr_element, encoding='unicode', method='xml')
+                    abbr_text = f"{last_word}{g_element_str}"
+                else:
+                    # If there's no text, use the full parent context with the g element
+                    g_element_str = etree.tostring(abbr_element, encoding='unicode', method='xml')
+                    abbr_text = g_element_str
+            
+            self.logger.debug(f"Processing g-abbreviation: {abbr_text}")
+            
+        else:
+            # Standard <abbr> element
+            # Extract abbr text content
+            abbr_text = self._get_element_text(abbr_element)
+            if not abbr_text or not abbr_text.strip():
+                self.logger.warning(f"Empty abbreviation found in {file_path}")
+                return None
+                
+            abbr_text = abbr_text.strip()
         
         # Get element ID if present
         abbr_id = abbr_element.get('{http://www.w3.org/XML/1998/namespace}id') or abbr_element.get('id')
         
-        # Check if this is already part of a choice element (already expanded)
+        # Get parent element
         parent = abbr_element.getparent()
-        already_expanded = False
         
-        if parent is not None and parent.tag.endswith('choice'):
-            # Check if there's an expansion sibling
-            for sibling in parent:
-                if sibling != abbr_element and sibling.tag.endswith('expan'):
+        # For g element abbreviations, we need special handling 
+        is_g_element = abbr_element.tag.endswith('g')
+        if is_g_element:
+            # For g elements, parent should have already been identified above
+            already_expanded = False
+            
+            # Special handling for the g element with char:abque reference
+            if abbr_element.get('ref') == 'char:abque' and parent is not None and parent.tag.endswith('am'):
+                am_parent = parent.getparent()
+                if am_parent is not None and am_parent.tag.endswith('expan'):
+                    for sibling in am_parent:
+                        if sibling != parent and sibling.tag.endswith('ex'):
+                            # Check if the expansion is 'que'
+                            if self._get_element_text(sibling).lower() == 'que':
+                                self.logger.info(f"Found 'que' abbreviation with <g ref=\"char:abque\"/> pattern")
+                            already_expanded = True
+                            self.stats['already_expanded'] += 1
+                            break
+            
+            # General pattern for other g element abbreviations
+            elif parent is not None and parent.tag.endswith('am'):
+                am_parent = parent.getparent()
+                if am_parent is not None and am_parent.tag.endswith('expan'):
+                    for sibling in am_parent:
+                        if sibling != parent and sibling.tag.endswith('ex'):
+                            already_expanded = True
+                            self.stats['already_expanded'] += 1
+                            break
+        else:
+            # Standard abbreviation element handling
+            already_expanded = False
+            
+            if parent is not None and parent.tag.endswith('choice'):
+                # Check if there's an expansion sibling
+                for sibling in parent:
+                    if sibling != abbr_element and sibling.tag.endswith('expan'):
+                        already_expanded = True
+                        self.stats['already_expanded'] += 1
+                        break
+            else:
+                # Check for sibling expan element
+                next_sibling = abbr_element.getnext()
+                if next_sibling is not None and next_sibling.tag.endswith('expan'):
                     already_expanded = True
                     self.stats['already_expanded'] += 1
-                    break
-        else:
-            # Check for sibling expan element
-            next_sibling = abbr_element.getnext()
-            if next_sibling is not None and next_sibling.tag.endswith('expan'):
-                already_expanded = True
-                self.stats['already_expanded'] += 1
         
         # Skip if already expanded and configured to do so
         if already_expanded and self.config.get('settings', 'skip_expanded', False):
@@ -270,16 +405,26 @@ class TEIProcessor:
         
         # Get line number (approximation)
         line_number = 0
-        for i, el in enumerate(parent.xpath('.//*') if parent is not None else []):
-            if el == abbr_element:
-                line_number = i
-                break
+        if parent is not None:
+            for i, el in enumerate(parent.xpath('.//*') if parent is not None else []):
+                if el == abbr_element:
+                    line_number = i
+                    break
         
         # Get XPath
         xpath = self._get_xpath(abbr_element)
         
-        # Extract context
-        context_before, context_after = self._extract_context(abbr_element, abbr_text)
+        # Extract context differently for g elements
+        if is_g_element:
+            # For g element abbreviations, we need to extract context from parent element
+            parent_abbr_text = self._get_element_text(parent)
+            context_before, context_after = self._extract_context(parent, parent_abbr_text)
+        else:
+            # Standard context extraction for regular abbreviations
+            context_before, context_after = self._extract_context(abbr_element, abbr_text)
+        
+        # Normalize abbreviation for dictionary lookup
+        normalized_abbr = self._normalize_abbreviation(abbr_text)
         
         return AbbreviationInfo(
             abbr_text=abbr_text,
@@ -291,7 +436,8 @@ class TEIProcessor:
             file_path=str(file_path),
             line_number=line_number,
             xpath=xpath,
-            metadata=metadata
+            metadata=metadata,
+            normalized_abbr=normalized_abbr
         )
 
     def _extract_context(self, abbr_element: etree.Element, abbr_text: str) -> Tuple[str, str]:
@@ -327,7 +473,66 @@ class TEIProcessor:
             # Extract all text
             full_text = self._get_element_text(context_element)
             
-            # Find position of abbreviation in full text
+            # For g-element abbreviations with XML markup, we need to do special handling
+            is_g_element = abbr_element.tag.endswith('g')
+            
+            if is_g_element:
+                # Handle <g ref="char:cmbAbbrStroke">̄</g> pattern
+                if abbr_element.get('ref') == 'char:cmbAbbrStroke':
+                    # Extract the preceding text and find the last word
+                    prev_text_node = abbr_element.getprevious()
+                    prev_text = prev_text_node.tail if prev_text_node is not None and prev_text_node.tail else ''
+                    if not prev_text and parent.text:
+                        prev_text = parent.text
+                    
+                    # Find the last character before the g element
+                    base_char = prev_text.strip()[-1] if prev_text.strip() else ''
+                    
+                    # Create a normalized form for search
+                    normalized_text = base_char + '$'
+                    
+                    # Attempt to find position using the normalized form
+                    abbr_pos = full_text.find(base_char)
+                    if abbr_pos >= 0:
+                        context_before = full_text[:abbr_pos].strip()[-self.context_window:]
+                        context_after = full_text[abbr_pos + 1:].strip()[:self.context_window]
+                        return context_before, context_after
+                
+                # Handle <g ref="char:abque"/> pattern
+                elif abbr_element.get('ref') == 'char:abque':
+                    # The abbreviation is a standalone marker
+                    parent_text = self._get_element_text(parent)
+                    
+                    # Find position of the element within the parent
+                    for i, child in enumerate(parent):
+                        if child == abbr_element:
+                            # Get text before this position
+                            before_text = parent.text or ''
+                            for j in range(i):
+                                if parent[j].tail:
+                                    before_text += parent[j].tail
+                            
+                            # Get text after this position
+                            after_text = abbr_element.tail or ''
+                            for j in range(i+1, len(parent)):
+                                if parent[j].tail:
+                                    after_text += parent[j].tail
+                            
+                            context_before = before_text.strip()[-self.context_window:]
+                            context_after = after_text.strip()[:self.context_window]
+                            return context_before, context_after
+            
+            # Special handling for combined Unicode abbreviations (letter + macron)
+            if '\u0304' in abbr_text:  # Check for combining macron
+                for i, char in enumerate(full_text):
+                    if i > 0 and full_text[i] == '\u0304':
+                        # Found a combining macron, get contexts around its base character
+                        base_pos = i - 1
+                        context_before = full_text[:base_pos].strip()[-self.context_window:]
+                        context_after = full_text[base_pos + 2:].strip()[:self.context_window]
+                        return context_before, context_after
+            
+            # Standard approach for regular abbreviations
             abbr_pos = full_text.find(abbr_text)
             
             if abbr_pos >= 0:
@@ -335,6 +540,18 @@ class TEIProcessor:
                 context_after = full_text[abbr_pos + len(abbr_text):].strip()[:self.context_window]
             else:
                 # Fallback if exact match not found
+                # Try a more flexible approach for g-element abbreviations
+                if is_g_element:
+                    # For g elements, try to find the text around the tag
+                    element_str = etree.tostring(abbr_element, encoding='unicode', method='text')
+                    if element_str:
+                        abbr_pos = full_text.find(element_str)
+                        if abbr_pos >= 0:
+                            context_before = full_text[:abbr_pos].strip()[-self.context_window:]
+                            context_after = full_text[abbr_pos + len(element_str):].strip()[:self.context_window]
+                            return context_before, context_after
+                
+                # If still not found, log and use fallback approach
                 self.logger.warning(f"Could not locate abbreviation '{abbr_text}' in parent text")
                 context_before = ''
                 context_after = ''
@@ -582,78 +799,86 @@ class TEIProcessor:
             parent = element.getparent()
         return '/'.join(path)
 
-    def get_statistics(self) -> Dict[str, int]:
+    def _normalize_abbreviation(self, abbr_text: str) -> str:
         """
-        Get processing statistics.
-        
-        Returns:
-            Dictionary of statistics
-        """
-        return self.stats
-
-    def validate_document(self, file_path: Union[str, Path]) -> bool:
-        """
-        Validate a TEI XML document against the TEI schema.
+        Normalize an abbreviation by converting Unicode characters to $ notation.
         
         Args:
-            file_path: Path to the document to validate
+            abbr_text: The abbreviation text from TEI
             
         Returns:
-            True if valid, False otherwise
+            Normalized abbreviation text compatible with dictionaries
         """
-        if not LXML_AVAILABLE:
-            self.logger.warning("lxml not available, document validation not supported")
-            return True
+        if not self.use_normalization:
+            return abbr_text
         
+        # Handle specific TEI g elements with abbreviation markers
+        # Process <g ref="char:cmbAbbrStroke">̄</g> pattern which is a combining macron
+        g_pattern = r'<g ref="char:cmbAbbrStroke">([^<]+)</g>'
+        
+        # Also match direct text with combining macron Unicode character (U+0304)
+        macron_pattern = r'([a-zA-Z])\u0304'
+        
+        # First check if there's a g element with the combining macron
+        g_transformed = False
+        if re.search(g_pattern, abbr_text):
+            # Process it and convert to $ notation
+            # Extract the base letter before the g element
+            parts = re.split(g_pattern, abbr_text)
+            normalized = ''
+            
+            for i in range(0, len(parts) - 1, 2):
+                base_letter = parts[i][-1] if parts[i] else ''
+                if base_letter:
+                    # Remove the base letter from its position and add with $ suffix
+                    normalized += parts[i][:-1] + base_letter + '$'
+                else:
+                    normalized += parts[i]
+            
+            # Add the last part if it exists
+            if len(parts) % 2 == 1:
+                normalized += parts[-1]
+            
+            # Update abbr_text for further processing of Unicode characters
+            abbr_text = normalized
+            g_transformed = True
+            
+        # Check for direct Unicode combining macron (U+0304)
+        elif re.search(macron_pattern, abbr_text):
+            # Find all letters with macrons and replace them with letter+$
+            normalized = re.sub(macron_pattern, r'\1$', abbr_text)
+            abbr_text = normalized
+            g_transformed = True
+        
+        # Now process any Unicode abbreviation characters
         try:
-            from lxml import isoschematron
-            tei_schema_url = "https://tei-c.org/release/xml/tei/custom/schema/relaxng/tei_all.rng"
+            # Try to use the UnicodeReplacement static method
+            normalized = UnicodeReplacement.normalize_abbreviation(abbr_text)
+            if normalized != abbr_text or g_transformed:
+                self.stats['normalized_abbr'] += 1
+            return normalized
+        except (NameError, AttributeError):
+            # Fallback if UnicodeReplacement is not available
+            # Simple normalization of common characters
+            normalized = abbr_text
             
-            parser = etree.XMLParser(remove_blank_text=True)
-            doc = etree.parse(str(file_path), parser=parser)
-            relaxng = etree.RelaxNG(etree.parse(tei_schema_url))
-            is_valid = relaxng.validate(doc)
-            
-            if not is_valid:
-                self.logger.warning(f"Document {file_path} is not valid TEI:")
-                for error in relaxng.error_log:
-                    self.logger.warning(f"  - {error}")
-            return is_valid
-        
-        except Exception as e:
-            self.logger.error(f"Error validating document {file_path}: {e}")
-            return False
-
-    def find_document_for_id(self, document_id: str, directory: Union[str, Path]) -> Optional[str]:
-        """
-        Find a document containing a specific ID.
-        
-        Args:
-            document_id: ID to search for
-            directory: Directory to search in
-            
-        Returns:
-            Path to the document if found, None otherwise
-        """
-        try:
-            directory = Path(directory)
-            for file_path in directory.glob('**/*.xml'):
-                try:
-                    tree = etree.parse(str(file_path))
-                    root = tree.getroot()
-                    id_elements = root.xpath(
-                        f'//*[@xml:id="{document_id}" or @id="{document_id}"]',
-                        namespaces=self.namespaces
-                    )
-                    if id_elements:
-                        return str(file_path)
-                except Exception as e:
-                    self.logger.error(f"Error searching in {file_path}: {e}")
-            return None
-        except Exception as e:
-            self.logger.error(f"Error finding document for ID {document_id}: {e}")
-            return None
-
+            # Map macrons
+            for char, repl in [('ā', 'a$'), ('ē', 'e$'), ('ī', 'i$'), ('ō', 'o$'), ('ū', 'u$'), ('n̄', 'n$'), ('m̄', 'm$')]:
+                normalized = normalized.replace(char, repl)
+                
+            # Map tildes
+            for char, repl in [('ã', 'a$'), ('ẽ', 'e$'), ('ĩ', 'i$'), ('õ', 'o$'), ('ũ', 'u$'), ('ñ', 'n$')]:
+                normalized = normalized.replace(char, repl)
+                
+            # Handle period abbreviations (like Ill.mo to Ill$mo)
+            period_regex = r'\.([a-z]{2})$'
+            normalized = re.sub(period_regex, r'$\1', normalized)
+                    
+            if normalized != abbr_text or g_transformed:
+                self.stats['normalized_abbr'] += 1
+                
+            return normalized
+    
     def is_valid_tei(self, file_path: Union[str, Path]) -> bool:
         """
         Check if a file is a valid TEI XML document.

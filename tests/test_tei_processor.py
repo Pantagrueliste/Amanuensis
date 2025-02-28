@@ -415,3 +415,33 @@ class TestTEIProcessor:
         
         result = processor.add_expansion(abbr_info, "test_expansion")
         assert result is False
+        
+    def test_normalize_g_element_abbreviation(self, mock_config):
+        """Test normalization of abbreviations with g element combining macron."""
+        processor = TEIProcessor(mock_config)
+        
+        # Test with g element for combining macron
+        abbr_text = "Geraniu<g ref=\"char:cmbAbbrStroke\">̄</g>"
+        normalized = processor._normalize_abbreviation(abbr_text)
+        assert normalized == "Geraniu$"
+        
+        # Test with multiple g elements
+        abbr_text = "d<g ref=\"char:cmbAbbrStroke\">̄</g>no<g ref=\"char:cmbAbbrStroke\">̄</g>"
+        normalized = processor._normalize_abbreviation(abbr_text)
+        assert normalized == "d$no$"
+        
+        # Test with mixed standard and g element abbreviations
+        # First normalize existing characters, then handle g elements
+        abbr_text = "māgnus<g ref=\"char:cmbAbbrStroke\">̄</g>"
+        normalized = processor._normalize_abbreviation(abbr_text)
+        # Should convert ā -> a$ and add $ for the g element
+        assert normalized == "ma$gnus$"
+        
+        # Manually apply the full normalization chain for clarity
+        abbr_text = "māgnus<g ref=\"char:cmbAbbrStroke\">̄</g>"
+        # Step 1: Process g elements
+        text_after_g = "māgnus$"
+        # Step 2: Process existing Unicode characters
+        expected = "ma$gnus$"
+        # Actual full process should match this
+        assert processor._normalize_abbreviation(abbr_text) == expected

@@ -23,7 +23,9 @@ context_size = 20              # Context size for older modules (backward compat
 logging_level = "INFO"         # Options: DEBUG, INFO, WARNING, ERROR, CRITICAL
 language = "eng"               # Target language for abbreviation expansion
 use_wordnet = true             # Enable WordNet-based abbreviation suggestions
-skip_expanded = false          # Skip abbreviations that already have expansions
+skip_expanded = true           # Skip abbreviations that already have expansions
+normalize_abbreviations = true # Normalize Unicode markers to $ format for dictionary lookups
+process_g_elements = true     # Process <g> elements with abbreviation markers
 
 
 #==============================================================================
@@ -38,6 +40,7 @@ tei_namespace = "http://www.tei-c.org/ns/1.0"
 abbr_xpath = "//tei:abbr"      # XPath to find abbreviation tags
 expan_xpath = "//tei:expan"    # XPath to find expansion tags
 choice_xpath = "//tei:choice"  # For TEI documents using choice+abbr+expan pattern
+g_abbr_xpath = "//tei:g[@ref='char:cmbAbbrStroke' or @ref='char:abque']"  # XPath for g elements with abbreviation markers
 
 # Context extraction
 context_window_size = 50       # Characters before and after abbreviation
@@ -136,7 +139,9 @@ Format your response as a numbered list.
 # Example abbreviations for few-shot learning
 examples = [
   { abbr = "co$cerning", context = "matters co$cerning the church", expansion = "concerning" },
-  { abbr = "iudgme$t", context = "the day of iudgme$t is approaching", expansion = "iudgment" }
+  { abbr = "iudgme$t", context = "the day of iudgme$t is approaching", expansion = "iudgment" },
+  { abbr = "motiõ", context = "the motiõ of celestial bodies", expansion = "motion" },
+  { abbr = "nōn", context = "nōn sufficit autem", expansion = "non" }
 ]
 
 

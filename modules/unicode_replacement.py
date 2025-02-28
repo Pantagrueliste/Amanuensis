@@ -1,8 +1,9 @@
 import orjson
 import os
+import re
 from multiprocessing import Pool
 from time import time
-from typing import List, Optional
+from typing import List, Optional, Dict, Tuple
 
 from rich.console import Console
 from rich.progress import Progress
@@ -15,6 +16,25 @@ class UnicodeReplacement:
         self._initialize_config(config)
         self.log = []
         self.num_workers = num_workers
+        
+        # Common early modern abbreviation markers
+        self.default_abbr_markers = {
+            # Macrons (overlines)
+            'ā': 'a$', 'ē': 'e$', 'ī': 'i$', 'ō': 'o$', 'ū': 'u$', 'n̄': 'n$', 'm̄': 'm$',
+            # Tildes
+            'ã': 'a$', 'ẽ': 'e$', 'ĩ': 'i$', 'õ': 'o$', 'ũ': 'u$', 'ñ': 'n$',
+            # Superscript letters
+            'ᵃ': 'a$', 'ᵉ': 'e$', 'ⁱ': 'i$', 'ᵒ': 'o$', 'ᵘ': 'u$', 'ʳ': 'r$', 'ˢ': 's$', 'ᵗ': 't$',
+            # Other common abbreviation markers
+            'ꝑ': 'p$', 'ꝓ': 'p$', 'ꝗ': 'q$', 'ꝙ': 'q$', 'ꝯ': 'con$',
+            # Period marks
+            '.mo': '.mo', '.ma': '.ma', '.mi': '.mi',
+        }
+        
+        # Add any configured abbr markers
+        self.abbr_markers = {**self.default_abbr_markers}
+        if config.get("unicode_replacements", "additional_abbr_markers", None):
+            self.abbr_markers.update(config.get("unicode_replacements", "additional_abbr_markers"))
 
     def _initialize_config(self, config: Config):
         try:
@@ -39,6 +59,8 @@ class UnicodeReplacement:
         if self.replacements_on:
             modified_line = self._delete_chars(modified_line, line_num, input_file_path, local_log)
             modified_line = self._replace_chars(modified_line, line_num, input_file_path, local_log)
+            # Process abbreviation markers
+            modified_line = self._replace_abbr_markers(modified_line, line_num, input_file_path, local_log)
         return modified_line
 
     def _delete_chars(self, line: str, line_num: int, input_file_path: str, local_log: list) -> str:
@@ -53,6 +75,14 @@ class UnicodeReplacement:
             if original in line:
                 UnicodeReplacement.log_change(input_file_path, line_num, original, replacement, local_log)
                 line = line.replace(original, replacement)
+        return line
+        
+    def _replace_abbr_markers(self, line: str, line_num: int, input_file_path: str, local_log: list) -> str:
+        """Replace abbreviation markers with standard $ notation for dictionary compatibility."""
+        for marker, replacement in self.abbr_markers.items():
+            if marker in line:
+                UnicodeReplacement.log_change(input_file_path, line_num, marker, replacement, local_log)
+                line = line.replace(marker, replacement)
         return line
 
     def _write_output_file(self, input_file_path: str, modified_lines: List[str]):
@@ -108,3 +138,85 @@ class UnicodeReplacement:
         self.log = global_log
         self.save_log()
         self.print_summary()
+        
+    @staticmethod
+    def normalize_abbreviation(abbr_text: str) -> str:
+        """
+        Normalize an abbreviation from a TEI document to match the dictionary format.
+        
+        Args:
+            abbr_text: The raw abbreviation text from TEI
+            
+        Returns:
+            Normalized abbreviation text with $ notation
+        """
+        # Handle specific TEI g elements with abbreviation markers
+        # Process <g ref="char:cmbAbbrStroke">̄</g> pattern which is a combining macron
+        g_pattern = r'<g ref="char:cmbAbbrStroke">([^<]+)</g>'
+        
+        # First check if there's a g element with the combining macron
+        if re.search(g_pattern, abbr_text):
+            # Process it and convert to $ notation
+            # Extract the base letter before the g element
+            parts = re.split(g_pattern, abbr_text)
+            normalized = ''
+            
+            for i in range(0, len(parts) - 1, 2):
+                base_letter = parts[i][-1] if parts[i] else ''
+                if base_letter:
+                    # Remove the base letter from its position and add with $ suffix
+                    normalized += parts[i][:-1] + base_letter + '$'
+                else:
+                    normalized += parts[i]
+            
+            # Add the last part if it exists
+            if len(parts) % 2 == 1:
+                normalized += parts[-1]
+                
+            return normalized
+            
+        # Handle <g ref="char:abque"/> pattern
+        abque_pattern = r'<g ref="char:abque"/>'
+        if re.search(abque_pattern, abbr_text):
+            # Replace with a standard 'que' abbreviation marker
+            return re.sub(abque_pattern, 'q$', abbr_text)
+            
+        # Common abbreviation markers
+        markers = {
+            # Macrons (overlines)
+            'ā': 'a$', 'ē': 'e$', 'ī': 'i$', 'ō': 'o$', 'ū': 'u$', 'n̄': 'n$', 'm̄': 'm$',
+            # Tildes
+            'ã': 'a$', 'ẽ': 'e$', 'ĩ': 'i$', 'õ': 'o$', 'ũ': 'u$', 'ñ': 'n$',
+            # Superscript letters
+            'ᵃ': 'a$', 'ᵉ': 'e$', 'ⁱ': 'i$', 'ᵒ': 'o$', 'ᵘ': 'u$', 'ʳ': 'r$', 'ˢ': 's$', 'ᵗ': 't$',
+            # Other common abbreviation markers
+            'ꝑ': 'p$', 'ꝓ': 'p$', 'ꝗ': 'q$', 'ꝙ': 'q$', 'ꝯ': 'con$',
+        }
+        
+        # Replace each marker
+        normalized = abbr_text
+        for marker, replacement in markers.items():
+            normalized = normalized.replace(marker, replacement)
+            
+        # Handle common Latin abbreviations with period (e.g., Ill.mo)
+        # Convert them to use $ notation for dictionary lookups
+        period_regex = r'\.([a-z]{2})$'
+        normalized = re.sub(period_regex, lambda m: f'${m.group(1)}', normalized)
+        
+        return normalized
+        
+    @staticmethod
+    def denormalize_expansion(abbr_text: str, expansion: str) -> str:
+        """
+        Convert an expansion back to the style matching the original abbreviation.
+        
+        Args:
+            abbr_text: Original abbreviation text
+            expansion: The expansion text
+            
+        Returns:
+            Expansion text styled to match the original
+        """
+        # Currently just returns the plain expansion
+        # Could be extended to maintain case patterns or other stylistic elements
+        return expansion

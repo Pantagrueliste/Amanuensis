@@ -126,12 +126,13 @@ def main():
                 # Process each abbreviation
                 expanded_count = 0
                 for abbr in abbreviations:
-                    # Generate suggestions
+                    # Generate suggestions (using normalized form if available)
                     suggestions = suggestion_generator.generate_suggestions(
                         abbr.abbr_text,
                         abbr.context_before,
                         abbr.context_after,
-                        abbr.metadata
+                        abbr.metadata,
+                        normalized_abbr=abbr.normalized_abbr
                     )
                     
                     if suggestions:

@@ -95,6 +95,10 @@ class UserInterface:
         console.print(f"  Output path: [cyan]{self.config.get('paths', 'output_path')}[/cyan]")
         console.print(f"  Language model: [cyan]{self.config.get('language_model_integration', 'provider')} - {self.config.get('language_model_integration', 'model_name')}[/cyan]")
         
+        # Check if using fallback dictionary
+        if self.suggestion_generator.stats.get('fallback_dictionary_used', False):
+            console.print(f"  [yellow]WARNING: Using fallback abbreviation dictionary[/yellow]")
+        
         console.print("\n[bold]Ready to process TEI documents with abbreviated text.[/bold]")
     
     def show_main_menu(self) -> str:
@@ -231,12 +235,13 @@ class UserInterface:
         expanded_count = 0
         
         for abbr in abbreviations:
-            # Generate suggestions
+            # Generate suggestions (using normalized form if available)
             suggestions = self.suggestion_generator.generate_suggestions(
                 abbr.abbr_text,
                 abbr.context_before,
                 abbr.context_after,
-                abbr.metadata
+                abbr.metadata,
+                normalized_abbr=abbr.normalized_abbr
             )
             
             if not suggestions:
@@ -276,14 +281,20 @@ class UserInterface:
         
         for i, abbr in enumerate(abbreviations, 1):
             console.print(f"\n[bold]Abbreviation {i}/{len(abbreviations)}:[/bold] [yellow]{abbr.abbr_text}[/yellow]")
+            
+            # Show normalized form if different from original
+            if abbr.normalized_abbr and abbr.normalized_abbr != abbr.abbr_text:
+                console.print(f"Normalized for dictionary lookup: [cyan]{abbr.normalized_abbr}[/cyan]")
+                
             console.print(f"Context: ...{abbr.context_before} [bold red]{abbr.abbr_text}[/bold red] {abbr.context_after}...")
             
-            # Generate suggestions
+            # Generate suggestions (using normalized form if available)
             suggestions = self.suggestion_generator.generate_suggestions(
                 abbr.abbr_text,
                 abbr.context_before,
                 abbr.context_after,
-                abbr.metadata
+                abbr.metadata,
+                normalized_abbr=abbr.normalized_abbr
             )
             
             # Display suggestions
@@ -294,11 +305,16 @@ class UserInterface:
             table.add_column("Source", style="blue")
             
             for idx, sugg in enumerate(suggestions, 1):
+                # Highlight fallback dictionary entries
+                source_display = sugg['source']
+                if sugg['source'] == 'dictionary' and self.suggestion_generator.stats.get('fallback_dictionary_used', False):
+                    source_display = f"[yellow]{sugg['source']} (fallback)[/yellow]"
+                
                 table.add_row(
                     str(idx),
                     sugg['expansion'],
                     f"{sugg['confidence']:.2f}",
-                    sugg['source']
+                    source_display
                 )
             
             table.add_row("c", "Custom expansion", "-", "-")
@@ -427,11 +443,22 @@ class UserInterface:
             
             context = Prompt.ask("Enter context (optional)")
             
-            # Generate suggestions
+            # Normalize the abbreviation for dictionary lookup
+            normalized_abbr = None
+            try:
+                from modules.unicode_replacement import UnicodeReplacement
+                normalized_abbr = UnicodeReplacement.normalize_abbreviation(abbr_text)
+                if normalized_abbr != abbr_text:
+                    console.print(f"Normalized for dictionary lookup: [cyan]{normalized_abbr}[/cyan]")
+            except (ImportError, AttributeError):
+                pass
+            
+            # Generate suggestions using normalized form if available
             suggestions = self.suggestion_generator.generate_suggestions(
                 abbr_text,
                 context_before=context,
-                context_after=""
+                context_after="",
+                normalized_abbr=normalized_abbr
             )
             
             if not suggestions:

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version='1.0' encoding='UTF-8'?>
 <TEI xmlns="http://www.tei-c.org/ns/1.0">
   <teiHeader>
     <fileDesc>
@@ -35,33 +35,26 @@
         <head>A Discourse on Natural Philosophy</head>
         <p>
           In these latter days, we have observed the <abbr>motiõ</abbr> of celestial
-          bodies with greater accuracy. The <abbr>co$cerning</abbr> matter of planetary
-          orbits has been much debated among the <abbr>lear$ed</abbr> men of our age.
-        </p>
+          bodies with greater accuracy. The <expan xml:id="expan_9ec712f1">motion</expan><abbr>co$cerning</abbr> matter of planetary
+          orbits has been much debated among the <expan xml:id="expan_bf99ac6d">concerning</expan><abbr>lear$ed</abbr> men of our age.
+        <expan xml:id="expan_10b9f915">learned</expan></p>
         <p>
           The <abbr>iudgme$t</abbr> of Copernicus, though controversial, has found 
-          <abbr>substa$tial</abbr> support among those who study the heavens.
-        </p>
+          <expan xml:id="expan_383fc964">iudgment</expan><abbr>substa$tial</abbr> support among those who study the heavens.
+        <expan xml:id="expan_b1af046d">substantial</expan></p>
         <p>
-          When we <abbr>co$sider</abbr> the evidence before us, the <abbr>argume$ts</abbr>
+          When we <abbr>co$sider</abbr> the evidence before us, the <expan xml:id="expan_6e6fcaf2">consider</expan><abbr>argume$ts</abbr>
           for a heliocentric system become difficult to dismiss.
-        </p>
+        <expan xml:id="expan_88fd5c6d">arguments</expan></p>
       </div>
-      <div>
-        <head>On the <abbr>Natu$</abbr> of Light</head>
-        <p>
+      <div><head>On the <abbr>Natu$</abbr> of Light<expan xml:id="expan_428a7499">Natun</expan></head><p>
           The properties of light have been <abbr>demo$strated</abbr> through various
           experiments. We know that light travels in straight lines, and that it can be
           reflected and refracted.
-        </p>
-        <p>
+        <expan xml:id="expan_93e0be78">demonstrated</expan></p><p>
           Some have <abbr>mai$tained</abbr> that light consists of tiny particles, while
-          others have argued for a wave-like <abbr>natu$</abbr>.
-        </p>
-        <choice>
-          <abbr>experime$ts</abbr>
-          <expan>experiments</expan>
-        </choice> have shown that both views have merit.
+          others have argued for a wave-like <expan xml:id="expan_802e3c61">maintained</expan><abbr>natu$</abbr>.
+        <expan xml:id="expan_2b71b205">natu</expan></p><choice><abbr>experime$ts</abbr><expan>experiments</expan></choice> have shown that both views have merit.
       </div>
     </body>
   </text>
