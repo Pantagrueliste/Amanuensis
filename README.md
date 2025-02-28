@@ -17,12 +17,23 @@ Amanuensis 2.0 is a significant upgrade from the original version, focusing spec
 
 ### New Features in Version 2.0
 
-- **TEI XML Processing**: Parse and manipulate TEI XML documents containing early modern abbreviations
+- **XML-Native Processing**: Works directly with XML nodes without extracting to plain text, preserving the structure and relationships between elements
+- **TEI-Aware Handling**: Special handling for TEI XML abbreviation structures including `<abbr>`, `<g>`, and `<am>` elements
 - **Smart Suggestion System**: Combine dictionary lookups, pattern matching, WordNet, and language models for better expansions
 - **Interactive Interface**: User-friendly command-line interface for reviewing and selecting expansions
 - **Dataset Creation**: Build datasets for training language models on abbreviation expansion
 - **Comprehensive Test Suite**: Extensive testing framework to ensure reliability
 - **Modern Architecture**: Modular, maintainable code structure
+
+### XML-Native Processing Approach
+
+In version 2.0, we've completely redesigned how TEI documents are processed to preserve structural information:
+
+1. **Direct XML Manipulation**: Work directly with XML nodes instead of extracting to plain text
+2. **Node Relationships**: Maintain parent-child relationships between elements
+3. **Structure Preservation**: Handle complex TEI structures like `<choice>`, `<abbr>`, `<expan>`, `<am>`, `<ex>` properly
+4. **Special Element Support**: Properly handle special elements like `<g ref="char:cmbAbbrStroke">` for macrons and other early modern abbreviation markers
+5. **XPath Navigation**: Use XPath for precise element location rather than string searching
 
 ## Original Features
 

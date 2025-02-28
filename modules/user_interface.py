@@ -235,13 +235,13 @@ class UserInterface:
         expanded_count = 0
         
         for abbr in abbreviations:
-            # Generate suggestions (using normalized form if available)
+            # Generate suggestions (using normalized form for dictionary lookup)
             suggestions = self.suggestion_generator.generate_suggestions(
-                abbr.abbr_text,
-                abbr.context_before,
-                abbr.context_after,
+                "",  # Empty string as we're using normalized_form now
+                "",  # Context not needed with XML-based approach
+                "",  # Context not needed with XML-based approach  
                 abbr.metadata,
-                normalized_abbr=abbr.normalized_abbr
+                normalized_abbr=abbr.normalized_form  # Use normalized_form from new AbbreviationInfo
             )
             
             if not suggestions:
@@ -256,10 +256,15 @@ class UserInterface:
             if success:
                 expanded_count += 1
                 
-                # Record the decision
-                self.user_decisions[abbr.abbr_text] = {
+                # Record the decision using normalized form as the key
+                # Get element text for display
+                element_text = abbr.abbr_element.text_content() if hasattr(abbr.abbr_element, 'text_content') else "Unknown"
+                key = abbr.normalized_form or element_text
+                
+                self.user_decisions[key] = {
                     'expansion': best_suggestion,
-                    'context': f"{abbr.context_before} [{abbr.abbr_text}] {abbr.context_after}",
+                    'xpath': abbr.xpath,
+                    'element_type': abbr.abbr_element.tag.split('}')[-1] if '}' in abbr.abbr_element.tag else abbr.abbr_element.tag,
                     'source': suggestions[0]['source'],
                     'confidence': suggestions[0]['confidence']
                 }
@@ -280,21 +285,27 @@ class UserInterface:
         expanded_count = 0
         
         for i, abbr in enumerate(abbreviations, 1):
-            console.print(f"\n[bold]Abbreviation {i}/{len(abbreviations)}:[/bold] [yellow]{abbr.abbr_text}[/yellow]")
+            # Get the tag name of the element without the namespace
+            element_tag = abbr.abbr_element.tag.split('}')[-1] if '}' in abbr.abbr_element.tag else abbr.abbr_element.tag
+            # Get element text content for display
+            element_text = abbr.abbr_element.text_content() if hasattr(abbr.abbr_element, 'text_content') else "Unknown"
             
-            # Show normalized form if different from original
-            if abbr.normalized_abbr and abbr.normalized_abbr != abbr.abbr_text:
-                console.print(f"Normalized for dictionary lookup: [cyan]{abbr.normalized_abbr}[/cyan]")
+            console.print(f"\n[bold]Abbreviation {i}/{len(abbreviations)}:[/bold] [yellow]{element_text}[/yellow] (<{element_tag}> element)")
+            
+            # Show normalized form used for lookup
+            if abbr.normalized_form:
+                console.print(f"Normalized for dictionary lookup: [cyan]{abbr.normalized_form}[/cyan]")
                 
-            console.print(f"Context: ...{abbr.context_before} [bold red]{abbr.abbr_text}[/bold red] {abbr.context_after}...")
+            # Show XPath to locate the element
+            console.print(f"Location (XPath): [dim]{abbr.xpath}[/dim]")
             
-            # Generate suggestions (using normalized form if available)
+            # Generate suggestions (using normalized form for dictionary lookup)
             suggestions = self.suggestion_generator.generate_suggestions(
-                abbr.abbr_text,
-                abbr.context_before,
-                abbr.context_after,
+                "",  # Empty string as we're using normalized_form now
+                "",  # Context not needed with XML-based approach
+                "",  # Context not needed with XML-based approach  
                 abbr.metadata,
-                normalized_abbr=abbr.normalized_abbr
+                normalized_abbr=abbr.normalized_form  # Use normalized_form from new AbbreviationInfo
             )
             
             # Display suggestions
@@ -342,13 +353,18 @@ class UserInterface:
             if success:
                 expanded_count += 1
                 
-                # Record the decision
+                # Record the decision using normalized form as the key
                 source = "custom" if choice == "c" else suggestions[int(choice)-1]['source']
                 confidence = 1.0 if choice == "c" else suggestions[int(choice)-1]['confidence']
                 
-                self.user_decisions[abbr.abbr_text] = {
+                # Get element text for display
+                element_text = abbr.abbr_element.text_content() if hasattr(abbr.abbr_element, 'text_content') else "Unknown"
+                key = abbr.normalized_form or element_text
+                
+                self.user_decisions[key] = {
                     'expansion': expansion,
-                    'context': f"{abbr.context_before} [{abbr.abbr_text}] {abbr.context_after}",
+                    'xpath': abbr.xpath,
+                    'element_type': abbr.abbr_element.tag.split('}')[-1] if '}' in abbr.abbr_element.tag else abbr.abbr_element.tag,
                     'source': source,
                     'confidence': confidence
                 }

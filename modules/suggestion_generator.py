@@ -148,200 +148,150 @@ class SuggestionGenerator:
         Generate expansion suggestions for an abbreviation.
         
         Args:
-            abbreviation: The abbreviated text
-            context_before: Text context before the abbreviation
-            context_after: Text context after the abbreviation
-            metadata: Optional metadata about the source
-            normalized_abbr: Optional pre-normalized abbreviation text
+            abbreviation: The abbreviation text or normalized form
+            context_before: Optional context before the abbreviation (may be empty with XML-based approach)
+            context_after: Optional context after the abbreviation (may be empty with XML-based approach)
+            metadata: Optional document metadata
+            normalized_abbr: Optional normalized form of the abbreviation (preferred over abbreviation)
             
         Returns:
-            List of suggestions with confidence scores and source information
+            List of suggestions sorted by confidence
         """
         if not abbreviation:
             return []
-            
+        
+        # Track attempts
+        self.stats['total_suggestions'] += 1
+        
+        # Use normalized form if provided
+        lookup_abbr = normalized_abbr if normalized_abbr else abbreviation
+        
+        # Initialize suggestions list
         suggestions = []
         
-        # Clean the abbreviation
-        clean_abbr = abbreviation.strip()
-        
-        # Use the normalized form if provided, otherwise use the original
-        lookup_abbr = normalized_abbr or clean_abbr
-        
-        # 1. Try user solution dictionary lookup first (highest priority)
+        # 1. Check user-verified solutions (highest priority)
         if lookup_abbr in self.user_solutions:
-            user_solution = self.user_solutions[lookup_abbr]
+            expansion = self.user_solutions[lookup_abbr]
             suggestions.append({
-                'expansion': user_solution,
+                'expansion': expansion,
                 'confidence': self.confidence_scores['user_dictionary'],
                 'source': 'user_dictionary'
             })
             self.stats['user_dictionary_matches'] += 1
-            
-            # If we have a high-confidence user-verified match, return immediately
-            return suggestions
         
-        # 2. Try standard dictionary lookup
-        dict_suggestions = self._lookup_dictionary(lookup_abbr)
-        for suggestion in dict_suggestions:
-            suggestions.append({
-                'expansion': suggestion,
-                'confidence': self.confidence_scores['dictionary'],
-                'source': 'dictionary'
-            })
+        # 2. Check dictionary of standard abbreviations
+        if lookup_abbr in self.abbreviation_dict:
+            expansions = self.abbreviation_dict[lookup_abbr]
+            for expansion in expansions:
+                # Skip duplicates
+                if any(s['expansion'] == expansion for s in suggestions):
+                    continue
+                
+                suggestions.append({
+                    'expansion': expansion,
+                    'confidence': self.confidence_scores['dictionary'],
+                    'source': 'dictionary'
+                })
             self.stats['dictionary_matches'] += 1
+                
+        # 3. Try WordNet for single letter abbreviations (if no matches yet)
+        if self.use_wordnet and not suggestions and len(lookup_abbr) == 1:
+            wordnet_expansions = self._get_wordnet_expansions(lookup_abbr, context_before, context_after)
+            
+            for expansion in wordnet_expansions:
+                suggestions.append({
+                    'expansion': expansion,
+                    'confidence': self.confidence_scores['wordnet'],
+                    'source': 'wordnet'
+                })
+            
+            if wordnet_expansions:
+                self.stats['wordnet_suggestions'] += 1
         
-        # If high-confidence dictionary matches were found, skip other methods
-        if suggestions and suggestions[0]['confidence'] >= 0.95:
-            return suggestions[:self.suggestion_count]
+        # 4. Use language model if enabled and no matches yet
+        if self.lm_enabled and not suggestions:
+            lm_expansions = self._get_language_model_expansions(
+                lookup_abbr, context_before, context_after, metadata
+            )
+            
+            for expansion in lm_expansions:
+                suggestions.append({
+                    'expansion': expansion,
+                    'confidence': self.confidence_scores['language_model'],
+                    'source': 'language_model'
+                })
+            
+            if lm_expansions:
+                self.stats['lm_suggestions'] += 1
         
-        # 3. Try WordNet for relevant suggestions
-        if self.use_wordnet and len(suggestions) < self.suggestion_count:
-            wordnet_suggestions = self._consult_wordnet(clean_abbr, context_before, context_after)
-            for suggestion in wordnet_suggestions:
-                if suggestion not in [s['expansion'] for s in suggestions]:
-                    suggestions.append({
-                        'expansion': suggestion,
-                        'confidence': self.confidence_scores['wordnet'],
-                        'source': 'wordnet'
-                    })
-                    self.stats['wordnet_suggestions'] += 1
-        
-        # 4. Use language model if enabled and still need more suggestions
-        if self.lm_enabled and len(suggestions) < self.suggestion_count:
-            lm_suggestions = self._query_language_model(clean_abbr, context_before, context_after, metadata)
-            for suggestion in lm_suggestions:
-                if suggestion not in [s['expansion'] for s in suggestions]:
-                    suggestions.append({
-                        'expansion': suggestion,
-                        'confidence': self.confidence_scores['language_model'],
-                        'source': 'language_model'
-                    })
-                    self.stats['lm_suggestions'] += 1
-        
-        # Sort suggestions by confidence
-        suggestions.sort(key=lambda x: x['confidence'], reverse=True)
-        
-        # Update statistics
-        self.stats['total_suggestions'] += len(suggestions)
+        # Track failures
         if not suggestions:
             self.stats['failed_abbreviations'] += 1
-        
-        return suggestions[:self.suggestion_count]
+            
+        # Sort by confidence (highest first)
+        return sorted(suggestions, key=lambda x: x['confidence'], reverse=True)
     
-    def _lookup_dictionary(self, abbreviation: str) -> List[str]:
+    def _get_wordnet_expansions(self, 
+                               abbr: str, 
+                               context_before: str, 
+                               context_after: str) -> List[str]:
         """
-        Look up an abbreviation in the dictionary.
+        Use WordNet to suggest expansions for single-letter abbreviations.
         
         Args:
-            abbreviation: Abbreviated text
+            abbr: The abbreviated form
+            context_before: Text before the abbreviation
+            context_after: Text after the abbreviation
             
         Returns:
-            List of possible expansions
+            List of possible expansions based on WordNet
         """
-        # Direct lookup
-        if abbreviation in self.abbreviation_dict:
-            return self.abbreviation_dict[abbreviation]
-        
-        # Try case-insensitive lookup
-        for abbr, expansions in self.abbreviation_dict.items():
-            if abbr.lower() == abbreviation.lower():
-                return expansions
-        
-        return []
-    
-    def _consult_wordnet(self, abbreviation: str, context_before: str, context_after: str) -> List[str]:
-        """
-        Use WordNet to suggest possible expansions.
-        
-        Args:
-            abbreviation: Abbreviated text
-            context_before: Text context before the abbreviation
-            context_after: Text context after the abbreviation
-            
-        Returns:
-            List of suggested expansions from WordNet
-        """
-        if not NLTK_AVAILABLE or not self.use_wordnet:
+        if not NLTK_AVAILABLE or len(abbr) != 1:
             return []
-            
+        
         try:
-            # Simple implementation of WordNet suggestion
-            # Replace $ with n as common pattern for initial search
-            cleaned_abbr = abbreviation.replace('$', 'n')
+            # For single letters, try to find words that start with that letter
+            letter = abbr[0].lower()
             
-            # Get all words that start with the same sequence
-            suggestions = []
-            for synset in wordnet.synsets(cleaned_abbr[:3], lang=self.language):
-                word = synset.name().split('.')[0]
-                if word.startswith(cleaned_abbr[:3]) and word not in suggestions:
-                    suggestions.append(word)
+            # Search for common nouns that start with the letter
+            expansions = []
             
-            return suggestions[:3]  # Limit to top 3
+            for synset in wordnet.all_synsets('n')[:100]:  # Limit to first 100 noun synsets for performance
+                lemma_names = synset.lemma_names()
+                for name in lemma_names:
+                    if name.startswith(letter) and len(name) > 2:  # Skip very short words
+                        expansions.append(name)
+            
+            # Return the most common options (limited)
+            return list(set(expansions))[:3]
             
         except Exception as e:
-            self.logger.warning(f"Error consulting WordNet: {e}")
+            self.logger.error(f"Error getting WordNet expansions: {e}")
             return []
     
-    def _query_language_model(self, 
-                             abbreviation: str, 
-                             context_before: str, 
-                             context_after: str,
-                             metadata: Optional[Dict[str, Any]] = None) -> List[str]:
+    def _get_language_model_expansions(self, 
+                                      abbr: str, 
+                                      context_before: str, 
+                                      context_after: str,
+                                      metadata: Optional[Dict[str, Any]] = None) -> List[str]:
         """
-        Query a language model for suggestions.
+        Use language model to suggest expansions.
         
         Args:
-            abbreviation: Abbreviated text
-            context_before: Text context before the abbreviation
-            context_after: Text context after the abbreviation
+            abbr: The abbreviated form
+            context_before: Text before the abbreviation
+            context_after: Text after the abbreviation
             metadata: Optional metadata about the source
             
         Returns:
-            List of suggested expansions from language model
+            List of possible expansions based on language model
         """
         if not self.lm_enabled:
             return []
         
-        try:
-            # Import our custom LLM integration
-            from .gpt_suggestions import GPTSuggestions
-            
-            # Initialize the suggestion service
-            llm_service = GPTSuggestions(self.config)
-            
-            # Get suggestions from the service
-            suggestions = llm_service.get_suggestions(
-                abbreviation, 
-                context_before, 
-                context_after, 
-                metadata
-            )
-            
-            # Limit to requested suggestion count
-            return suggestions[:self.suggestion_count]
-            
-        except Exception as e:
-            self.logger.error(f"Error querying language model: {e}")
-            return []
-            
-    def rank_suggestions(self, suggestions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """
-        Rank suggestions by confidence score.
+        # For now, use a placeholder since this will be implemented
+        # in the language model integration module
+        self.logger.info(f"Language model would be used for: {abbr}")
         
-        Args:
-            suggestions: List of suggestion dictionaries
-            
-        Returns:
-            Ranked list of suggestions
-        """
-        return sorted(suggestions, key=lambda x: x['confidence'], reverse=True)
-    
-    def get_statistics(self) -> Dict[str, int]:
-        """
-        Get statistics about suggestion generation.
-        
-        Returns:
-            Dictionary of statistics
-        """
-        return self.stats
+        # Placeholder - later this would call the language model service
+        return []
