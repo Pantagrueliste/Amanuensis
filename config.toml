@@ -12,9 +12,6 @@ discarded_directory = "/Users/clementgodbarge/Amanuensis/Amanuensis2.0/discarded
 # Data file locations for various dictionaries and datasets
 machine_solution_path = "data/machine_solution.json"
 user_solution_path = "data/user_solution.json"
-difficult_passages_path = "data/difficult_passages.json"
-unresolved_aws_path = "data/unresolved_aw.json"
-abbreviation_dataset_path = "data/abbreviation_dataset.json"
 
 [settings]
 # General application settings

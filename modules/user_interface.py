@@ -67,18 +67,52 @@ class UserInterface:
         sys.exit(0)
     
     def _save_user_decisions(self):
-        """Save user decisions to file."""
+        """Save user decisions to file and create dataset entries."""
         output_dir = Path(self.config.get("paths", "output_path"))
         output_dir.mkdir(exist_ok=True)
         
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        output_file = output_dir / f"user_decisions_{timestamp}.json"
         
-        with open(output_file, 'w', encoding='utf-8') as f:
+        # Save raw decisions first
+        decisions_file = output_dir / f"user_decisions_{timestamp}.json"
+        
+        with open(decisions_file, 'w', encoding='utf-8') as f:
             json.dump(self.user_decisions, f, ensure_ascii=False, indent=2)
         
-        self.logger.info(f"Saved user decisions to {output_file}")
-        console.print(f"[green]Saved user decisions to {output_file}[/green]")
+        self.logger.info(f"Saved raw user decisions to {decisions_file}")
+        
+        # Convert user decisions to dataset format
+        dataset_entries = []
+        for abbr_text, decision in self.user_decisions.items():
+            entry = {
+                'abbreviation': abbr_text,
+                'expansion': decision['expansion'],
+                'context_before': decision.get('context_before', ''),
+                'context_after': decision.get('context_after', ''),
+                'source': {
+                    'file': decision.get('file_path', ''),
+                    'confidence': decision.get('confidence', 1.0),
+                    'source_type': decision.get('source', 'user')
+                }
+            }
+            
+            # Include metadata if available
+            if 'metadata' in decision and decision['metadata']:
+                entry['metadata'] = decision['metadata']
+                
+            dataset_entries.append(entry)
+        
+        # Save as structured dataset
+        dataset_dir = output_dir / "datasets"
+        dataset_dir.mkdir(exist_ok=True)
+        dataset_file = dataset_dir / f"expansion_dataset_{timestamp}.json"
+        
+        with open(dataset_file, 'w', encoding='utf-8') as f:
+            json.dump(dataset_entries, f, ensure_ascii=False, indent=2)
+        
+        self.logger.info(f"Saved {len(dataset_entries)} dataset entries to {dataset_file}")
+        console.print(f"[green]Saved user decisions to {decisions_file}[/green]")
+        console.print(f"[green]Created dataset with {len(dataset_entries)} entries at {dataset_file}[/green]")
     
     def show_welcome(self):
         """Display welcome message and application info."""
@@ -95,11 +129,20 @@ class UserInterface:
         console.print(f"  Output path: [cyan]{self.config.get('paths', 'output_path')}[/cyan]")
         console.print(f"  Language model: [cyan]{self.config.get('language_model_integration', 'provider')} - {self.config.get('language_model_integration', 'model_name')}[/cyan]")
         
+<<<<<<< HEAD
         # Check if using fallback dictionary
         if self.suggestion_generator.stats.get('fallback_dictionary_used', False):
             console.print(f"  [yellow]WARNING: Using fallback abbreviation dictionary[/yellow]")
         
         console.print("\n[bold]Ready to process TEI documents with abbreviated text.[/bold]")
+=======
+        console.print("\n[bold]Dataset Collection Mode:[/bold]")
+        console.print("This application now runs in dataset collection mode. Instead of modifying")
+        console.print("the original TEI documents, abbreviation expansions are recorded as training")
+        console.print("examples for language model fine-tuning. Original documents remain unmodified.")
+        
+        console.print("\n[bold]Ready to collect abbreviation expansion examples.[/bold]")
+>>>>>>> fcb6d5e (revert to previous version)
     
     def show_main_menu(self) -> str:
         """
@@ -110,9 +153,9 @@ class UserInterface:
         """
         console.print("\n[bold]Main Menu:[/bold]")
         options = [
-            "1. Process TEI documents",
+            "1. Extract abbreviations from TEI documents",
             "2. Interactive abbreviation expansion",
-            "3. Build training dataset",
+            "3. Build training dataset from collected examples",
             "4. View statistics",
             "5. Settings",
             "6. Exit"
@@ -125,7 +168,7 @@ class UserInterface:
         return choice
     
     def process_tei_documents(self):
-        """Process all TEI documents in the input directory."""
+        """Extract abbreviations from TEI documents and collect expansion examples."""
         input_path = self.config.get("paths", "input_path")
         output_path = self.config.get("paths", "output_path")
         
@@ -182,7 +225,7 @@ class UserInterface:
                 
                 progress.update(task, advance=1)
         
-        console.print(f"[bold green]Processed {self.files_processed} files with {self.abbreviations_expanded} expansions.[/bold green]")
+        console.print(f"[bold green]Processed {self.files_processed} files, collected {self.abbreviations_expanded} abbreviation expansions.[/bold green]")
     
     def _process_single_tei_file(self, file_path: str, output_dir: str):
         """Process a single TEI XML file."""
@@ -199,7 +242,7 @@ class UserInterface:
             output_path = os.path.join(output_dir, rel_path)
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
             
-            # Get suggestions and add expansions
+            # Get suggestions and record user selections without modifying documents
             expanded_count = 0
             
             use_interactive = self.config.get("user_interface", "interactive_mode", True)
@@ -208,14 +251,15 @@ class UserInterface:
             else:
                 expanded_count = self._automatic_expansion(abbreviations, tree)
             
-            # Save the modified document
-            self.tei_processor.save_document(tree, output_path)
+            # No need to save the document since we're no longer modifying it
+            # Instead, use the dataset builder to process collected abbreviations
+            # We'll handle exporting the collected data when the user chooses to save
             
             # Update statistics
             self.files_processed += 1
             self.abbreviations_expanded += expanded_count
             
-            self.logger.info(f"Processed {file_path} with {expanded_count} expansions")
+            self.logger.info(f"Processed {file_path}, collected {expanded_count} abbreviation expansions")
             
         except Exception as e:
             self.logger.error(f"Error processing {file_path}: {e}")
@@ -250,9 +294,20 @@ class UserInterface:
             # Use highest confidence suggestion
             best_suggestion = suggestions[0]['expansion']
             
-            # Add expansion to the document
-            success = self.tei_processor.add_expansion(abbr, best_suggestion)
+            # Don't modify the document, just record the selection as a training example
+            # Record the decision without modifying the original document
+            self.user_decisions[abbr.abbr_text] = {
+                'expansion': best_suggestion,
+                'context_before': abbr.context_before,
+                'context_after': abbr.context_after,
+                'abbreviation': abbr.abbr_text, 
+                'source': suggestions[0]['source'],
+                'confidence': suggestions[0]['confidence'],
+                'file_path': abbr.file_path,
+                'metadata': abbr.metadata
+            }
             
+<<<<<<< HEAD
             if success:
                 expanded_count += 1
                 
@@ -268,6 +323,10 @@ class UserInterface:
                     'source': suggestions[0]['source'],
                     'confidence': suggestions[0]['confidence']
                 }
+=======
+            # Just increment the counter without actually modifying the document
+            expanded_count += 1
+>>>>>>> fcb6d5e (revert to previous version)
         
         return expanded_count
     
@@ -347,9 +406,12 @@ class UserInterface:
                 idx = int(choice) - 1
                 expansion = suggestions[idx]['expansion']
             
-            # Add expansion to the document
-            success = self.tei_processor.add_expansion(abbr, expansion)
+            # Don't modify the document, just record the selection as a training example
+            # Record the decision without modifying the original document
+            source = "custom" if choice == "c" else suggestions[int(choice)-1]['source']
+            confidence = 1.0 if choice == "c" else suggestions[int(choice)-1]['confidence']
             
+<<<<<<< HEAD
             if success:
                 expanded_count += 1
                 
@@ -372,61 +434,114 @@ class UserInterface:
                 console.print(f"[green]Added expansion: {expansion}[/green]")
             else:
                 console.print("[red]Failed to add expansion[/red]")
+=======
+            self.user_decisions[abbr.abbr_text] = {
+                'expansion': expansion,
+                'context_before': abbr.context_before,
+                'context_after': abbr.context_after,
+                'abbreviation': abbr.abbr_text,
+                'source': source,
+                'confidence': confidence,
+                'file_path': abbr.file_path,
+                'metadata': abbr.metadata
+            }
+            
+            # Just increment the counter without actually modifying the document
+            expanded_count += 1
+            
+            console.print(f"[green]Recorded expansion: {expansion} (original document unchanged)[/green]")
+>>>>>>> fcb6d5e (revert to previous version)
         
         return expanded_count
     
     def build_dataset(self):
-        """Build a dataset from processed documents."""
+        """Build a dataset from user decisions and/or extracted abbreviations."""
         console.print("[bold]Building Dataset[/bold]")
         
-        # Collect abbreviations from all documents
-        input_path = self.config.get("paths", "input_path")
-        output_path = self.config.get("paths", "output_path")
-        
-        # Find all XML files in the input directory
-        xml_files = []
-        for root, _, files in os.walk(input_path):
-            for file in files:
-                if file.endswith(".xml"):
-                    xml_files.append(os.path.join(root, file))
-        
-        if not xml_files:
-            console.print("[yellow]No XML files found in the input directory.[/yellow]")
-            return
-        
-        console.print(f"[bold]Found {len(xml_files)} XML files to process.[/bold]")
-        
-        # Extract abbreviations from all files
-        all_abbreviations = []
-        
-        with Progress() as progress:
-            task = progress.add_task("[cyan]Extracting abbreviations...", total=len(xml_files))
+        # Check if we already have user decisions to use
+        if self.user_decisions:
+            console.print(f"[green]Using {len(self.user_decisions)} collected abbreviation expansions.[/green]")
             
-            for file_path in xml_files:
-                rel_path = os.path.relpath(file_path, input_path)
-                progress.update(task, description=f"[cyan]Processing {rel_path}...[/cyan]")
+            # Convert user decisions to dataset entries
+            entries = []
+            for abbr_text, decision in self.user_decisions.items():
+                entry = {
+                    'abbreviation': abbr_text,
+                    'expansion': decision['expansion'],
+                    'context_before': decision.get('context_before', ''),
+                    'context_after': decision.get('context_after', ''),
+                    'source': {
+                        'file': decision.get('file_path', ''),
+                        'confidence': decision.get('confidence', 1.0),
+                        'source_type': decision.get('source', 'user')
+                    }
+                }
                 
-                # Extract abbreviations
-                abbreviations, _ = self.tei_processor.parse_document(file_path)
-                all_abbreviations.extend(abbreviations)
+                # Include metadata if available
+                if 'metadata' in decision and decision['metadata']:
+                    entry['metadata'] = decision['metadata']
+                    
+                entries.append(entry)
                 
-                progress.update(task, advance=1)
+            console.print(f"[green]Created {len(entries)} entries from user decisions.[/green]")
+        else:
+            # If no user decisions, extract abbreviations from XML files
+            input_path = self.config.get("paths", "input_path")
+            output_path = self.config.get("paths", "output_path")
+            
+            # Find all XML files in the input directory
+            xml_files = []
+            for root, _, files in os.walk(input_path):
+                for file in files:
+                    if file.endswith(".xml"):
+                        xml_files.append(os.path.join(root, file))
+            
+            if not xml_files:
+                console.print("[yellow]No XML files found in the input directory.[/yellow]")
+                return
+            
+            console.print(f"[bold]Found {len(xml_files)} XML files to process.[/bold]")
+            
+            # Extract abbreviations from all files
+            all_abbreviations = []
+            
+            with Progress() as progress:
+                task = progress.add_task("[cyan]Extracting abbreviations...", total=len(xml_files))
+                
+                for file_path in xml_files:
+                    rel_path = os.path.relpath(file_path, input_path)
+                    progress.update(task, description=f"[cyan]Processing {rel_path}...[/cyan]")
+                    
+                    # Extract abbreviations
+                    abbreviations, _ = self.tei_processor.parse_document(file_path)
+                    all_abbreviations.extend(abbreviations)
+                    
+                    progress.update(task, advance=1)
+            
+            console.print(f"[green]Extracted {len(all_abbreviations)} abbreviations.[/green]")
+            
+            # Process abbreviations into dataset entries
+            entries = self.dataset_builder.process_abbreviations(all_abbreviations)
         
-        console.print(f"[green]Extracted {len(all_abbreviations)} abbreviations.[/green]")
-        
-        # Process abbreviations into dataset entries
-        entries = self.dataset_builder.process_abbreviations(all_abbreviations)
-        
+        # Check if we have any entries to process
+        if not entries:
+            console.print("[yellow]No entries to include in dataset.[/yellow]")
+            return
+            
         # Split dataset
         train_set, val_set, test_set = self.dataset_builder.split_dataset(entries)
         
         # Save datasets
+        output_path = self.config.get("paths", "output_path")
         dataset_dir = os.path.join(output_path, "datasets")
         os.makedirs(dataset_dir, exist_ok=True)
         
-        self.dataset_builder.save_dataset(train_set, os.path.join(dataset_dir, "train.json"))
-        self.dataset_builder.save_dataset(val_set, os.path.join(dataset_dir, "validation.json"))
-        self.dataset_builder.save_dataset(test_set, os.path.join(dataset_dir, "test.json"))
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        base_filename = f"expansion_dataset_{timestamp}"
+        
+        self.dataset_builder.save_dataset(train_set, os.path.join(dataset_dir, f"{base_filename}_train.json"))
+        self.dataset_builder.save_dataset(val_set, os.path.join(dataset_dir, f"{base_filename}_validation.json"))
+        self.dataset_builder.save_dataset(test_set, os.path.join(dataset_dir, f"{base_filename}_test.json"))
         
         # Format for LLM training
         system_message = self.config.get("language_model_integration", "openai", {}).get(
@@ -437,7 +552,7 @@ class UserInterface:
         formatted_train = self.dataset_builder.format_for_llm_training(train_set, system_message)
         self.dataset_builder.save_dataset(
             formatted_train, 
-            os.path.join(dataset_dir, "train_formatted.jsonl"), 
+            os.path.join(dataset_dir, f"{base_filename}_train_formatted.jsonl"), 
             format="jsonl"
         )
         

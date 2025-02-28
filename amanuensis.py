@@ -8,7 +8,6 @@ It sets up the necessary environment and launches the main application.
 
 import os
 import sys
-import argparse
 from pathlib import Path
 
 # Ensure the modules directory is in the Python path

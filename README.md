@@ -17,11 +17,16 @@ Amanuensis 2.0 is a significant upgrade from the original version, focusing spec
 
 ### New Features in Version 2.0
 
+<<<<<<< HEAD
 - **XML-Native Processing**: Works directly with XML nodes without extracting to plain text, preserving the structure and relationships between elements
 - **TEI-Aware Handling**: Special handling for TEI XML abbreviation structures including `<abbr>`, `<g>`, and `<am>` elements
+=======
+- **TEI XML Processing**: Parse TEI XML documents containing early modern abbreviations
+>>>>>>> fcb6d5e (revert to previous version)
 - **Smart Suggestion System**: Combine dictionary lookups, pattern matching, WordNet, and language models for better expansions
 - **Interactive Interface**: User-friendly command-line interface for reviewing and selecting expansions
-- **Dataset Creation**: Build datasets for training language models on abbreviation expansion
+- **Dataset Collection Mode**: Preserve original documents while building training datasets from user selections
+- **Dataset Creation**: Build structured datasets for training language models on abbreviation expansion
 - **Comprehensive Test Suite**: Extensive testing framework to ensure reliability
 - **Modern Architecture**: Modular, maintainable code structure
 
