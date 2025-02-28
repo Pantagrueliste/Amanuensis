@@ -129,20 +129,12 @@ class UserInterface:
         console.print(f"  Output path: [cyan]{self.config.get('paths', 'output_path')}[/cyan]")
         console.print(f"  Language model: [cyan]{self.config.get('language_model_integration', 'provider')} - {self.config.get('language_model_integration', 'model_name')}[/cyan]")
         
-<<<<<<< HEAD
-        # Check if using fallback dictionary
-        if self.suggestion_generator.stats.get('fallback_dictionary_used', False):
-            console.print(f"  [yellow]WARNING: Using fallback abbreviation dictionary[/yellow]")
-        
-        console.print("\n[bold]Ready to process TEI documents with abbreviated text.[/bold]")
-=======
         console.print("\n[bold]Dataset Collection Mode:[/bold]")
         console.print("This application now runs in dataset collection mode. Instead of modifying")
         console.print("the original TEI documents, abbreviation expansions are recorded as training")
         console.print("examples for language model fine-tuning. Original documents remain unmodified.")
         
         console.print("\n[bold]Ready to collect abbreviation expansion examples.[/bold]")
->>>>>>> fcb6d5e (revert to previous version)
     
     def show_main_menu(self) -> str:
         """
@@ -295,7 +287,6 @@ class UserInterface:
             best_suggestion = suggestions[0]['expansion']
             
             # Don't modify the document, just record the selection as a training example
-            # Record the decision without modifying the original document
             self.user_decisions[abbr.abbr_text] = {
                 'expansion': best_suggestion,
                 'context_before': abbr.context_before,
@@ -307,26 +298,7 @@ class UserInterface:
                 'metadata': abbr.metadata
             }
             
-<<<<<<< HEAD
-            if success:
-                expanded_count += 1
-                
-                # Record the decision using normalized form as the key
-                # Get element text for display
-                element_text = abbr.abbr_element.text_content() if hasattr(abbr.abbr_element, 'text_content') else "Unknown"
-                key = abbr.normalized_form or element_text
-                
-                self.user_decisions[key] = {
-                    'expansion': best_suggestion,
-                    'xpath': abbr.xpath,
-                    'element_type': abbr.abbr_element.tag.split('}')[-1] if '}' in abbr.abbr_element.tag else abbr.abbr_element.tag,
-                    'source': suggestions[0]['source'],
-                    'confidence': suggestions[0]['confidence']
-                }
-=======
-            # Just increment the counter without actually modifying the document
             expanded_count += 1
->>>>>>> fcb6d5e (revert to previous version)
         
         return expanded_count
     
@@ -406,35 +378,10 @@ class UserInterface:
                 idx = int(choice) - 1
                 expansion = suggestions[idx]['expansion']
             
-            # Don't modify the document, just record the selection as a training example
-            # Record the decision without modifying the original document
+            # Determine source and confidence
             source = "custom" if choice == "c" else suggestions[int(choice)-1]['source']
             confidence = 1.0 if choice == "c" else suggestions[int(choice)-1]['confidence']
             
-<<<<<<< HEAD
-            if success:
-                expanded_count += 1
-                
-                # Record the decision using normalized form as the key
-                source = "custom" if choice == "c" else suggestions[int(choice)-1]['source']
-                confidence = 1.0 if choice == "c" else suggestions[int(choice)-1]['confidence']
-                
-                # Get element text for display
-                element_text = abbr.abbr_element.text_content() if hasattr(abbr.abbr_element, 'text_content') else "Unknown"
-                key = abbr.normalized_form or element_text
-                
-                self.user_decisions[key] = {
-                    'expansion': expansion,
-                    'xpath': abbr.xpath,
-                    'element_type': abbr.abbr_element.tag.split('}')[-1] if '}' in abbr.abbr_element.tag else abbr.abbr_element.tag,
-                    'source': source,
-                    'confidence': confidence
-                }
-                
-                console.print(f"[green]Added expansion: {expansion}[/green]")
-            else:
-                console.print("[red]Failed to add expansion[/red]")
-=======
             self.user_decisions[abbr.abbr_text] = {
                 'expansion': expansion,
                 'context_before': abbr.context_before,
@@ -446,11 +393,9 @@ class UserInterface:
                 'metadata': abbr.metadata
             }
             
-            # Just increment the counter without actually modifying the document
             expanded_count += 1
             
             console.print(f"[green]Recorded expansion: {expansion} (original document unchanged)[/green]")
->>>>>>> fcb6d5e (revert to previous version)
         
         return expanded_count
     
@@ -639,7 +584,7 @@ class UserInterface:
         
         table.add_row("Total Suggestions Generated", str(sugg_stats['total_suggestions']))
         table.add_row("Dictionary Matches", str(sugg_stats['dictionary_matches']))
-        table.add_row("Pattern Matches", str(sugg_stats['pattern_matches']))
+        table.add_row("Pattern Matches", str(sugg_stats.get('pattern_matches', 0)))
         table.add_row("WordNet Suggestions", str(sugg_stats['wordnet_suggestions']))
         table.add_row("Language Model Suggestions", str(sugg_stats['lm_suggestions']))
         table.add_row("Failed Abbreviations", str(sugg_stats['failed_abbreviations']))
