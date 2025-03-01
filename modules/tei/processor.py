@@ -205,12 +205,28 @@ class TEIProcessor:
         """
         Get the text content of an element including all child text.
         This preserves ordering of text and is only used for metadata extraction.
+        Uses a non-recursive approach to avoid maximum recursion depth issues.
         """
         if element is None:
             return ''
         
-        # Use lxml's built-in text_content() method which recursively gets all text
-        return element.text_content().strip()
+        try:
+            # First try using lxml's xpath method which is most efficient
+            return element.xpath('string(.)').strip()
+        except (AttributeError, TypeError):
+            text_parts = []
+            
+            if element.text:
+                text_parts.append(element.text)
+                
+            for child in element.iter():
+                if child != element:  
+                    if child.text:    
+                        text_parts.append(child.text)
+                    if child.tail:    
+                        text_parts.append(child.tail)
+            
+            return ' '.join(text_parts).strip()
     
     def _get_xpath(self, element: etree.Element) -> str:
         """
@@ -421,10 +437,10 @@ class TEIProcessor:
         """
         if not self.use_normalization:
             # Just return the text content if not normalizing
-            return abbr_el.text_content()
+            return self._get_element_text_content(abbr_el)
         
         # Get the raw text content
-        text = abbr_el.text_content()
+        text = self._get_element_text_content(abbr_el)
         
         # Apply Unicode normalization 
         try:
@@ -469,7 +485,7 @@ class TEIProcessor:
             return "q$"
         
         # Unknown <g> type, return as is
-        return g_el.text_content()
+        return self._get_element_text_content(g_el)
     
     def _normalize_am_element(self, am_el: etree.Element) -> str:
         """
@@ -488,7 +504,7 @@ class TEIProcessor:
             return self._normalize_g_element(g_elements[0])
         
         # If no <g> elements, use the text content
-        text = am_el.text_content()
+        text = self._get_element_text_content(am_el)
         
         # Basic normalization on the text content
         return self._basic_normalize_text(text)
