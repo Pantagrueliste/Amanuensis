@@ -37,9 +37,9 @@ def setup_logging(level=logging.INFO, log_dir="logs"):
         '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
     
-    # Console handler
+    # Console handler - set to WARNING to hide INFO messages on the console
     console_handler = logging.StreamHandler()
-    console_handler.setLevel(level)
+    console_handler.setLevel(logging.WARNING)
     console_handler.setFormatter(console_formatter)
     
     # File handler for general logs

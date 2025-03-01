@@ -51,6 +51,22 @@ class GPTSuggestions:
             self.mistral_model = config.get('language_model_integration.mistral', 'model_name', 'mistral-medium')
             self.mistral_api_base = config.get('language_model_integration.mistral', 'api_base', 'https://api.mistral.ai/v1')
 
+    def get_expansions(self, word: str, context_before: str = "", context_after: str = "", metadata: Dict[str, Any] = None) -> List[str]:
+        """
+        Generate expansion suggestions for an abbreviation using the configured LLM provider.
+        This is the method called by the suggestion_generator.
+        
+        Args:
+            word: The abbreviated text
+            context_before: Text before the abbreviation
+            context_after: Text after the abbreviation
+            metadata: Additional information about the abbreviation
+            
+        Returns:
+            List of suggested expansions
+        """
+        return self.get_suggestions(word, context_before, context_after, metadata)
+        
     def get_suggestions(self, word: str, context_before: str = "", context_after: str = "", metadata: Dict[str, Any] = None) -> List[str]:
         """
         Generate suggestions for an abbreviation using the configured LLM provider.

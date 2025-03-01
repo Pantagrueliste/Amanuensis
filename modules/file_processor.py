@@ -35,6 +35,8 @@ class AbbreviationInfo:
     file_path: str
     metadata: Dict[str, Any]
     normalized_form: Optional[str] = None  # Normalized form for dictionary lookup
+    context_before: str = ""     # Text context before the abbreviation
+    context_after: str = ""      # Text context after the abbreviation
     
 
 class TEIProcessor:
@@ -62,9 +64,9 @@ class TEIProcessor:
         self.g_abbr_xpath = '//tei:g[@ref="char:cmbAbbrStroke" or @ref="char:abque"][not(ancestor::tei:expan)]'
         self.am_abbr_xpath = '//tei:am[not(ancestor::tei:expan)]'
         
-        # Output structure settings
-        self.use_choice_tags = config.get('xml_processing', 'use_choice_tags', True)
-        self.add_xml_ids = config.get('xml_processing', 'add_xml_ids', True)
+        # Context extraction settings
+        self.context_words_before = config.get('xml_processing', 'context_words_before', 5)
+        self.context_words_after = config.get('xml_processing', 'context_words_after', 5)
         
         # Normalization settings for dictionary lookup
         self.use_normalization = config.get('settings', 'normalize_abbreviations', True)
@@ -220,6 +222,75 @@ class TEIProcessor:
                 if child.tail:
                     text += child.tail
             return text.strip()
+            
+    def _extract_word_context(self, element: etree.Element) -> Tuple[str, str]:
+        """
+        Extract word context before and after an abbreviation element.
+        
+        Args:
+            element: The abbreviation element
+            
+        Returns:
+            Tuple containing:
+            - Text context before the abbreviation (number of words defined in config)
+            - Text context after the abbreviation (number of words defined in config)
+        """
+        parent = element.getparent()
+        if parent is None:
+            return "", ""
+            
+        # Get the full text of the parent element
+        parent_text = self._get_element_text_content(parent)
+        
+        # Get the text of the abbreviation element
+        abbr_text = self._get_element_text_content(element)
+        
+        # Try to find the position of the abbreviation in the parent text
+        try:
+            # Use a more complex approach to handle cases where the element's text appears multiple times
+            # or where there's complex nesting
+            
+            # Get the entire subtree as XML string
+            parent_xml = etree.tostring(parent, encoding='unicode')
+            elem_xml = etree.tostring(element, encoding='unicode')
+            
+            # Find position of element XML within parent XML
+            pos = parent_xml.find(elem_xml)
+            if pos < 0:
+                # If can't find exact XML, fallback to simple text search
+                pos = parent_text.find(abbr_text)
+                
+            if pos < 0:
+                # If still can't find, try to get an approximation
+                for ancestor in element.iterancestors():
+                    ancestor_text = self._get_element_text_content(ancestor)
+                    
+                    # If we found a larger context with the text
+                    if abbr_text in ancestor_text:
+                        parent_text = ancestor_text
+                        pos = parent_text.find(abbr_text)
+                        break
+                
+                # If still can't find, return empty context
+                if pos < 0:
+                    return "", ""
+            
+            # Extract context before the abbreviation
+            before_text = parent_text[:pos].strip()
+            words_before = before_text.split()
+            context_before = " ".join(words_before[-self.context_words_before:]) if words_before else ""
+            
+            # Extract context after the abbreviation
+            after_pos = pos + len(abbr_text)
+            after_text = parent_text[after_pos:].strip()
+            words_after = after_text.split()
+            context_after = " ".join(words_after[:self.context_words_after]) if words_after else ""
+            
+            return context_before, context_after
+            
+        except Exception as e:
+            self.logger.error(f"Error extracting context: {e}")
+            return "", ""
     
     def _get_xpath(self, element: etree.Element) -> str:
         """
@@ -326,6 +397,9 @@ class TEIProcessor:
         
         # Create normalized form for dictionary lookup
         normalized_form = self._normalize_abbr_element(abbr_el)
+        
+        # Extract context around the abbreviation
+        context_before, context_after = self._extract_word_context(abbr_el)
             
         return AbbreviationInfo(
             abbr_element=abbr_el,
@@ -334,7 +408,9 @@ class TEIProcessor:
             xpath=xpath,
             file_path=str(file_path),
             metadata=metadata,
-            normalized_form=normalized_form
+            normalized_form=normalized_form,
+            context_before=context_before,
+            context_after=context_after
         )
     
     def _process_g_element(self, g_el: etree.Element, file_path: str, metadata: Dict[str, Any]) -> Optional[AbbreviationInfo]:
@@ -369,6 +445,9 @@ class TEIProcessor:
         
         # Create normalized form for dictionary lookup
         normalized_form = self._normalize_g_element(g_el)
+        
+        # Extract context around the abbreviation
+        context_before, context_after = self._extract_word_context(g_el)
             
         return AbbreviationInfo(
             abbr_element=g_el,
@@ -377,7 +456,9 @@ class TEIProcessor:
             xpath=xpath,
             file_path=str(file_path),
             metadata=metadata,
-            normalized_form=normalized_form
+            normalized_form=normalized_form,
+            context_before=context_before,
+            context_after=context_after
         )
     
     def _process_am_element(self, am_el: etree.Element, file_path: str, metadata: Dict[str, Any]) -> Optional[AbbreviationInfo]:
@@ -406,6 +487,9 @@ class TEIProcessor:
         
         # Create normalized form for dictionary lookup
         normalized_form = self._normalize_am_element(am_el)
+        
+        # Extract context around the abbreviation
+        context_before, context_after = self._extract_word_context(am_el)
             
         return AbbreviationInfo(
             abbr_element=am_el,
@@ -414,7 +498,9 @@ class TEIProcessor:
             xpath=xpath,
             file_path=str(file_path),
             metadata=metadata,
-            normalized_form=normalized_form
+            normalized_form=normalized_form,
+            context_before=context_before,
+            context_after=context_after
         )
     
     def _normalize_abbr_element(self, abbr_el: etree.Element) -> str:
@@ -535,384 +621,6 @@ class TEIProcessor:
         
         return normalized
     
-    def add_expansion(self, abbr_info: AbbreviationInfo, expansion: str) -> bool:
-        """
-        Add an expansion to an abbreviation element, preserving XML structure.
-        
-        Args:
-            abbr_info: Information about the abbreviation
-            expansion: The expansion text to add
-            
-        Returns:
-            True if successful, False otherwise
-        """
-        try:
-            abbr_element = abbr_info.abbr_element
-            parent = abbr_info.parent_element
-            
-            if parent is None:
-                self.logger.error("Cannot add expansion: parent element is None")
-                return False
-            
-            # Different handling based on element type
-            element_type = abbr_element.tag.split('}')[-1] if '}' in abbr_element.tag else abbr_element.tag
-            
-            if element_type == 'abbr':
-                # Standard <abbr> element
-                return self._add_expansion_to_abbr(abbr_element, parent, expansion, abbr_info.abbr_id)
-            
-            elif element_type == 'g':
-                # Special <g> abbreviation marker
-                return self._add_expansion_to_g(abbr_element, parent, expansion, abbr_info.abbr_id)
-            
-            elif element_type == 'am':
-                # <am> abbreviation marker
-                return self._add_expansion_to_am(abbr_element, parent, expansion, abbr_info.abbr_id)
-            
-            else:
-                self.logger.error(f"Unknown abbreviation element type: {element_type}")
-                return False
-                
-        except Exception as e:
-            self.logger.error(f"Error adding expansion: {e}")
-            return False
-    
-    def _add_expansion_to_abbr(self, abbr_el: etree.Element, parent: etree.Element, 
-                               expansion: str, abbr_id: Optional[str]) -> bool:
-        """Add expansion to a standard <abbr> element."""
-        
-        # Check if parent is already a <choice> element
-        if parent.tag.endswith('choice'):
-            # Look for existing <expan> sibling
-            for child in parent:
-                if child.tag.endswith('expan'):
-                    # Update existing expansion
-                    child.text = expansion
-                    return True
-            
-            # No <expan> found, create new one
-            expan = self._create_expansion_element(expansion, abbr_id)
-            parent.append(expan)
-            return True
-            
-        elif self.use_choice_tags:
-            # Create a new <choice> structure
-            choice = self._create_element('choice')
-            
-            # Find position of abbr in parent
-            abbr_index = -1
-            for i, child in enumerate(parent):
-                if child == abbr_el:
-                    abbr_index = i
-                    break
-                    
-            if abbr_index == -1:
-                self.logger.error("Cannot find abbr element within parent")
-                return False
-            
-            # Create expansion element
-            expan = self._create_expansion_element(expansion, abbr_id)
-            
-            # Remove abbr from parent and add to choice
-            parent.remove(abbr_el)
-            choice.append(abbr_el)
-            choice.append(expan)
-            
-            # Insert choice at the same position
-            parent.insert(abbr_index, choice)
-            return True
-            
-        else:
-            # Simple approach: just add <expan> after <abbr>
-            expan = self._create_expansion_element(expansion, abbr_id)
-            
-            # Find position of abbr in parent
-            abbr_index = -1
-            for i, child in enumerate(parent):
-                if child == abbr_el:
-                    abbr_index = i
-                    break
-                    
-            if abbr_index == -1:
-                self.logger.error("Cannot find abbr element within parent")
-                return False
-                
-            # Insert expan after abbr
-            parent.insert(abbr_index + 1, expan)
-            return True
-    
-    def _add_expansion_to_g(self, g_el: etree.Element, parent: etree.Element, 
-                           expansion: str, g_id: Optional[str]) -> bool:
-        """Add expansion to a <g> abbreviation element."""
-        
-        # Get the reference type to determine expansion approach
-        ref = g_el.get('ref', '')
-        
-        if ref == 'char:abque':
-            # This is the special 'que' abbreviation
-            # Create specialized structure following TEI conventions
-            if not parent.tag.endswith('am'):
-                # If not already in <am>, create one
-                am = self._create_element('am')
-                
-                # Find position of g_el in parent
-                g_index = -1
-                for i, child in enumerate(parent):
-                    if child == g_el:
-                        g_index = i
-                        break
-                
-                if g_index == -1:
-                    self.logger.error("Cannot find g element within parent")
-                    return False
-                
-                # Remove g from parent and add to am
-                parent.remove(g_el)
-                am.append(g_el)
-                
-                # Create choice structure
-                choice = self._create_element('choice')
-                abbr = self._create_element('abbr')
-                abbr.append(am)
-                
-                # Create expan with ex
-                expan = self._create_element('expan')
-                am_copy = self._create_element('am')
-                am_copy.append(etree.fromstring(f'<g xmlns="{self.tei_ns}" ref="char:abque"/>'))
-                ex = self._create_element('ex')
-                ex.text = expansion
-                
-                expan.append(am_copy)
-                expan.append(ex)
-                
-                # Build the complete structure
-                choice.append(abbr)
-                choice.append(expan)
-                
-                # Insert choice where g was
-                parent.insert(g_index, choice)
-                return True
-                
-            else:
-                # Already inside <am>, create standard pattern
-                am_parent = parent.getparent()
-                if am_parent is None:
-                    self.logger.error("AM element has no parent")
-                    return False
-                
-                if am_parent.tag.endswith('abbr'):
-                    # Good structure - create matching expan
-                    abbr_parent = am_parent.getparent()
-                    if abbr_parent is None:
-                        self.logger.error("ABBR element has no parent")
-                        return False
-                        
-                    if abbr_parent.tag.endswith('choice'):
-                        # Already in choice - add/update expan
-                        for child in abbr_parent:
-                            if child.tag.endswith('expan'):
-                                # Update existing expan
-                                child.clear()
-                                am_copy = self._create_element('am')
-                                am_copy.append(etree.fromstring(f'<g xmlns="{self.tei_ns}" ref="char:abque"/>'))
-                                ex = self._create_element('ex')
-                                ex.text = expansion
-                                child.append(am_copy)
-                                child.append(ex)
-                                return True
-                        
-                        # No expan found, create new one
-                        expan = self._create_element('expan')
-                        am_copy = self._create_element('am')
-                        am_copy.append(etree.fromstring(f'<g xmlns="{self.tei_ns}" ref="char:abque"/>'))
-                        ex = self._create_element('ex')
-                        ex.text = expansion
-                        expan.append(am_copy)
-                        expan.append(ex)
-                        abbr_parent.append(expan)
-                        return True
-                    else:
-                        # Need to create choice
-                        choice = self._create_element('choice')
-                        expan = self._create_element('expan')
-                        am_copy = self._create_element('am')
-                        am_copy.append(etree.fromstring(f'<g xmlns="{self.tei_ns}" ref="char:abque"/>'))
-                        ex = self._create_element('ex')
-                        ex.text = expansion
-                        expan.append(am_copy)
-                        expan.append(ex)
-                        
-                        # Find position of abbr in parent
-                        abbr_index = -1
-                        for i, child in enumerate(abbr_parent):
-                            if child == am_parent:
-                                abbr_index = i
-                                break
-                                
-                        if abbr_index == -1:
-                            self.logger.error("Cannot find abbr element within parent")
-                            return False
-                            
-                        # Remove abbr and add to choice with expan
-                        abbr_parent.remove(am_parent)
-                        choice.append(am_parent)
-                        choice.append(expan)
-                        
-                        # Insert choice where abbr was
-                        abbr_parent.insert(abbr_index, choice)
-                        return True
-                else:
-                    # Unusual structure - add simple expansion
-                    expan = self._create_expansion_element(expansion, g_id)
-                    am_parent.append(expan)
-                    return True
-        
-        elif ref == 'char:cmbAbbrStroke':
-            # Combining macron
-            # Create a simplified expansion that doesn't try to reproduce the complex TEI structure
-            expan = self._create_expansion_element(expansion, g_id)
-            
-            # Find position of g in parent
-            g_index = -1
-            for i, child in enumerate(parent):
-                if child == g_el:
-                    g_index = i
-                    break
-                    
-            if g_index == -1:
-                self.logger.error("Cannot find g element within parent")
-                return False
-                
-            # Insert expan after g
-            parent.insert(g_index + 1, expan)
-            return True
-            
-        else:
-            # Unknown g type - use simple expansion
-            expan = self._create_expansion_element(expansion, g_id)
-            
-            # Find position of g in parent
-            g_index = -1
-            for i, child in enumerate(parent):
-                if child == g_el:
-                    g_index = i
-                    break
-                    
-            if g_index == -1:
-                self.logger.error("Cannot find g element within parent")
-                return False
-                
-            # Insert expan after g
-            parent.insert(g_index + 1, expan)
-            return True
-    
-    def _add_expansion_to_am(self, am_el: etree.Element, parent: etree.Element, 
-                            expansion: str, am_id: Optional[str]) -> bool:
-        """Add expansion to an <am> abbreviation marker element."""
-        
-        # Check if parent is <abbr>
-        if parent.tag.endswith('abbr'):
-            abbr_parent = parent.getparent()
-            if abbr_parent is None:
-                self.logger.error("ABBR parent is None")
-                return False
-                
-            if abbr_parent.tag.endswith('choice'):
-                # Already in choice structure, add/update expan
-                for child in abbr_parent:
-                    if child.tag.endswith('expan'):
-                        # Update existing expan
-                        child.clear()
-                        am_copy = etree.fromstring(etree.tostring(am_el))
-                        ex = self._create_element('ex')
-                        ex.text = expansion
-                        child.append(am_copy)
-                        child.append(ex)
-                        return True
-                
-                # No expan found, create new one
-                expan = self._create_element('expan')
-                am_copy = etree.fromstring(etree.tostring(am_el))
-                ex = self._create_element('ex')
-                ex.text = expansion
-                expan.append(am_copy)
-                expan.append(ex)
-                abbr_parent.append(expan)
-                return True
-            else:
-                # Need to create choice structure
-                choice = self._create_element('choice')
-                expan = self._create_element('expan')
-                am_copy = etree.fromstring(etree.tostring(am_el))
-                ex = self._create_element('ex')
-                ex.text = expansion
-                expan.append(am_copy)
-                expan.append(ex)
-                
-                # Find position of abbr in parent
-                abbr_index = -1
-                for i, child in enumerate(abbr_parent):
-                    if child == parent:
-                        abbr_index = i
-                        break
-                        
-                if abbr_index == -1:
-                    self.logger.error("Cannot find abbr element within parent")
-                    return False
-                    
-                # Remove abbr and add to choice with expan
-                abbr_parent.remove(parent)
-                choice.append(parent)
-                choice.append(expan)
-                
-                # Insert choice where abbr was
-                abbr_parent.insert(abbr_index, choice)
-                return True
-        else:
-            # Unusual structure - add simple expansion
-            expan = self._create_expansion_element(expansion, am_id)
-            
-            # Find position of am in parent
-            am_index = -1
-            for i, child in enumerate(parent):
-                if child == am_el:
-                    am_index = i
-                    break
-                    
-            if am_index == -1:
-                self.logger.error("Cannot find am element within parent")
-                return False
-                
-            # Insert expan after am
-            parent.insert(am_index + 1, expan)
-            return True
-    
-    def _create_expansion_element(self, expansion: str, abbr_id: Optional[str]) -> etree.Element:
-        """
-        Create a simple <expan> element.
-        
-        Args:
-            expansion: The expansion text
-            abbr_id: Optional ID of the corresponding abbreviation
-            
-        Returns:
-            New <expan> element
-        """
-        expan = self._create_element('expan')
-        expan.text = expansion
-        
-        # Add reference to abbr if it has an ID
-        if abbr_id and self.add_xml_ids:
-            expan.set('corresp', f"#{abbr_id}")
-        
-        # Optionally add an ID to the expan element
-        if self.add_xml_ids:
-            import uuid
-            expan_id = f"expan_{uuid.uuid4().hex[:8]}"
-            expan.set('{http://www.w3.org/XML/1998/namespace}id', expan_id)
-        
-        return expan
-    
     def _create_element(self, tag_name: str) -> etree.Element:
         """
         Create a new element with the TEI namespace.
@@ -925,37 +633,6 @@ class TEIProcessor:
         """
         return etree.Element(f"{{{self.tei_ns}}}{tag_name}")
     
-    def save_document(self, tree: etree.ElementTree, output_path: Union[str, Path]) -> bool:
-        """
-        Save the modified TEI document.
-        
-        Args:
-            tree: XML tree object
-            output_path: Path to save document to
-            
-        Returns:
-            True if successful, False otherwise
-        """
-        try:
-            # Create output directory if it doesn't exist
-            output_dir = os.path.dirname(str(output_path))
-            os.makedirs(output_dir, exist_ok=True)
-            
-            # Write the tree with proper formatting
-            tree.write(
-                str(output_path), 
-                pretty_print=True, 
-                encoding='utf-8', 
-                xml_declaration=True
-            )
-            
-            self.logger.info(f"Saved document to {output_path}")
-            return True
-            
-        except Exception as e:
-            self.logger.error(f"Error saving document to {output_path}: {e}")
-            return False
-    
     def get_statistics(self) -> Dict[str, int]:
         """
         Get processing statistics.
@@ -964,23 +641,3 @@ class TEIProcessor:
             Dictionary of statistics
         """
         return self.stats
-    
-    def is_valid_tei(self, file_path: Union[str, Path]) -> bool:
-        """
-        Check if a file is a valid TEI XML document.
-        
-        Args:
-            file_path: Path to the file to check
-            
-        Returns:
-            True if it's a valid TEI document
-        """
-        try:
-            tree = etree.parse(str(file_path))
-            root = tree.getroot()
-            # Check if it has the TEI namespace
-            root_tag = root.tag
-            return '{http://www.tei-c.org/ns/1.0}' in root_tag
-        except Exception as e:
-            self.logger.error(f"File is not valid TEI: {e}")
-            return False

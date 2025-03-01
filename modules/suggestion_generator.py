@@ -2,12 +2,10 @@ import logging
 import re
 import os
 import json
-import importlib.resources
-from typing import List, Dict, Any, Optional, Tuple, Union
+from typing import List, Dict, Any, Optional
 from pathlib import Path
-import random
 
-# Try to import NLTK for advanced NLP
+# Attempt to import NLTK and its WordNet corpus for advanced natural language processing.
 try:
     import nltk
     from nltk.corpus import wordnet
@@ -16,23 +14,39 @@ except ImportError:
     NLTK_AVAILABLE = False
     logging.warning("NLTK not available. Some suggestion features will be limited.")
 
-
 class SuggestionGenerator:
     """
-    Generates expansion suggestions for abbreviations using various methods.
-    """
+    SuggestionGenerator produces expansion suggestions for abbreviations using a combination of sources.
     
+    Processing steps:
+      1. Legacy dictionary lookup (from user and machine solution JSON files).
+      2. Fixed regex pattern expansion based on document language.
+      3. WordNet-based suggestions (for single-letter abbreviations) if no suggestions are found.
+      4. Language model-based suggestions as a fallback.
+      
+    The document language is assumed to be set by another component (via the TI header) and is 
+    available in the configuration. This value drives which regex patterns are applied.
+    
+    Custom expansions are recorded in the legacy dictionary (user_solution.json) using the same format.
+    """
+
     def __init__(self, config):
         """
         Initialize the suggestion generator with configuration.
         
         Args:
-            config: Configuration object with suggestion settings
+            config: A configuration object with settings, including:
+                - settings: General settings (e.g. language, use_wordnet flag).
+                - document: Document metadata (e.g. language from the TI header).
+                - data: Paths for legacy dictionaries.
+                - language_model_integration: Settings for language model integration.
+        
+        Sets up internal state, loads dictionaries, and selects regex patterns based on document language.
         """
         self.logger = logging.getLogger(__name__)
         self.config = config
-        
-        # Statistics
+
+        # Statistics for tracking processing details.
         self.stats = {
             'total_suggestions': 0,
             'dictionary_matches': 0,
@@ -40,41 +54,55 @@ class SuggestionGenerator:
             'wordnet_suggestions': 0,
             'lm_suggestions': 0,
             'failed_abbreviations': 0,
-            'fallback_dictionary_used': False  # Track if fallback dictionary was used
+            'fallback_dictionary_used': False
         }
-        
-        # Load settings
+
+        # General settings.
         self.language = config.get('settings', 'language', 'eng')
+        # Document language retrieved from the TI header.
+        self.document_language = config.get('document', 'language', 'latin')
         self.use_wordnet = config.get('settings', 'use_wordnet', True) and NLTK_AVAILABLE
-        
-        # Load language model settings
+
+        # Language model integration settings.
         self.lm_enabled = config.get('language_model_integration', 'enabled', False)
         self.lm_provider = config.get('language_model_integration', 'provider', 'openai')
         self.lm_model = config.get('language_model_integration', 'model_name', 'gpt-4')
         self.suggestion_count = config.get('language_model_integration', 'suggestion_count', 3)
-        
-        # Load legacy abbreviation dictionaries
+
+        # Load legacy abbreviation dictionaries.
         self._load_legacy_dictionaries()
-        
-        # Load common expansion patterns
-        self.common_expansions = self._load_common_expansions()
-        
-        # Confidence scores for different sources
+
+        # Load regex patterns based on document language.
+        self.common_expansions = self._load_common_expansions(self.document_language)
+
+        # Confidence scores for suggestion sources.
         self.confidence_scores = {
-            'dictionary': 0.9,
+            'dictionary': 0.8,
             'pattern': 0.4,
             'wordnet': 0.6,
             'language_model': 0.8,
             'rule_based': 0.5
         }
-        
+
     def _load_legacy_dictionaries(self) -> None:
         """
-        Load legacy dictionaries from the configured paths for machine and user solutions.
-        If a file isn’t available, the corresponding dictionary remains empty.
+        Load legacy abbreviation dictionaries from configured file paths.
+        These include the machine and user solution dictionaries.
+        Relative paths are made absolute using the configuration file's location or CWD.
         """
         machine_path = self.config.get('data', 'machine_solution_path', 'data/machine_solution.json')
         user_path = self.config.get('data', 'user_solution_path', 'data/user_solution.json')
+
+        # Store user dictionary path for potential persistence.
+        self._user_solution_path = user_path
+
+        if not os.path.isabs(machine_path):
+            config_dir = os.path.dirname(self.config.config_path) if hasattr(self.config, 'config_path') else os.getcwd()
+            machine_path = os.path.join(config_dir, machine_path)
+        if not os.path.isabs(user_path):
+            config_dir = os.path.dirname(self.config.config_path) if hasattr(self.config, 'config_path') else os.getcwd()
+            user_path = os.path.join(config_dir, user_path)
+
         self.machine_solution_dict = {}
         self.user_solution_dict = {}
 
@@ -95,66 +123,75 @@ class SuggestionGenerator:
                 self.logger.error(f"Error loading user solution dictionary: {e}")
         else:
             self.logger.info(f"User solution dictionary not found at {user_path}")
-    
-    def _load_common_expansions(self) -> Dict[str, List[str]]:
+
+    def _load_common_expansions(self, doc_language: str) -> Dict[str, List[str]]:
         """
-        Load common expansion patterns.
+        Load fixed regex expansion patterns based on the document language.
+        
+        Args:
+            doc_language: The language of the document (e.g. 'latin' or 'english').
         
         Returns:
-            Dictionary of pattern regex to expansion templates
+            A dictionary mapping regex patterns to expansion templates.
+        
+        For Latin documents, a new pattern is included to match an isolated 'q' with a marker
+        (e.g. normalized as "q$") that expands to "que".
         """
-        return {
-            # Dollar sign as medial n/m
-            r'(\w+)\$(\w+)': [r'\1n\2', r'\1m\2'],
-            
-            # Tilde as final n/m
-            r'(\w+)õ$': [r'\1on', r'\1om'],
-            r'(\w+)ã$': [r'\1an', r'\1am'],
-            r'(\w+)ẽ$': [r'\1en', r'\1em'],
-            
-            # Superscript abbreviations
-            r'(\w+)r$': [r'\1er', r'\1or'],
-            r'(\w+)d$': [r'\1ed'],
-            r'(\w+)t$': [r'\1th', r'\1et'],
-            
-            # Common Latin abbreviations
-            r'(\w+)b;$': [r'\1bus'],
-            r'(\w+)q;$': [r'\1que'],
-            r'(\w+)p;$': [r'\1pre']
-        }
-    
-    def generate_suggestions(self, 
-                             abbreviation: str, 
-                             context_before: str = '', 
+        if doc_language.lower() == 'latin':
+            return {
+                r'(\w+)b;$': [r'\1bus'],
+                r'(\w+)q;$': [r'\1que'],
+                r'(\w+)p;$': [r'\1pre'],
+                r'^q\$': ['que']  # Pattern for isolated q$ (normalized from q̄)
+            }
+        elif doc_language.lower() == 'english':
+            return {
+                r'\bDr\b': ['Doctor'],
+                r'\bMr\b': ['Mister'],
+                r'\bSt\b': ['Saint']
+            }
+        else:
+            self.logger.info(f"No specific regex patterns defined for language {doc_language}")
+            return {}
+
+    def generate_suggestions(self,
+                             abbreviation: str,
+                             context_before: str = '',
                              context_after: str = '',
                              metadata: Optional[Dict[str, Any]] = None,
                              normalized_abbr: Optional[str] = None) -> List[Dict[str, Any]]:
         """
-        Generate expansion suggestions for an abbreviation.
+        Generate expansion suggestions for an abbreviation following several steps:
+        
+          1. Legacy dictionary lookup (from user and machine dictionaries).
+          2. Fixed regex pattern expansion based on document language.
+          3. WordNet suggestions (for single-letter abbreviations) if no suggestions are found.
+          4. Language model suggestions (if enabled and still no suggestions).
         
         Args:
-            abbreviation: The abbreviation text or normalized form
-            context_before: Optional context before the abbreviation (may be empty with XML-based approach)
-            context_after: Optional context after the abbreviation (may be empty with XML-based approach)
-            metadata: Optional document metadata
-            normalized_abbr: Optional normalized form of the abbreviation (preferred over abbreviation)
-            
+            abbreviation: The abbreviation text (or its normalized form).
+            context_before: Text preceding the abbreviation.
+            context_after: Text following the abbreviation.
+            metadata: Optional metadata from the document.
+            normalized_abbr: Optionally pre-processed abbreviation.
+        
         Returns:
-            List of suggestions sorted by confidence
+            A sorted list of suggestion dictionaries with keys:
+              - expansion: The suggested expansion text.
+              - confidence: The confidence score.
+              - source: The originating source (e.g. dictionary, pattern, wordnet, language_model).
         """
-        if not abbreviation:
-            return []
-        
-        # Track attempts
         self.stats['total_suggestions'] += 1
-        
-        # Use normalized form if provided
+
         lookup_abbr = normalized_abbr if normalized_abbr else abbreviation
-        
-        # Initialize suggestions list
+        if not lookup_abbr and context_before:
+            lookup_abbr = context_before.split()[-1]
+        if not lookup_abbr:
+            return []
+
         suggestions = []
-        
-        # 1. Try legacy dictionary lookup
+
+        # 1. Legacy Dictionary Lookup.
         dict_suggestions = self._lookup_dictionary(lookup_abbr)
         for suggestion in dict_suggestions:
             suggestions.append({
@@ -162,11 +199,12 @@ class SuggestionGenerator:
                 'confidence': self.confidence_scores['dictionary'],
                 'source': 'dictionary'
             })
+        if dict_suggestions:
             self.stats['dictionary_matches'] += 1
-        
-        # 2. Try pattern-based expansions
-        pattern_suggestions = self._apply_patterns(lookup_abbr)
-        for suggestion in pattern_suggestions:
+
+        # 2. Fixed Regex Pattern Expansion.
+        regex_suggestions = self._apply_patterns(lookup_abbr)
+        for suggestion in regex_suggestions:
             if suggestion not in [s['expansion'] for s in suggestions]:
                 suggestions.append({
                     'expansion': suggestion,
@@ -174,9 +212,9 @@ class SuggestionGenerator:
                     'source': 'pattern'
                 })
                 self.stats['pattern_matches'] += 1
-                
-        # 3. Try WordNet for single letter abbreviations (if no matches yet)
-        if self.use_wordnet and not suggestions and len(lookup_abbr) == 1:
+
+        # 3. WordNet Suggestions (for single-letter abbreviations).
+        if not suggestions and self.use_wordnet and len(lookup_abbr) == 1:
             wordnet_expansions = self._get_wordnet_expansions(lookup_abbr, context_before, context_after)
             for expansion in wordnet_expansions:
                 suggestions.append({
@@ -186,9 +224,9 @@ class SuggestionGenerator:
                 })
             if wordnet_expansions:
                 self.stats['wordnet_suggestions'] += 1
-        
-        # 4. Optionally, try language model suggestions if enabled and no matches yet
-        if self.lm_enabled and not suggestions:
+
+        # 4. Language Model Suggestions.
+        if not suggestions and self.lm_enabled:
             lm_expansions = self._get_language_model_expansions(lookup_abbr, context_before, context_after, metadata)
             for expansion in lm_expansions:
                 suggestions.append({
@@ -198,47 +236,76 @@ class SuggestionGenerator:
                 })
             if lm_expansions:
                 self.stats['lm_suggestions'] += 1
-        
-        # Track failures
+
         if not suggestions:
             self.stats['failed_abbreviations'] += 1
-            
-        # Sort by confidence (highest first)
+
         return sorted(suggestions, key=lambda x: x['confidence'], reverse=True)
-    
+
     def _lookup_dictionary(self, abbreviation: str) -> List[str]:
         """
-        Look up an abbreviation in the legacy dictionaries.
-        Checks both machine and user dictionaries.
+        Look up an abbreviation in the legacy dictionaries (user and machine).
+        
+        The lookup process:
+          - Exact match in the user dictionary.
+          - Exact match in the machine dictionary.
+          - Case-insensitive matching if no exact match is found.
+        
+        Dictionary entries are normalized to lists to prevent iteration over individual characters.
+        
+        Returns:
+            A list of expansion strings.
         """
         suggestions = []
-        # Check machine solution dictionary
-        if abbreviation in self.machine_solution_dict:
-            suggestions.extend(self.machine_solution_dict[abbreviation])
-        else:
-            for abbr, expansions in self.machine_solution_dict.items():
-                if abbr.lower() == abbreviation.lower():
-                    suggestions.extend(expansions)
-                    break
-        # Check user solution dictionary
+        if not abbreviation:
+            return []
+
+        def normalize_entry(entry):
+            if isinstance(entry, str):
+                return [entry]
+            elif isinstance(entry, list):
+                return entry
+            return []
+
         if abbreviation in self.user_solution_dict:
-            suggestions.extend(self.user_solution_dict[abbreviation])
-        else:
+            user_expansions = normalize_entry(self.user_solution_dict[abbreviation])
+            for expansion in user_expansions:
+                if isinstance(expansion, str) and len(expansion) > 1:
+                    suggestions.append(expansion)
+                else:
+                    self.logger.warning(f"Skipping single character expansion '{expansion}' for '{abbreviation}' from user dictionary")
+
+        if abbreviation in self.machine_solution_dict:
+            machine_expansions = normalize_entry(self.machine_solution_dict[abbreviation])
+            for expansion in machine_expansions:
+                if isinstance(expansion, str) and len(expansion) > 1:
+                    if expansion not in suggestions:
+                        suggestions.append(expansion)
+                else:
+                    self.logger.warning(f"Skipping single character expansion '{expansion}' for '{abbreviation}' from machine dictionary")
+
+        if not suggestions:
             for abbr, expansions in self.user_solution_dict.items():
                 if abbr.lower() == abbreviation.lower():
-                    suggestions.extend(expansions)
+                    valid_expansions = [exp for exp in normalize_entry(expansions) if len(exp) > 1]
+                    suggestions.extend(valid_expansions)
                     break
+
+        if not suggestions:
+            for abbr, expansions in self.machine_solution_dict.items():
+                if abbr.lower() == abbreviation.lower():
+                    valid_expansions = [exp for exp in normalize_entry(expansions) if len(exp) > 1]
+                    suggestions.extend(valid_expansions)
+                    break
+
         return suggestions
-    
+
     def _apply_patterns(self, abbreviation: str) -> List[str]:
         """
-        Apply expansion patterns to an abbreviation.
+        Apply fixed regex expansion patterns to an abbreviation.
         
-        Args:
-            abbreviation: Abbreviated text
-            
         Returns:
-            List of expansions based on patterns
+            A list of expansion strings obtained via regex substitution.
         """
         expansions = []
         for pattern, templates in self.common_expansions.items():
@@ -251,23 +318,19 @@ class SuggestionGenerator:
                     except Exception as e:
                         self.logger.warning(f"Error applying pattern {pattern} to {abbreviation}: {e}")
         return expansions
-    
+
     def _get_wordnet_expansions(self, abbr: str, context_before: str, context_after: str) -> List[str]:
         """
-        Look up an abbreviation using WordNet suggestions for single-letter abbreviations.
+        Use WordNet to generate expansion suggestions for a single-letter abbreviation.
         
-        Args:
-            abbr: The abbreviated form
-            context_before: Text before the abbreviation
-            context_after: Text after the abbreviation
-            
         Returns:
-            List of possible expansions based on WordNet
+            Up to three unique suggestions from WordNet.
         """
         try:
             letter = abbr[0].lower()
             expansions = []
-            for synset in wordnet.all_synsets('n')[:100]:
+            synsets = list(wordnet.all_synsets('n'))[:100]
+            for synset in synsets:
                 lemma_names = synset.lemma_names()
                 for name in lemma_names:
                     if name.startswith(letter) and len(name) > 2:
@@ -276,59 +339,133 @@ class SuggestionGenerator:
         except Exception as e:
             self.logger.error(f"Error getting WordNet expansions: {e}")
             return []
-    
-    def _get_language_model_expansions(self, abbr: str, context_before: str, context_after: str, metadata: Optional[Dict[str, Any]] = None) -> List[str]:
+
+    def _get_language_model_expansions(self, abbr: str, context_before: str, context_after: str,
+                                        metadata: Optional[Dict[str, Any]] = None) -> List[str]:
         """
-        Use language model to suggest expansions.
+        Generate expansion suggestions using an external language model.
         
-        Args:
-            abbr: The abbreviated form
-            context_before: Text before the abbreviation
-            context_after: Text after the abbreviation
-            metadata: Optional metadata about the source
-            
         Returns:
-            List of possible expansions based on language model
+            A list of expansion strings from the language model or a fallback.
         """
         if not self.lm_enabled:
             return []
-        # Mock implementation for testing purposes
+
         try:
-            mock_responses = {
-                "co$cerning": ["concerning"],
-                "lear$ed": ["learned"],
-                "motiõ": ["motion"],
-                "substa$tial": ["substantial"],
-                "iudgme$t": ["iudgment", "judgement"],
-                "argume$ts": ["arguments"],
-                "co$sider": ["consider"],
-                "demo$strated": ["demonstrated"],
-                "mai$tained": ["maintained"],
-            }
-            if abbr in mock_responses:
-                return mock_responses[abbr]
-            return [abbr.replace('$', 'n').replace('õ', 'on')]
-        except Exception as e:
-            self.logger.error(f"Error querying language model: {e}")
-            return []
-    
+            from .gpt_suggestions import GPTSuggestions
+            lm_provider = GPTSuggestions(self.config)
+            return lm_provider.get_expansions(abbr, context_before, context_after, metadata)
+        except ImportError:
+            try:
+                mock_responses = {
+                    "co$cerning": ["concerning"],
+                    "lear$ed": ["learned"],
+                    "motiõ": ["motion"],
+                    "substa$tial": ["substantial"],
+                    "iudgme$t": ["judgment", "judgement"],
+                    "argume$ts": ["arguments"],
+                    "co$sider": ["consider"],
+                    "demo$strated": ["demonstrated"],
+                    "mai$tained": ["maintained"],
+                    "❧": ["pilcrow"],
+                    "Kingis": ["King's"],
+                    "Maieſteis": ["Majesty's"],
+                    "beiring": ["bearing"],
+                    "incu$ming": ["incoming"],
+                    "Inglis": ["English"],
+                    "heines": ["highness"],
+                    "thair": ["their"],
+                    "gude": ["good"],
+                    "Intreatment": ["treatment"],
+                    "freindly": ["friendly"],
+                    "vſage": ["usage"],
+                    "abbreviated$word": ["abbreviatedword"],
+                    "preſervatiou$": ["preservation"],
+                    "sta$ding": ["standing"],
+                    "gra$tit": ["granted"],
+                    "conditiou$": ["condition"],
+                    "obedie$ce": ["obedience"]
+                }
+                if abbr in mock_responses:
+                    return mock_responses[abbr]
+                elif abbr and '$' in abbr:
+                    return [abbr.replace('$', 'n')]
+                elif abbr and 'õ' in abbr:
+                    return [abbr.replace('õ', 'on')]
+                elif abbr:
+                    return [abbr]
+                else:
+                    return []
+            except Exception as e:
+                self.logger.error(f"Error with language model mock response: {e}")
+                return []
+
     def rank_suggestions(self, suggestions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
-        Rank suggestions by confidence score.
+        Rank the suggestions by confidence in descending order.
         
-        Args:
-            suggestions: List of suggestion dictionaries
-            
         Returns:
-            Ranked list of suggestions
+            The sorted list of suggestion dictionaries.
         """
         return sorted(suggestions, key=lambda x: x['confidence'], reverse=True)
-    
+
     def get_statistics(self) -> Dict[str, int]:
         """
-        Get statistics about suggestion generation.
+        Retrieve statistics about the suggestion generation process.
         
         Returns:
-            Dictionary of statistics
+            A dictionary of statistical counts.
         """
         return self.stats
+
+    def add_custom_expansion(self, abbreviation: str, custom_expansion: str) -> None:
+        """
+        Record a custom expansion for a given abbreviation in the user legacy dictionary.
+        
+        The custom expansion is added following the same format as in the usersolution.json.
+        Future lookups for the abbreviation will then include this custom expansion.
+        
+        Args:
+            abbreviation: The abbreviation to update.
+            custom_expansion: The custom expansion string provided by the user.
+        
+        Notes:
+            - Expansions shorter than 2 characters are ignored.
+            - Optionally, the application can call save_user_dictionary() after this to persist the change.
+        """
+        if len(custom_expansion) <= 1:
+            self.logger.warning("Custom expansion must be longer than one character")
+            return
+
+        def normalize_entry(entry):
+            if isinstance(entry, str):
+                return [entry]
+            elif isinstance(entry, list):
+                return entry
+            return []
+
+        if abbreviation in self.user_solution_dict:
+            current_entries = normalize_entry(self.user_solution_dict[abbreviation])
+            if custom_expansion not in current_entries:
+                current_entries.append(custom_expansion)
+            self.user_solution_dict[abbreviation] = current_entries
+        else:
+            self.user_solution_dict[abbreviation] = [custom_expansion]
+
+        self.logger.info(f"Added custom expansion '{custom_expansion}' for abbreviation '{abbreviation}'")
+
+    def save_user_dictionary(self) -> None:
+        """
+        Persist the updated user legacy dictionary to disk.
+        
+        This method writes the current in-memory user_solution_dict to the file specified in the configuration.
+        """
+        if hasattr(self, "_user_solution_path"):
+            try:
+                with open(self._user_solution_path, 'w', encoding='utf-8') as f:
+                    json.dump(self.user_solution_dict, f, ensure_ascii=False, indent=4)
+                self.logger.info(f"User dictionary saved to {self._user_solution_path}")
+            except Exception as e:
+                self.logger.error(f"Error saving user dictionary: {e}")
+        else:
+            self.logger.error("User dictionary path is not set; cannot save dictionary.")
