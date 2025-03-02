@@ -24,7 +24,7 @@ class SuggestionGenerator:
       3. WordNet-based suggestions (for single-letter abbreviations) if no suggestions are found.
       4. Language model-based suggestions as a fallback.
       
-    The document language is assumed to be set by another component (via the TI header) and is 
+    The document language is assumed to be set by another component (via the TEI header) and is 
     available in the configuration. This value drives which regex patterns are applied.
     
     Custom expansions are recorded in the legacy dictionary (user_solution.json) using the same format.
@@ -37,7 +37,7 @@ class SuggestionGenerator:
         Args:
             config: A configuration object with settings, including:
                 - settings: General settings (e.g. language, use_wordnet flag).
-                - document: Document metadata (e.g. language from the TI header).
+                - document: Document metadata (e.g. language from the TEI header).
                 - data: Paths for legacy dictionaries.
                 - language_model_integration: Settings for language model integration.
         
@@ -59,7 +59,7 @@ class SuggestionGenerator:
 
         # General settings.
         self.language = config.get('settings', 'language', 'eng')
-        # Document language retrieved from the TI header.
+        # Document language retrieved from the TEI header.
         self.document_language = config.get('document', 'language', 'latin')
         self.use_wordnet = config.get('settings', 'use_wordnet', True) and NLTK_AVAILABLE
 
@@ -355,7 +355,8 @@ class SuggestionGenerator:
             from .gpt_suggestions import GPTSuggestions
             lm_provider = GPTSuggestions(self.config)
             return lm_provider.get_expansions(abbr, context_before, context_after, metadata)
-        except ImportError:
+        except Exception as e:
+            self.logger.error(f"Error obtaining LM expansions: {e}")
             try:
                 mock_responses = {
                     "co$cerning": ["concerning"],
