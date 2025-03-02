@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Amanuensis 2.0 - Early Modern Abbreviation Expansion System
 
@@ -11,6 +12,9 @@ Features:
 - Dataset creation for training language models
 - Rich command-line interface with configuration options
 """
+
+from dotenv import load_dotenv
+load_dotenv()  # Load environment variables from .env before any other imports
 
 import os
 import sys
@@ -126,7 +130,7 @@ def main():
                 # Process each abbreviation
                 expanded_count = 0
                 for abbr in abbreviations:
-                    # Generate suggestions (using normalized form if available)
+                    # Generate suggestions (using normalized form for dictionary lookup)
                     suggestions = suggestion_generator.generate_suggestions(
                         abbr.normalized_form or "",  # Use normalized form for lookup
                         "",  # Context is not needed with the new approach

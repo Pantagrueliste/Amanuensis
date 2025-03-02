@@ -534,22 +534,25 @@ class TEIProcessor:
             g_el: The <g> element to normalize
             
         Returns:
-            Normalized abbreviation string - extracting just the abbreviated word
+            Normalized abbreviation string
         """
         ref = g_el.get('ref', '')
         
         # Different handling based on abbreviation type
         if ref == 'char:cmbAbbrStroke':
-            # Combining macron - find just the word containing the abbreviation
+            # Combining macron - find the full word context and insert $ at the right position
             parent = g_el.getparent()
             if parent is None:
                 self.logger.warning("G element has no parent, cannot determine word context")
                 return "m$"  # Fallback
+                
+            # First get all text content from the parent
+            full_text = self._get_element_text_content(parent)
             
-            # Try to extract just the word containing the abbreviation
-            parent_text = self._get_element_text_content(parent)
+            # Now we need to find where in this text the g element appears
+            # This is challenging with just the element tree, but we can analyze the structure
             
-            # Try to find the word immediately before the g element
+            # Try to build the text content up to this g element
             text_before_g = ''
             if parent.text:
                 text_before_g += parent.text
@@ -557,84 +560,58 @@ class TEIProcessor:
             for child in parent:
                 if child is g_el:
                     break
+                # Add text from this child
                 if hasattr(child, 'text') and child.text:
                     text_before_g += child.text
+                # Add tail text
                 if hasattr(child, 'tail') and child.tail:
                     text_before_g += child.tail
             
-            # Get the last word before the abbreviation
-            text_before_g = text_before_g.strip()
-            last_word_before = text_before_g.split()[-1] if text_before_g else ""
-            
-            # Get text after the abbreviation mark
+            # Handle text after the g element to reconstruct the full word
             text_after_g = ''
             if g_el.tail:
                 text_after_g += g_el.tail
                 
-            after_g_started = False
+            # Find siblings that come after the g element
+            found_g = False
             for child in parent:
-                if after_g_started and hasattr(child, 'text') and child.text:
-                    text_after_g += child.text
+                if found_g and child is not g_el:
+                    if hasattr(child, 'text') and child.text:
+                        text_after_g += child.text
+                    if hasattr(child, 'tail') and child.tail:
+                        text_after_g += child.tail
                 if child is g_el:
-                    after_g_started = True
-                if after_g_started and hasattr(child, 'tail') and child.tail:
-                    text_after_g += child.tail
+                    found_g = True
             
-            # Get the first word after the abbreviation
-            text_after_g = text_after_g.strip()
-            first_word_after = text_after_g.split()[0] if text_after_g else ""
-            
-            # Combine to get the full abbreviated word
-            if last_word_before:
-                if first_word_after:
-                    # We need to analyze the context to determine if this is an abbreviation marker:
-                    # 1. Within a word (e.g., "incu<g>̄</g>ming")
-                    # 2. At the end of a word before a space (e.g., "preservatiou<g>̄</g> of")
-                    # 3. Between words (rare case)
-                    
-                    # Get the element's tag name and context
-                    tag_name = parent.tag.split('}')[-1] if '}' in parent.tag else parent.tag
-                    
-                    # Get the original text content from parent
-                    text_content = self._get_element_text_content(parent)
-                    raw_xml = etree.tostring(parent, encoding='unicode')
-                    
-                    # Check if there's a space or punctuation after the <g> element in the XML
-                    if g_el.tail and (g_el.tail.startswith(' ') or g_el.tail.startswith('.') or 
-                                     g_el.tail.startswith(',') or g_el.tail.startswith(';')):
-                        # This is a case where the abbreviation is at the end of a word
-                        # followed by space or punctuation - add the space or punctuation marker
-                        first_char = g_el.tail[0] if g_el.tail else ""
-                        return f"{last_word_before}${first_char}{first_word_after}"
-                    
-                    # Look for specific word boundary indicators in the context
-                    # Common case: "preſeruatiou<g>̄</g> of" where there should be a space
-                    if ' of ' in text_content or ' the ' in text_content or ' and ' in text_content:
-                        # Find common word boundaries
-                        match = re.search(r'(\w+)<g[^>]*>[^<]*</g>\s+(\w+)', raw_xml)
-                        if match and match.group(1) == last_word_before and match.group(2) == first_word_after:
-                            # This is a word boundary case
-                            return f"{last_word_before}$ {first_word_after}"
-                    
-                    # Default case - assume it's within a word (most common for combining macron)
-                    # Insert the abbreviation marker between parts without a space
-                    return f"{last_word_before}${first_word_after}"
+            # If we have both before and after text, we can reconstruct the word
+            if text_before_g or text_after_g:
+                # If text_before_g has the last character, we insert $ after it
+                if text_before_g and text_before_g.strip():
+                    last_char = text_before_g.strip()[-1]
+                    result = text_before_g.strip()[:-1] + last_char + "$" + text_after_g.strip()
+                    return result
                 else:
-                    # The abbreviation is at the end of a word
-                    return f"{last_word_before}$"
-            elif first_word_after:
-                # The abbreviation is at the beginning of a word
-                return f"${first_word_after}"
-            
-            # If we couldn't extract a clear word, use the parent text but add marker
-            words = parent_text.split()
-            if words:
-                midpoint = len(words) // 2
-                return f"{words[midpoint]}$"
-            
-            # Last resort fallback - log the situation
-            self.logger.warning(f"Unable to extract abbreviated word from <g> element with ref={ref}")
-            return "abbreviated$word"
+                    # Fallback if we can't find the exact position
+                    return text_before_g.strip() + "m$" + text_after_g.strip()
+                    
+            # If we couldn't determine the word context using the above method,
+            # try to infer it from the parent's text content
+            parent_text = self._get_element_text_content(parent)
+            if parent_text:
+                # Do our best to find where to insert the $ marker
+                words = parent_text.split()
+                for word in words:
+                    # Look for words with the character that might have had an abbreviation
+                    # This is imperfect and would need refinement
+                    if len(word) > 2:  # Skip very short words
+                        # Insert $ after a likely position (this needs more logic)
+                        for i in range(1, len(word)-1):  # Skip first and last chars
+                            if word[i] in "aeioumn":  # Common abbreviated letters
+                                return word[:i+1] + "$" + word[i+1:]
+                
+            # Last resort fallback
+            self.logger.warning("Could not reconstruct full word context for abbreviation")
+            return "m$"
                 
         elif ref == 'char:abque':
             # This is the special 'que' abbreviation
