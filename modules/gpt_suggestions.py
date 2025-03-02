@@ -1,6 +1,8 @@
 import logging
 import os
-import openai
+from openai import OpenAI
+
+client = OpenAI(api_key=self.api_key)
 import requests
 from typing import List, Dict, Any
 
@@ -9,10 +11,10 @@ class GPTSuggestions:
     GPTSuggestions integrates with either the OpenAI API or the Mistral API to provide
     expansion suggestions for abbreviations. The provider, model, and suggestion count
     are specified in the configuration (e.g., config.toml), while API keys and endpoints
-    are read from environment variables (via your .env file).
+    are read from environment variables (loaded from your .env file).
     
     The prompt sent to the language model now includes additional contextual information,
-    such as language, title, date, and source details, if provided via the metadata.
+    such as language, title, date, and source details (if provided in the metadata).
     
     Required configuration keys under [language_model_integration]:
       - provider: "openai" or "mistral"
@@ -33,18 +35,17 @@ class GPTSuggestions:
         """
         self.logger = logging.getLogger(__name__)
         self.config = config
-        
+
         self.provider = config.get("language_model_integration", "provider", "openai").lower()
         self.suggestion_count = config.get("language_model_integration", "suggestion_count", 3)
         self.model = config.get("language_model_integration", "model_name")
         if not self.model:
             raise ValueError("Model name must be specified in config.toml under [language_model_integration].")
-        
+
         if self.provider == "openai":
             self.api_key = os.getenv("OPENAI_API_KEY")
             if not self.api_key:
                 raise ValueError("OPENAI_API_KEY must be set in your environment.")
-            openai.api_key = self.api_key
         elif self.provider == "mistral":
             self.api_key = os.getenv("MISTRAL_API_KEY")
             self.endpoint = os.getenv("MISTRAL_ENDPOINT")
@@ -70,7 +71,7 @@ class GPTSuggestions:
         Raises:
             Exception: Propagates any errors from the API call.
         """
-        # Build additional context information from metadata if provided.
+        # Build additional context from metadata if provided.
         context_info = ""
         if metadata:
             if 'language' in metadata:
@@ -93,15 +94,13 @@ class GPTSuggestions:
 
         if self.provider == "openai":
             try:
-                response = openai.ChatCompletion.create(
-                    model=self.model,
-                    messages=[
-                        {"role": "system", "content": "You are an expert in early modern abbreviations."},
-                        {"role": "user", "content": prompt}
-                    ],
-                    n=self.suggestion_count,
-                    temperature=0.7
-                )
+                response = client.chat.completions.create(model=self.model,
+                messages=[
+                    {"role": "system", "content": "You are an expert in early modern abbreviations."},
+                    {"role": "user", "content": prompt}
+                ],
+                n=self.suggestion_count,
+                temperature=0.7)
                 suggestions = []
                 for choice in response.choices:
                     text = choice.message.get('content', '').strip()
